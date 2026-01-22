@@ -21,8 +21,8 @@ import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 
 public class SwerveTelemetryCTRE {
-    
-    private final double maxSpeed;
+
+    private double maxSpeed;
 
     /**
      * Construct a SwerveTelemetry object, with the specified max speed of the robot
@@ -119,4 +119,9 @@ public class SwerveTelemetryCTRE {
             m_moduleSpeeds[i].setLength(state.ModuleStates[i].speedMetersPerSecond / (2 * maxSpeed));
         }
     }
+
+    public void setMaxSpeed(double maxSpeed) {
+        this.maxSpeed = maxSpeed;
+    }
+
 }

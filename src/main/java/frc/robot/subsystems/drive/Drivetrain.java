@@ -2,15 +2,18 @@ package frc.robot.subsystems.drive;
 
 import java.util.function.Supplier;
 
+import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.Constants;
 import frc.robot.generated.TunerConstants;
 
 public class Drivetrain extends CommandSwerveDrivetrain {
@@ -24,7 +27,6 @@ public class Drivetrain extends CommandSwerveDrivetrain {
 
     public Drivetrain() {
         super(TunerConstants.DrivetrainConstants, TunerConstants.FrontLeft, TunerConstants.FrontRight, TunerConstants.BackLeft, TunerConstants.BackRight);
-
     }
 
     public Command teleopDrive(CommandXboxController controller) {
@@ -76,6 +78,6 @@ public class Drivetrain extends CommandSwerveDrivetrain {
     }
 
     public Distance getShotDistance() {
-        return getShotDistance(DriveConstants.getHubPose().toPose2d().getTranslation());
+        return getShotDistance(Constants.Game.getHubPose().toPose2d().getTranslation());
     }
 }

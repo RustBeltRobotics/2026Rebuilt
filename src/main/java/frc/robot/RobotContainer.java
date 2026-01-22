@@ -4,9 +4,6 @@
 
 package frc.robot;
 
-import frc.robot.commands.ExampleCommand;
-import frc.robot.subsystems.ExampleSubsystem;
-
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathfindingCommand;
 
@@ -18,6 +15,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.subsystems.drive.Drivetrain;
+import frc.robot.util.SwerveTelemetryCTRE;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -35,9 +34,16 @@ public class RobotContainer {
   private final CommandXboxController driverController = new CommandXboxController(Constants.DriverStation.CONTROLLER_PORT_DRIVER);
   private final CommandXboxController operatorController = new CommandXboxController(Constants.DriverStation.CONTROLLER_PORT_OPERATOR);
 
+  private final SwerveTelemetryCTRE swerveTelemetryCTRE = new SwerveTelemetryCTRE(MAX_SPEED_FACTOR * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND);
+  private final Drivetrain drivetrain = new Drivetrain();
+
   private final SendableChooser<Command> autoChooser;
   private final SendableChooser<Double> driveTrainSpeedChooser = new SendableChooser<>();
   private DoublePublisher maxSpeedFactorPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/MaxSpeed").publish();
+
+  public static double getMaxSpeed() {
+    return MAX_SPEED_FACTOR * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND;
+  }
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
@@ -49,7 +55,10 @@ public class RobotContainer {
     driveTrainSpeedChooser.addOption("75%", 0.75);
     driveTrainSpeedChooser.addOption("50%", 0.5);
     driveTrainSpeedChooser.addOption("25%", 0.25);
-    driveTrainSpeedChooser.onChange((newValue) -> RobotContainer.MAX_SPEED_FACTOR = newValue);
+    driveTrainSpeedChooser.onChange((newValue) -> {
+      MAX_SPEED_FACTOR = newValue;
+      swerveTelemetryCTRE.setMaxSpeed(getMaxSpeed());
+    });
     Constants.Shuffleboard.COMPETITION_TAB.add("Drive Speed Selector", driveTrainSpeedChooser).withPosition(0, 2).withSize(2, 1);
 
     setDefaultCommands();

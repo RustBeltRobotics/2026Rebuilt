@@ -4,17 +4,21 @@
 
 package frc.robot;
 
+import java.util.Optional;
+
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.Units;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 
 /**
@@ -39,8 +43,18 @@ public final class Constants {
 
   public static final class Game {
     //These are buffers to accomodate for margin of error in Vision / PoseEstimator output
-    public static final double FIELD_POSE_XY_ERROR_MARGIN_METERS = Units.inchesToMeters(1.0);
-    public static final double FIELD_POSE_THETA_ERROR_MARGIN_RADIANS = Units.degreesToRadians(2.0);
+    public static final double FIELD_POSE_XY_ERROR_MARGIN_METERS = Units.Inches.of(1.0).in(Units.Meters);
+    public static final double FIELD_POSE_THETA_ERROR_MARGIN_RADIANS = Units.Degrees.of(2.0).in(Units.Radians);
+
+    public static final Pose3d redHubPose = new Pose3d(Units.Inches.of(468.56), Units.Inches.of(158.32), Units.Inches.of(72.0), new Rotation3d());
+    public static final Pose3d blueHubPose = new Pose3d(Units.Inches.of(152.56), Units.Inches.of(158.32),  Units.Inches.of(72.0), new Rotation3d());
+
+    public static final Pose3d getHubPose() {
+        Pose3d pose = edu.wpi.first.wpilibj.DriverStation.getAlliance().equals(Optional.of(Alliance.Red)) ? redHubPose : blueHubPose;
+
+        return pose;
+    }
+
     //Note: this should be set to false for testing the the RBR Lab
     //TODO: check this is set properly before every competition!!
     public static final boolean IS_COMPETITION = true;
@@ -100,26 +114,26 @@ public final class Constants {
     public static final double INITIAL_DRIVE_MAX_SPEED_FACTOR = 1.00;
 
     /* Robot mass in Kg. */
-    public static final double ROBOT_MASS = Units.lbsToKilograms(106.0); //Note: this weight does NOT include the battery or bumpers
+    public static final double ROBOT_MASS = Units.Pounds.of(106.0).in(Units.Kilograms); //Note: this weight does NOT include the battery or bumpers
 
-    public static final double LOADED_MASS = Units.lbsToKilograms(135.0); //Note: this weight includes the battery and bumpers
+    public static final double LOADED_MASS = Units.Pounds.of(135.0).in(Units.Kilograms); //Note: this weight includes the battery and bumpers
 
     public static final double MOMENT_OF_INTERIA = 6.883; //TODO: get this value from CAD from Dillan - 6.883 is the default UI value
 
     /* Robot frame width in meters */
-    public static final double WIDTH = Units.inchesToMeters(27.5);  //from 2026 CAD
+    public static final double WIDTH = Units.Inches.of(27.5).in(Units.Meters);  //from 2026 CAD
 
     /* Robot width in meters WITH bumpers on */
-    public static final double WIDTH_WITH_BUMPERS = Units.inchesToMeters(24.0); //TODO: update
+    public static final double WIDTH_WITH_BUMPERS = Units.Inches.of(31.5).in(Units.Meters); //TODO: update
 
     /* Robot frame length in meters */
-    public static final double LENGTH = Units.inchesToMeters(27.0); //from 2026 CAD
+    public static final double LENGTH = Units.Inches.of(27.0).in(Units.Meters); //from 2026 CAD
 
     /* Robot length in meters WITH bumpers on */
-    public static final double LENGTH_WITH_BUMPERS = Units.inchesToMeters(29.5); //TODO: update
+    public static final double LENGTH_WITH_BUMPERS = Units.Inches.of(31.0).in(Units.Meters); //TODO: update
 
     /* Robot wheel diameter in meters */
-    public static final double WHEEL_DIAMETER = Units.inchesToMeters(4.0);
+    public static final double WHEEL_DIAMETER = Units.Inches.of(4.0).in(Units.Meters);;
 
     /* Robot wheel circumference in meters */
     public static final double WHEEL_CIRCUMFERENCE = WHEEL_DIAMETER * Math.PI;
@@ -135,14 +149,14 @@ public final class Constants {
      * <p>
      * Should be measured from center to center
      */
-    public static final double DRIVETRAIN_TRACKWIDTH_METERS = Units.inchesToMeters(21.75); //from 2026 CAD
+    public static final double DRIVETRAIN_TRACKWIDTH_METERS = Units.Inches.of(21.75).in(Units.Meters); //from 2026 CAD
     
     /**
      * The front-to-back distance between the drivetrain wheels
      * <p>
      * Should be measured from center to center
      */
-    public static final double DRIVETRAIN_WHEELBASE_METERS = Units.inchesToMeters(21.75); //from 2026 CAD
+    public static final double DRIVETRAIN_WHEELBASE_METERS = Units.Inches.of(21.75).in(Units.Meters); //from 2026 CAD
 
     /** Distance from center of robot to center of swerve module  **/
     public static final double DRIVETRAIN_BASE_RADIUS = Math.hypot(DRIVETRAIN_TRACKWIDTH_METERS, DRIVETRAIN_WHEELBASE_METERS) / 2.0;
@@ -203,7 +217,7 @@ public final class Constants {
     public static final long MICROSECONDS_SINCE_COLLISION_THRESHOLD = 250000;  //0.25 seconds
 
     // public static final Matrix<N3, N1> WHEEL_ODOMETRY_POSE_STANDARD_DEVIATIONS = VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(5));
-    public static final Matrix<N3, N1> WHEEL_ODOMETRY_POSE_STANDARD_DEVIATIONS = VecBuilder.fill(0.1, 0.1, Units.degreesToRadians(5));
+    public static final Matrix<N3, N1> WHEEL_ODOMETRY_POSE_STANDARD_DEVIATIONS = VecBuilder.fill(0.1, 0.1, Units.Degrees.of(5.0).in(Units.Radians));
   }
 
   public static final class Vision {
@@ -230,11 +244,11 @@ public final class Constants {
      * See also https://www.chiefdelphi.com/t/how-do-i-understand-standard-deviation-in-the-poseestimator-class/411492/10?u=mrokitka
      */
     public static final Matrix<N3, N1> DEFAULT_VISION_MEASUREMENT_STANDARD_DEVIATIONS = VecBuilder.fill(0.9, 0.9, 0.9);
-    public static final Matrix<N3, N1> SINGLE_TAG_MEASUREMENT_STANDARD_DEVIATIONS = VecBuilder.fill(0.8, 0.8, Units.degreesToRadians(30));
-    public static final Matrix<N3, N1> FRONT_CAMERA_STANDARD_DEVIATIONS = VecBuilder.fill(0.85, 0.85, Units.degreesToRadians(20));
-    public static final Matrix<N3, N1> OTHER_CAMERA_STANDARD_DEVIATIONS = VecBuilder.fill(1.2, 1.2, Units.degreesToRadians(30));
+    public static final Matrix<N3, N1> SINGLE_TAG_MEASUREMENT_STANDARD_DEVIATIONS = VecBuilder.fill(0.8, 0.8, Units.Degrees.of(30.0).in(Units.Radians));
+    public static final Matrix<N3, N1> FRONT_CAMERA_STANDARD_DEVIATIONS = VecBuilder.fill(0.85, 0.85, Units.Degrees.of(20.0).in(Units.Radians));
+    public static final Matrix<N3, N1> OTHER_CAMERA_STANDARD_DEVIATIONS = VecBuilder.fill(1.2, 1.2, Units.Degrees.of(30.0).in(Units.Radians));
     public static final double MULTI_TAG_XY_PER_TAG_STANDARD_DEVIATION = 0.3;
-    public static final double MULTI_TAG_THETA_STANDARD_DEVIATION = Units.degreesToRadians(20);
+    public static final double MULTI_TAG_THETA_STANDARD_DEVIATION = Units.Degrees.of(20.0).in(Units.Radians);
 
     /**
      * Unique camera names, usable in PhotonCamera instances
@@ -262,17 +276,17 @@ public final class Constants {
 
       //TODO: these values are all from last year - need to update for new positions this year
 
-      public static final Transform3d FRONT_CENTER = new Transform3d(Units.inchesToMeters(14.0), 0.0, Units.inchesToMeters(11.5), 
+      public static final Transform3d FRONT_CENTER = new Transform3d(Units.Inches.of(14.0).in(Units.Meters), 0.0, Units.Inches.of(11.5).in(Units.Meters), 
         new Rotation3d(0, 0, 0));  //front center - photonvision1
       //x+, y-, z+, (0, -degrees, 0).rotateBy(0, 0, -45 degrees)
       // public static final Transform3d FRONT_RIGHT = new Transform3d(CAM_XY_FROM_CENTER_OF_ROBOT, -CAM_XY_FROM_CENTER_OF_ROBOT, CAM_Z_FROM_FLOOR, 
       //   new Rotation3d(0, CAM_PITCH_ANGLE, 0).rotateBy(new Rotation3d(0, 0, -Units.degreesToRadians(45))));  //front right - photonvision2
       //x-, y-, z+, (0, -degrees, 0).rotateBy(0, 0, -135 degrees)
-      public static final Transform3d BACK_RIGHT = new Transform3d(Units.inchesToMeters(9.5), -Units.inchesToMeters(9.0), Units.inchesToMeters(11.0), 
-        new Rotation3d(0, 0, 0).rotateBy(new Rotation3d(0, 0, -Units.degreesToRadians(90))));  //back right - photonvision1
+      public static final Transform3d BACK_RIGHT = new Transform3d(Units.Inches.of(9.5).in(Units.Meters), -Units.Inches.of(9.0).in(Units.Meters), Units.Inches.of(11.0).in(Units.Meters), 
+        new Rotation3d(0, 0, 0).rotateBy(new Rotation3d(0, 0, -Units.Degrees.of(90.0).in(Units.Radians))));  //back right - photonvision1
       //x-, y+, z+, (0, -degrees, 0).rotateBy(0, 0, 135 degrees)
-      public static final Transform3d BACK_LEFT = new Transform3d(Units.inchesToMeters(9.5), Units.inchesToMeters(9.0), Units.inchesToMeters(11.0),
-        new Rotation3d(0, 0, 0).rotateBy(new Rotation3d(0, 0, Units.degreesToRadians(90))));  //back left - photonvision2
+      public static final Transform3d BACK_LEFT = new Transform3d(Units.Inches.of(9.5).in(Units.Meters), Units.Inches.of(9.0).in(Units.Meters), Units.Inches.of(11.0).in(Units.Meters),
+        new Rotation3d(0, 0, 0).rotateBy(new Rotation3d(0, 0, Units.Degrees.of(90.0).in(Units.Radians))));  //back left - photonvision2
     }
   }
 
