@@ -13,7 +13,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.generated.TunerConstants;
 
-public class SwerveDrivetrain extends CommandSwerveDrivetrain {
+public class Drivetrain extends CommandSwerveDrivetrain {
 
     private final SwerveRequest.FieldCentric teleopRequest = new SwerveRequest.FieldCentric()
         .withDeadband(DriveConstants.maxSpeed * ControlBoardConstants.stickDeadband)
@@ -22,7 +22,7 @@ public class SwerveDrivetrain extends CommandSwerveDrivetrain {
 
     private final SwerveRequest.ApplyRobotSpeeds m_pathApplyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
 
-    public SwerveDrivetrain() {
+    public Drivetrain() {
         super(TunerConstants.DrivetrainConstants, TunerConstants.FrontLeft, TunerConstants.FrontRight, TunerConstants.BackLeft, TunerConstants.BackRight);
 
     }

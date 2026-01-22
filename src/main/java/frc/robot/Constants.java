@@ -100,20 +100,20 @@ public final class Constants {
     public static final double INITIAL_DRIVE_MAX_SPEED_FACTOR = 1.00;
 
     /* Robot mass in Kg. */
-    public static final double MASS = Units.lbsToKilograms(106.0); //Note: this weight includes the battery (but no bumpers)
+    public static final double ROBOT_MASS = Units.lbsToKilograms(106.0); //Note: this weight does NOT include the battery or bumpers
 
     public static final double LOADED_MASS = Units.lbsToKilograms(135.0); //Note: this weight includes the battery and bumpers
 
     public static final double MOMENT_OF_INTERIA = 6.883; //TODO: get this value from CAD from Dillan - 6.883 is the default UI value
 
     /* Robot frame width in meters */
-    public static final double WIDTH = Units.inchesToMeters(28.125);
+    public static final double WIDTH = Units.inchesToMeters(27.5);  //from 2026 CAD
 
     /* Robot width in meters WITH bumpers on */
     public static final double WIDTH_WITH_BUMPERS = Units.inchesToMeters(24.0); //TODO: update
 
     /* Robot frame length in meters */
-    public static final double LENGTH = Units.inchesToMeters(28.125);
+    public static final double LENGTH = Units.inchesToMeters(27.0); //from 2026 CAD
 
     /* Robot length in meters WITH bumpers on */
     public static final double LENGTH_WITH_BUMPERS = Units.inchesToMeters(29.5); //TODO: update
@@ -135,14 +135,14 @@ public final class Constants {
      * <p>
      * Should be measured from center to center
      */
-    public static final double DRIVETRAIN_TRACKWIDTH_METERS = Units.inchesToMeters(22.875);
+    public static final double DRIVETRAIN_TRACKWIDTH_METERS = Units.inchesToMeters(21.75); //from 2026 CAD
     
     /**
      * The front-to-back distance between the drivetrain wheels
      * <p>
      * Should be measured from center to center
      */
-    public static final double DRIVETRAIN_WHEELBASE_METERS = Units.inchesToMeters(22.875);
+    public static final double DRIVETRAIN_WHEELBASE_METERS = Units.inchesToMeters(21.75); //from 2026 CAD
 
     /** Distance from center of robot to center of swerve module  **/
     public static final double DRIVETRAIN_BASE_RADIUS = Math.hypot(DRIVETRAIN_TRACKWIDTH_METERS, DRIVETRAIN_WHEELBASE_METERS) / 2.0;
@@ -173,16 +173,16 @@ public final class Constants {
     public static final double STEER_VELOCITY_CONVERSION = STEER_POSITION_CONVERSION / BasicUnits.SECONDS_PER_MINUTE;
 
     /**
-     * The maximum linear velocity of a swerve module in meters per second. Calculate using https://www.reca.lc/drive
+     * The maximum linear velocity in meters per second. Calculate using https://www.reca.lc/drive
      */
-    public static final double MAX_SWERVE_MODULE_VELOCITY_METERS_PER_SECOND = 5.48;  //TODO: compare to empirical measurement
+    public static final double MAX_VELOCITY_METERS_PER_SECOND = 5.29;  //TODO: compare to empirical measurement
 
     /**
      * The maximum angular velocity of the robot in radians per second. This is a
      * measure of how fast the robot can rotate in place.
-     * 5.37 M/Sec / 0.41 M = 13.1 Rad / Sec = 750.57 degrees / sec
+     * 5.29 M/Sec / 0.39 M = 13.5 Rad / Sec = 773.49 degrees / sec
      */
-    public static final double MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND = MAX_SWERVE_MODULE_VELOCITY_METERS_PER_SECOND / DRIVETRAIN_BASE_RADIUS; //TODO: compare to empirical measurement (calc in comment seems high)
+    public static final double MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND = MAX_VELOCITY_METERS_PER_SECOND / DRIVETRAIN_BASE_RADIUS; //TODO: compare to empirical measurement (calc in comment seems high)
 
     /**
      * Used  to convert desired chassis velocity into individual swerve smodule states
