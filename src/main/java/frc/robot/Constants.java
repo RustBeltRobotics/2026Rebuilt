@@ -221,7 +221,7 @@ public final class Constants {
   }
 
   public static final class Vision {
-
+    public static final boolean VISION_ENABLED = true;
     public static final int APRIL_TAG_PIPELINE_INDEX = 0;
     public static final String ARDUCAM_MODEL = "OV9281";
     public static final double POSE_AMBIGUITY_CUTOFF = 0.2;  //https://docs.photonvision.org/en/latest/docs/apriltag-pipelines/3D-tracking.html#ambiguity

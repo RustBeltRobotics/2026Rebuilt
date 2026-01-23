@@ -4,17 +4,20 @@
 
 package frc.robot;
 
+import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathfindingCommand;
 
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.subsystems.VisionSystem;
 import frc.robot.subsystems.drive.Drivetrain;
 import frc.robot.util.SwerveTelemetryCTRE;
 
@@ -36,6 +39,7 @@ public class RobotContainer {
 
   private final SwerveTelemetryCTRE swerveTelemetryCTRE = new SwerveTelemetryCTRE(MAX_SPEED_FACTOR * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND);
   private final Drivetrain drivetrain = new Drivetrain();
+  private final VisionSystem visionSystem;
 
   private final SendableChooser<Command> autoChooser;
   private final SendableChooser<Double> driveTrainSpeedChooser = new SendableChooser<>();
@@ -60,6 +64,13 @@ public class RobotContainer {
       swerveTelemetryCTRE.setMaxSpeed(getMaxSpeed());
     });
     Constants.Shuffleboard.COMPETITION_TAB.add("Drive Speed Selector", driveTrainSpeedChooser).withPosition(0, 2).withSize(2, 1);
+
+    if (Constants.Vision.VISION_ENABLED) {
+      visionSystem = new VisionSystem();
+      drivetrain.setVisionSystem(visionSystem);
+    } else {
+      visionSystem = null;
+    }
 
     setDefaultCommands();
     configureBindings();
@@ -122,6 +133,14 @@ public class RobotContainer {
 
   public void updateTelemetry() {
     maxSpeedFactorPublisher.set(MAX_SPEED_FACTOR);
+  }
+
+  public void updateSimPeriodic() {
+    //Note: CommandSwerveDrivetrain already handles state updates via startSimThread() logic
+    if (visionSystem != null) {
+      SwerveDriveState swerveState = drivetrain.getState();
+      visionSystem.simulationPeriodic(swerveState.Pose);
+    }
   }
 
   public static void setMaxSpeedFactor(double newSpeedFactor) {
