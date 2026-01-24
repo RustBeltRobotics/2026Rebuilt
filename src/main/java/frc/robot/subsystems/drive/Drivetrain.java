@@ -6,24 +6,32 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants;
 import frc.robot.generated.TunerConstants;
+import frc.robot.vision.VisionEstimateConsumer;
 
-public class Drivetrain extends CommandSwerveDrivetrain {
+public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimateConsumer {
 
     private final SwerveRequest.FieldCentric teleopRequest = new SwerveRequest.FieldCentric()
-        .withDeadband(DriveConstants.maxSpeed * ControlBoardConstants.stickDeadband)
-        .withRotationalDeadband(DriveConstants.maxAngularRate * ControlBoardConstants.stickDeadband) // Add a 10% deadband
+        .withDeadband(Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND * Constants.Controls.CONTROLLER_DEADBAND)
+        .withRotationalDeadband(Constants.Kinematics.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND * Constants.Controls.CONTROLLER_DEADBAND)
         .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
 
-    private final SwerveRequest.ApplyRobotSpeeds m_pathApplyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
+    private final SwerveRequest.FieldCentric alignToTargetDriveRequest = new SwerveRequest.FieldCentric()
+        .withDeadband(Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND * Constants.Controls.CONTROLLER_DEADBAND)
+        .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
+
+    private final SwerveRequest.ApplyRobotSpeeds pathApplyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
 
     public Drivetrain() {
         super(TunerConstants.DrivetrainConstants, TunerConstants.FrontLeft, TunerConstants.FrontRight, TunerConstants.BackLeft, TunerConstants.BackRight);
@@ -31,40 +39,51 @@ public class Drivetrain extends CommandSwerveDrivetrain {
 
     public Command teleopDrive(CommandXboxController controller) {
         return applyRequest(() ->
-                teleopRequest.withVelocityX(-controller.getLeftY() * DriveConstants.maxSpeed) // Drive forward with negative Y (forward)
-                    .withVelocityY(-controller.getLeftX() * DriveConstants.maxSpeed) // Drive left with negative X (left)
-                    .withRotationalRate(-controller.getRightX() * DriveConstants.maxAngularRate) // Drive counterclockwise with negative X (left)
+                teleopRequest.withVelocityX(-controller.getLeftY() * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND) // Drive forward with negative Y (forward)
+                    .withVelocityY(-controller.getLeftX() * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND) // Drive left with negative X (left)
+                    .withRotationalRate(-controller.getRightX() * Constants.Kinematics.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND) // Drive counterclockwise with negative X (left)
             );
     }
 
-    public Command alignDrive(CommandXboxController controller, Supplier<Pose2d> targetPoseSupplier) {
+    public Command alignToTargetDrive(CommandXboxController controller, Supplier<Pose2d> targetPoseSupplier) {
         return applyRequest(() -> {
-            double controllerVelX = -controller.getLeftY();
-            double controllerVelY = -controller.getLeftX();
+            double controllerVelX = -controller.getLeftY();  //forward/back
+            double controllerVelY = -controller.getLeftX();  //left/right strafe
 
+            //change this to false if our shooter is centered on the robot
+            boolean shooterIsOffsetFromCenter = true;
+            Rotation2d desiredAngle;
             Pose2d drivePose = getState().Pose;
             Pose2d targetPose = targetPoseSupplier.get();
-            double shooterOffset = -DriveConstants.shooterSideOffset.in(Units.Meters);
-            double targetDistance = drivePose.getTranslation().getDistance(targetPose.getTranslation());
-            double shooterAngleRads = Math.acos(shooterOffset / targetDistance); 
-            Rotation2d shooterAngle = Rotation2d.fromRadians(shooterAngleRads);
-            Rotation2d offsetAngle = Rotation2d.kCCW_90deg.minus(shooterAngle);
-            Rotation2d desiredAngle = offsetAngle.plus(drivePose.relativeTo(targetPose).getTranslation().getAngle()).plus(Rotation2d.k180deg);
-            desiredAngle = desiredAngle.plus(Rotation2d.k180deg);
             Rotation2d currentAngle = drivePose.getRotation();
+
+            if (shooterIsOffsetFromCenter) {
+                double targetDistance = drivePose.getTranslation().getDistance(targetPose.getTranslation());
+                double shooterOffset = -DriveConstants.shooterSideOffset.in(Units.Meters);  //lateral offset from center of robot to shooter (negative is left)
+                double shooterAngleRads = Math.acos(shooterOffset / targetDistance); 
+                Rotation2d shooterAngle = Rotation2d.fromRadians(shooterAngleRads);
+                Rotation2d offsetAngle = Rotation2d.kCCW_90deg.minus(shooterAngle);
+                desiredAngle = offsetAngle.plus(drivePose.relativeTo(targetPose).getTranslation().getAngle()).plus(Rotation2d.k180deg);
+                desiredAngle = desiredAngle.plus(Rotation2d.k180deg);
+            } else {
+                desiredAngle = targetPose.getTranslation().minus(drivePose.getTranslation()).getAngle();
+                //TODO: do we need to add 180 degrees here?
+            }
+
             Rotation2d deltaAngle = currentAngle.minus(desiredAngle);
             double wrappedAngleDeg = MathUtil.inputModulus(deltaAngle.getDegrees(), -180.0, 180.0);
 
-            if (
-                (Math.abs(wrappedAngleDeg) < DriveConstants.epsilonAngleToGoal.in(Units.Degrees)) // if facing goal already
-                && Math.hypot(controllerVelX, controllerVelY) < ControlBoardConstants.stickDeadband) {
-                    return new SwerveRequest.SwerveDriveBrake();
-                } else {
-                double rotationalRate = DriveConstants.rotationController.calculate(currentAngle.getRadians(), desiredAngle.getRadians());
+            boolean notTryingToDrive = Math.hypot(controllerVelX, controllerVelY) < Constants.Controls.CONTROLLER_DEADBAND;
+            boolean alreadyFacingGoal = Math.abs(wrappedAngleDeg) < Constants.Kinematics.EPSILON_ANGLE_TO_GOAL.in(Units.Degrees);
 
-                return alignRequest.withVelocityX(controllerVelX * DriveConstants.maxSpeed) // Drive forward with negative Y (forward)
-                    .withVelocityY(-controller.getLeftX() * DriveConstants.maxSpeed) // Drive left with negative X (left)
-                    .withRotationalRate(rotationalRate * DriveConstants.maxAngularRate); // Use angular rate for rotation
+            if (alreadyFacingGoal && notTryingToDrive) {
+                return new SwerveRequest.SwerveDriveBrake();
+            } else {
+                double rotationalRate = Constants.Kinematics.ROTATE_TO_POSE_PID_CONTROLLER.calculate(currentAngle.getRadians(), desiredAngle.getRadians());
+
+                return alignToTargetDriveRequest.withVelocityX(controllerVelX * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND) // Drive forward with negative Y (forward)
+                    .withVelocityY(-controller.getLeftX() * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND) // Drive left with negative X (left)
+                    .withRotationalRate(rotationalRate * Constants.Kinematics.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND); // Use angular rate for rotation
             }
         });
     }
@@ -79,5 +98,10 @@ public class Drivetrain extends CommandSwerveDrivetrain {
 
     public Distance getShotDistance() {
         return getShotDistance(Constants.Game.getHubPose().toPose2d().getTranslation());
+    }
+
+    @Override
+    public void consumeVisionPoseEstimate(Pose2d pose, double timestamp, Matrix<N3, N1> estimationStdDevs) {
+        this.addVisionMeasurement(pose, timestamp, estimationStdDevs);
     }
 }

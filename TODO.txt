@@ -1,0 +1,10 @@
+- Update firmware on Radio to latest
+- Flash Rio if necessary
+- Update Photonvision on Orange PIs
+- Test camera configuration on photon GUI
+- Get robot to camera translation values from CAS / physical measurement once placed on robot
+- Generate CTRE swerve code
+- Run SysId routines, import logs and update PID gains in constants
+- Test basic field oriented drive
+- Run robot at full speed with AdvantageScope open to get measured max velocity in M/S
+    - Update MAX_VELOCITY_METERS_PER_SECOND and config in PathPlanner GUI to this value

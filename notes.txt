@@ -1,0 +1,2 @@
+- CTRE Swerve project setup procedure:
+    - https://www.youtube.com/watch?v=3QqltCdH_Qk

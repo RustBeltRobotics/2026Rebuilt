@@ -10,6 +10,7 @@ import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
@@ -18,6 +19,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.Units;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 
@@ -36,9 +38,10 @@ public final class Constants {
     public static final double DEGREES_PER_REVOLUTION = 360.0;
   }
 
-  public static final class DriverStation {
+  public static final class Controls {
     public static final int CONTROLLER_PORT_DRIVER = 0;
     public static final int CONTROLLER_PORT_OPERATOR = 1;
+    public static final double CONTROLLER_DEADBAND = 0.1;
   }
 
   public static final class Game {
@@ -189,7 +192,10 @@ public final class Constants {
     /**
      * The maximum linear velocity in meters per second. Calculate using https://www.reca.lc/drive
      */
-    public static final double MAX_VELOCITY_METERS_PER_SECOND = 5.29;  //TODO: compare to empirical measurement
+    // public static final double MAX_VELOCITY_METERS_PER_SECOND = 5.29;  //TODO: compare to empirical measurement
+    //TODO: run the robot at full speed and measure actual speed to verify this value,
+    //TODO: update settings in PathPlanner GUI to match if this value is changed
+    public static final double MAX_VELOCITY_METERS_PER_SECOND = TunerConstants.kSpeedAt12Volts.in(Units.MetersPerSecond);  //TODO: update CTRE Swerve generated constant value to match theoretical above
 
     /**
      * The maximum angular velocity of the robot in radians per second. This is a
@@ -215,6 +221,18 @@ public final class Constants {
     public static final double COLLISION_THRESHOLD_DELTA_G_AUTONOMOUS = 1.4;
     /* Pose estimate should not be reset until after this long after collision */
     public static final long MICROSECONDS_SINCE_COLLISION_THRESHOLD = 250000;  //0.25 seconds
+
+    public static final Angle EPSILON_ANGLE_TO_GOAL = Units.Degrees.of(1.0);
+
+    public static final PIDController ROTATE_TO_POSE_PID_CONTROLLER = getRotateToPoseController();
+
+    private static final PIDController getRotateToPoseController() {
+      //TODO: test/tune PID
+        PIDController controller = new PIDController(1.5, 0.0, 0.0);
+        controller.enableContinuousInput(-Math.PI, Math.PI);
+
+        return controller;
+    }
 
     // public static final Matrix<N3, N1> WHEEL_ODOMETRY_POSE_STANDARD_DEVIATIONS = VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(5));
     public static final Matrix<N3, N1> WHEEL_ODOMETRY_POSE_STANDARD_DEVIATIONS = VecBuilder.fill(0.1, 0.1, Units.Degrees.of(5.0).in(Units.Radians));

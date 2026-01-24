@@ -1,6 +1,5 @@
 package frc.robot.subsystems;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -8,7 +7,6 @@ import java.util.Optional;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
-import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
@@ -18,23 +16,20 @@ import org.photonvision.targeting.PhotonTrackedTarget;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFieldLayout.OriginPosition;
-import edu.wpi.first.math.ComputerVisionUtil;
 import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
-import edu.wpi.first.util.datalog.DataLog;
-import edu.wpi.first.wpilibj.DataLogManager;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.apriltag.AprilTagFields;
 import frc.robot.Constants;
@@ -42,6 +37,7 @@ import frc.robot.Robot;
 import frc.robot.util.AlertManager;
 import frc.robot.vision.CameraPosition;
 import frc.robot.vision.VisionCamera;
+import frc.robot.vision.VisionEstimateConsumer;
 import frc.robot.vision.VisionPoseEstimationResult;
 
 //TODO: MJR review latest photonvision example for 2025 season and update logic below accordingly
@@ -55,6 +51,9 @@ public class VisionSystem {
 
     private final AprilTagFieldLayout fieldLayout;
     private final List<VisionCamera> visionCameras = new ArrayList<>();
+    private final LinearFilter averageLatencyFilter = LinearFilter.movingAverage(40);
+    private VisionEstimateConsumer visionEstimateConsumer;
+    private DoublePublisher averageLatencyMsPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Vision/Latency").publish();
     private final StructArrayPublisher<Pose3d> acceptedTagPublisher = NetworkTableInstance.getDefault()
         .getStructArrayTopic("/RBR/Vision/AprilTags/Accepted", Pose3d.struct).publish();
     private final StructArrayPublisher<Pose3d> rejectedTagPublisher = NetworkTableInstance.getDefault()
@@ -84,7 +83,8 @@ public class VisionSystem {
      * https://github.com/TexasTorque/TorqueLib/blob/master/sensors/TorqueVision.java
      */
 
-    public VisionSystem() {
+    public VisionSystem(VisionEstimateConsumer visionEstimateConsumer) {
+        this.visionEstimateConsumer = visionEstimateConsumer;
         //TODO: if the venue is not using the default welded field layout and is instead using AndyMark, update this to AprilTagFields.k2025ReefscapeAndyMark
         fieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
         fieldLayout.setOrigin(OriginPosition.kBlueAllianceWallRightSide);
@@ -111,11 +111,13 @@ public class VisionSystem {
             // Create simulated camera properties. These can be set to mimic your actual camera.
             var cameraProp = new SimCameraProperties();
             //assumes a 75 degree horizontal FOV
+            //TODO: verify this resolution matches what we have configured on the Arducams in the Photonvision UI
             cameraProp.setCalibration(1280, 800, Rotation2d.fromDegrees(84.28));
-            cameraProp.setCalibError(0.35, 0.10);
-            cameraProp.setFPS(60);
-            cameraProp.setAvgLatencyMs(50);
+            cameraProp.setCalibError(0.77, 0.25);
+            cameraProp.setFPS(45); //TODO: verify this FPS matches what we see for the cameras in the Photonvision UI
+            cameraProp.setAvgLatencyMs(30);  //TODO: update this to match the average latency we're publishing to NT at /RBR/Vision/Latency
             cameraProp.setLatencyStdDevMs(15);
+
             for (VisionCamera visionCamera : visionCameras) {
                 // Create a PhotonCameraSim which will update the linked PhotonCamera's values with visible targets.
                 PhotonCameraSim cameraSim = new PhotonCameraSim(visionCamera.getCameraInstance(), cameraProp);
@@ -138,6 +140,20 @@ public class VisionSystem {
                 return isDisconnected;
             });
         }
+    }
+
+    public void periodic() {
+        List<VisionPoseEstimationResult> newVisionPoseEstimates = getRobotPoseEstimationResults();
+        for (int i = 0; i < newVisionPoseEstimates.size(); i++) {
+            VisionPoseEstimationResult poseEstimationResult = newVisionPoseEstimates.get(i);
+            Pose2d visionPoseEstimate = poseEstimationResult.getEstimatedRobotPose().estimatedPose.toPose2d();
+            visionEstimateConsumer.consumeVisionPoseEstimate(visionPoseEstimate, 
+                poseEstimationResult.getEstimatedRobotPose().timestampSeconds, poseEstimationResult.getVisionMeasurementStdDevs());
+        }
+        
+        if (Robot.isSimulation()) {
+            getSimDebugField().getObject("VisionEstimation").setPoses(newVisionPoseEstimates.stream().map(p -> p.getEstimatedRobotPose().estimatedPose.toPose2d()).toList());
+        } 
     }
  
     /**
@@ -193,17 +209,6 @@ public class VisionSystem {
             List<Pose3d> usedAprilTags, List<Pose3d> rejectedAprilTags, VisionCamera visionCamera, PhotonPoseEstimator poseEstimator) {
         List<Pose3d> usedAprilTagsForCamera = new ArrayList<>();
         List<Pose3d> rejectedAprilTagsForCamera = new ArrayList<>();
-        Optional<MultiTargetPNPResult> multiTagResult = pipelineResult.getMultiTagResult();
-
-        //https://docs.photonvision.org/en/latest/docs/apriltag-pipelines/multitag.html#enabling-multitag
-        if (multiTagResult.isPresent()) {
-            MultiTargetPNPResult mtr = multiTagResult.get();
-            Transform3d fieldToCamera = mtr.estimatedPose.best;
-            //TODO: discard poseEstimateResult below if bestReprojectionError is too high
-            double bestReprojectionError = mtr.estimatedPose.bestReprojErr;  //uom is pixels
-            //TODO: compare this with the EstimatedRobotPose result from below
-            Pose3d multiTagEstimatedRobotPose = new Pose3d(fieldToCamera.getX(), fieldToCamera.getY(), fieldToCamera.getZ(), fieldToCamera.getRotation());
-        }
 
         //TODO: verify this is non-empty when running the AprilTag pipeline and not object detection pipeline
         //  This whole block may be unnecessary due to poseEstimator.update(pipelineResult) below already taking multitag logic into account
@@ -241,6 +246,12 @@ public class VisionSystem {
             EstimatedRobotPose poseEstimate = poseEstimateResult.get();
             double visionPoseTimestampSeconds = poseEstimate.timestampSeconds;
             long networkTablesPoseTimestampMicroSeconds = Math.round(visionPoseTimestampSeconds * 1000000); //microseconds
+
+            double now = Timer.getFPGATimestamp();
+            double observedLatencyMs = (now - visionPoseTimestampSeconds) * 1000.0; //this latency can be used to compute avg latency for photon camera simulation
+            double runningAverageLatencyMs = averageLatencyFilter.calculate(observedLatencyMs);
+            averageLatencyMsPublisher.accept(runningAverageLatencyMs);
+
             Pose3d estimatedPose = poseEstimate.estimatedPose;
             Pose2d estimatedPose2d = estimatedPose.toPose2d();
 

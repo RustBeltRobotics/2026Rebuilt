@@ -5,6 +5,7 @@
 package frc.robot;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathfindingCommand;
 
@@ -16,6 +17,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.VisionSystem;
 import frc.robot.subsystems.drive.Drivetrain;
@@ -34,8 +36,8 @@ public class RobotContainer {
    // For limiting maximum speed (1.0 = 100% = full speed)
   private static double MAX_SPEED_FACTOR = Constants.Kinematics.INITIAL_DRIVE_MAX_SPEED_FACTOR;
 
-  private final CommandXboxController driverController = new CommandXboxController(Constants.DriverStation.CONTROLLER_PORT_DRIVER);
-  private final CommandXboxController operatorController = new CommandXboxController(Constants.DriverStation.CONTROLLER_PORT_OPERATOR);
+  private final CommandXboxController driverController = new CommandXboxController(Constants.Controls.CONTROLLER_PORT_DRIVER);
+  private final CommandXboxController operatorController = new CommandXboxController(Constants.Controls.CONTROLLER_PORT_OPERATOR);
 
   private final SwerveTelemetryCTRE swerveTelemetryCTRE = new SwerveTelemetryCTRE(MAX_SPEED_FACTOR * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND);
   private final Drivetrain drivetrain = new Drivetrain();
@@ -65,9 +67,10 @@ public class RobotContainer {
     });
     Constants.Shuffleboard.COMPETITION_TAB.add("Drive Speed Selector", driveTrainSpeedChooser).withPosition(0, 2).withSize(2, 1);
 
+    drivetrain.registerTelemetry(swerveTelemetryCTRE::telemeterize);
+
     if (Constants.Vision.VISION_ENABLED) {
-      visionSystem = new VisionSystem();
-      drivetrain.setVisionSystem(visionSystem);
+      visionSystem = new VisionSystem(drivetrain::consumeVisionPoseEstimate);
     } else {
       visionSystem = null;
     }
@@ -94,11 +97,24 @@ public class RobotContainer {
    * joysticks}.
    */
   private void configureBindings() {
-    //TODO: define controller bindings
+        // Idle while the robot is disabled. This ensures the configured
+        // neutral mode is applied to the drive motors while disabled.
+        final var idle = new SwerveRequest.Idle();
+        RobotModeTriggers.disabled().whileTrue(drivetrain.applyRequest(() -> idle).ignoringDisable(true));
+
+        // Run SysId routines when holding back/start and X/Y.
+        // Note that each routine should be run exactly once in a single log.
+        driverController.back().and(driverController.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
+        driverController.back().and(driverController.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
+        driverController.start().and(driverController.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
+        driverController.start().and(driverController.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
+
+        // Reset the field-centric heading on left bumper press.
+        driverController.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
   }
 
   private void setDefaultCommands() {
-    //TODO: register default commands for subsystems
+    drivetrain.setDefaultCommand(drivetrain.teleopDrive(driverController));
   }
 
   public void configureAutos() {
@@ -129,6 +145,10 @@ public class RobotContainer {
      Command chosenAutoCommand = autoChooser.getSelected();
 
     return chosenAutoCommand;
+  }
+
+  public void updatePeriodic() {
+    visionSystem.periodic();
   }
 
   public void updateTelemetry() {
