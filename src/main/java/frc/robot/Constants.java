@@ -6,8 +6,6 @@ package frc.robot;
 
 import java.util.Optional;
 
-import org.photonvision.PhotonPoseEstimator.PoseStrategy;
-
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
@@ -49,11 +47,12 @@ public final class Constants {
     public static final double FIELD_POSE_XY_ERROR_MARGIN_METERS = Units.Inches.of(1.0).in(Units.Meters);
     public static final double FIELD_POSE_THETA_ERROR_MARGIN_RADIANS = Units.Degrees.of(2.0).in(Units.Radians);
 
-    public static final Pose3d redHubPose = new Pose3d(Units.Inches.of(468.56), Units.Inches.of(158.32), Units.Inches.of(72.0), new Rotation3d());
-    public static final Pose3d blueHubPose = new Pose3d(Units.Inches.of(152.56), Units.Inches.of(158.32),  Units.Inches.of(72.0), new Rotation3d());
+    //These values are from pathplanner - center of hub opening at 72 inches height
+    public static final Pose3d BLUE_HUB_POSE = new Pose3d(Units.Meters.of(4.618), Units.Meters.of(4.039),  Units.Inches.of(72.0), new Rotation3d());
+    public static final Pose3d RED_HUB_POSE = new Pose3d(Units.Meters.of(11.914), Units.Meters.of(4.039),  Units.Inches.of(72.0), new Rotation3d());
 
     public static final Pose3d getHubPose() {
-        Pose3d pose = edu.wpi.first.wpilibj.DriverStation.getAlliance().equals(Optional.of(Alliance.Red)) ? redHubPose : blueHubPose;
+        Pose3d pose = edu.wpi.first.wpilibj.DriverStation.getAlliance().equals(Optional.of(Alliance.Red)) ? RED_HUB_POSE : BLUE_HUB_POSE;
 
         return pose;
     }
@@ -249,10 +248,7 @@ public final class Constants {
     public static final double DISTANCE_CUTOFF = 3.0;  //Tag readings beyond this distance (in meters) will be considered invalid
     public static final double DISTANCE_WEIGHT = 7.0;
     public static final int TAG_PRESENCE_WEIGHT = 10;
-    //Note: April tag posiitions in our lab are not in accurate enough positions to use multi-tag strategy, so we use lowest ambiguity in the lab instead
-    public static final PoseStrategy POSE_STRATEGY_LAB = PoseStrategy.LOWEST_AMBIGUITY;
-    public static final PoseStrategy POSE_STRATEGY_COMP = PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR;
-    public static final PoseStrategy POSE_STRATEGY = Game.IS_COMPETITION ? POSE_STRATEGY_COMP : POSE_STRATEGY_LAB;
+  
 
     /**
      * Standard deviations for vision measurements. Increase these numbers to trust your

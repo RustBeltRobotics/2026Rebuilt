@@ -90,13 +90,13 @@ public class VisionSystem {
         fieldLayout.setOrigin(OriginPosition.kBlueAllianceWallRightSide);
 
         VisionCamera frontCenterCamera = new VisionCamera(Constants.Vision.CameraName.FRONT_CENTER, CameraPosition.FRONT_CENTER,
-            Constants.Vision.CameraPose.FRONT_CENTER, Constants.Vision.POSE_STRATEGY, fieldLayout);   
+            Constants.Vision.CameraPose.FRONT_CENTER, fieldLayout);   
         // VisionCamera frontRightCamera = new VisionCamera(Constants.Vision.CameraName.FRONT_RIGHT, CameraPosition.FRONT_RIGHT,
-        //     Constants.Vision.CameraPose.FRONT_RIGHT, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, fieldLayout);
+        //     Constants.Vision.CameraPose.FRONT_RIGHT, fieldLayout);
         VisionCamera backRightCamera = new VisionCamera(Constants.Vision.CameraName.BACK_RIGHT, CameraPosition.BACK_RIGHT,
-            Constants.Vision.CameraPose.BACK_RIGHT, Constants.Vision.POSE_STRATEGY, fieldLayout);
+            Constants.Vision.CameraPose.BACK_RIGHT, fieldLayout);
         VisionCamera backLeftCamera = new VisionCamera(Constants.Vision.CameraName.BACK_LEFT, CameraPosition.BACK_LEFT,
-            Constants.Vision.CameraPose.BACK_LEFT, Constants.Vision.POSE_STRATEGY, fieldLayout);
+            Constants.Vision.CameraPose.BACK_LEFT, fieldLayout);
         visionCameras.add(frontCenterCamera);           
         // visionCameras.add(frontRightCamera);           
         visionCameras.add(backRightCamera);           
@@ -241,7 +241,12 @@ public class VisionSystem {
             }
         }
 
-        Optional<EstimatedRobotPose> poseEstimateResult = poseEstimator.update(pipelineResult);
+        Optional<EstimatedRobotPose> poseEstimateResult = poseEstimator.estimateCoprocMultiTagPose(pipelineResult);
+        if (poseEstimateResult.isEmpty()) {
+            //fallback to lowest ambiguity if multi-tag PNP on coprocessor did not return a result
+            poseEstimateResult = poseEstimator.estimateLowestAmbiguityPose(pipelineResult);
+        }
+        
         if (poseEstimateResult.isPresent()) {
             EstimatedRobotPose poseEstimate = poseEstimateResult.get();
             double visionPoseTimestampSeconds = poseEstimate.timestampSeconds;

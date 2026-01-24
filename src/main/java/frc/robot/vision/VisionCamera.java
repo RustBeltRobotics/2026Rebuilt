@@ -2,7 +2,6 @@ package frc.robot.vision;
 
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
-import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Transform3d;
@@ -15,12 +14,12 @@ public class VisionCamera {
     private final Transform3d robotToCameraPose;
     private final CameraPosition cameraPosition;
 
-    public VisionCamera(String cameraName, CameraPosition cameraPosition, Transform3d robotToCameraPose, PoseStrategy poseStrategy, AprilTagFieldLayout fieldLayout) {
+    public VisionCamera(String cameraName, CameraPosition cameraPosition, Transform3d robotToCameraPose, AprilTagFieldLayout fieldLayout) {
         this.cameraName = cameraName;
         this.cameraPosition = cameraPosition;
         this.robotToCameraPose = robotToCameraPose;
         cameraInstance = new PhotonCamera(cameraName);
-        poseEstimator = new PhotonPoseEstimator(fieldLayout, poseStrategy, robotToCameraPose);
+        poseEstimator = new PhotonPoseEstimator(fieldLayout, robotToCameraPose);
     }
 
     public String getCameraName() {

@@ -1,7 +1,5 @@
 - Update firmware on Radio to latest
 - Flash Rio if necessary
-- Update Photonvision on Orange PIs
-- Test camera configuration on photon GUI
 - Get robot to camera translation values from CAS / physical measurement once placed on robot
 - Generate CTRE swerve code
 - Run SysId routines, import logs and update PID gains in constants
