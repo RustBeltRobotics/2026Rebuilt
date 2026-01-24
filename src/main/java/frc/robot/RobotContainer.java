@@ -7,6 +7,7 @@ package frc.robot;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.commands.FollowPathCommand;
 import com.pathplanner.lib.commands.PathfindingCommand;
 
 import edu.wpi.first.networktables.DoublePublisher;
@@ -79,8 +80,8 @@ public class RobotContainer {
     configureBindings();
     configureAutos();
 
-    // Speed up initial run of Pathplanner commands
-    PathfindingCommand.warmupCommand().schedule();
+    // Speed up initial run of Pathplanner GUI commands
+    FollowPathCommand.warmupCommand().schedule();
   }
 
   private void registerPathPlannerNamedCommands() {
