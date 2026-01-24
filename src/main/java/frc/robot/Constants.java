@@ -6,6 +6,9 @@ package frc.robot;
 
 import java.util.Optional;
 
+import com.pathplanner.lib.config.ModuleConfig;
+import com.pathplanner.lib.config.RobotConfig;
+
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
@@ -16,6 +19,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -235,6 +239,26 @@ public final class Constants {
 
     // public static final Matrix<N3, N1> WHEEL_ODOMETRY_POSE_STANDARD_DEVIATIONS = VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(5));
     public static final Matrix<N3, N1> WHEEL_ODOMETRY_POSE_STANDARD_DEVIATIONS = VecBuilder.fill(0.1, 0.1, Units.Degrees.of(5.0).in(Units.Radians));
+  }
+
+  public static final class PathPlanner {
+    //TODO: update the driveGearing value here to match the CTRE Swerve gearing for MK5n modules once available
+    public static final ModuleConfig MODULE_CONFIG = new ModuleConfig(Kinematics.WHEEL_RADIUS, Kinematics.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND,
+      Kinematics.WHEEL_COEFFECIENT_OF_FRICTION, DCMotor.getKrakenX60(1), 6.12, 60.0, 4);
+    public static final RobotConfig ROBOT_CONFIG = new RobotConfig(Kinematics.LOADED_MASS, Kinematics.MOMENT_OF_INTERIA,
+      MODULE_CONFIG, Kinematics.SWERVE_KINEMATICS.getModules());
+      
+    //TODO: tune this - max xy error seen roughly 1 - 0.33
+    // public static final double rotation_P = 1.5;
+    public static final double rotation_P = 2.0;
+    public static final double rotation_I = 0.0;
+    public static final double rotation_D = 0.0;
+
+    //TODO: tune this - max xy error seen roughly 1 - 0.33
+    // public static final double translation_P = 1.0;
+    public static final double translation_P = 2.5;
+    public static final double translation_I = 0.0;
+    public static final double translation_D = 0.0;
   }
 
   public static final class Vision {
