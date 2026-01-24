@@ -19,12 +19,14 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants;
 import frc.robot.generated.TunerConstants;
+import frc.robot.util.AlertManager;
 import frc.robot.vision.VisionEstimateConsumer;
 
 public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimateConsumer {
@@ -39,6 +41,9 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
         .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
 
     private final SwerveRequest.ApplyRobotSpeeds pathApplyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
+
+    private boolean initialPoseSetViaVision = false;
+    private Pose2d latestVisionPose;
 
     public Drivetrain() {
         super(TunerConstants.DrivetrainConstants, TunerConstants.FrontLeft, TunerConstants.FrontRight, TunerConstants.BackLeft, TunerConstants.BackRight);
@@ -96,12 +101,24 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
         });
     }
 
+    public void resetPoseCustom(Pose2d pose) {
+        Pose2d targetPose = pose;
+        //if this is autonomous and we have valid vision data, override the provided pose with vision data
+        if (DriverStation.isAutonomous() && Constants.Vision.VISION_ENABLED && !initialPoseSetViaVision && this.latestVisionPose != null) {
+            targetPose = this.latestVisionPose;
+            initialPoseSetViaVision = true;
+            AlertManager.addAlert("AutoVision", "Initial AutoPose [" + pose + "] overriden with vision to [" + this.latestVisionPose + "]", AlertType.kInfo);
+        }
+
+        resetPose(targetPose);
+    }
+
     private void configureAutoBuilder() {
         RobotConfig ppRobotConfig = Constants.PathPlanner.ROBOT_CONFIG;
 
         AutoBuilder.configure(
                 () -> getState().Pose,   // Supplier of current robot pose
-                this::resetPose,         // Consumer for seeding pose against auto
+                this::resetPoseCustom,         // Consumer for seeding pose against auto
                 () -> getState().Speeds, // Supplier of current robot speeds
                 // Consumer of ChassisSpeeds and feedforwards to drive the robot
                 (speeds, feedforwards) -> setControl(
@@ -135,5 +152,6 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     @Override
     public void consumeVisionPoseEstimate(Pose2d pose, double timestamp, Matrix<N3, N1> estimationStdDevs) {
         this.addVisionMeasurement(pose, timestamp, estimationStdDevs);
+        this.latestVisionPose = pose;
     }
 }
