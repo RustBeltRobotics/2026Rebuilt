@@ -1,2 +1,4 @@
 - CTRE Swerve project setup procedure:
     - https://www.youtube.com/watch?v=3QqltCdH_Qk
+- YAMS / motor code technical docs/ref:
+    - https://www.chiefdelphi.com/uploads/short-url/dx8EE8MAC1raoOUDkIRvDPym1Zl.pdf

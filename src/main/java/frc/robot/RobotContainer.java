@@ -4,26 +4,34 @@
 
 package frc.robot;
 
+import java.util.function.Supplier;
+
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.FollowPathCommand;
-import com.pathplanner.lib.commands.PathfindingCommand;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
-import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
-import frc.robot.subsystems.VisionSystem;
+import frc.robot.commands.DefaultLedCommand;
+import frc.robot.subsystems.LED;
+import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.drive.Drivetrain;
+import frc.robot.util.HubStateTracker;
 import frc.robot.util.SwerveTelemetryCTRE;
+import frc.robot.vision.VisionSystem;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -43,6 +51,8 @@ public class RobotContainer {
 
   private final SwerveTelemetryCTRE swerveTelemetryCTRE = new SwerveTelemetryCTRE(MAX_SPEED_FACTOR * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND);
   private final Drivetrain drivetrain = new Drivetrain();
+  private final Shooter shooter = new Shooter();
+  private final LED led = new LED();
   private final VisionSystem visionSystem;
 
   private final SendableChooser<Command> autoChooser;
@@ -53,7 +63,7 @@ public class RobotContainer {
     return MAX_SPEED_FACTOR * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND;
   }
 
-  /** The container for the robot. Contains subsystems, OI devices, and commands. */
+  /** The container for the robot. Contains subsystems, I/O devices, and commands. */
   public RobotContainer() {
     registerPathPlannerNamedCommands();
     
@@ -115,10 +125,19 @@ public class RobotContainer {
 
         // Reset the field-centric heading (set robot forward direction) on left bumper press.
         driverController.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
+
+        Supplier<Pose2d> hubTargetPoseSupplier = () -> Constants.Game.getHubPose().toPose2d();
+        // Auto-align drive to hub while holding right bumper.
+        driverController.rightBumper().whileTrue(Commands.parallel(
+          shooter.prepVariableDistanceShot(() -> drivetrain.getShotDistance(hubTargetPoseSupplier.get().getTranslation())),
+          drivetrain.alignToTargetDrive(driverController, hubTargetPoseSupplier)
+        ));
   }
 
   private void setDefaultCommands() {
     drivetrain.setDefaultCommand(drivetrain.teleopDrive(driverController));
+    //Default LED command removes all color output (sets to black)
+    led.setDefaultCommand(new DefaultLedCommand(led));
   }
 
   public void configureAutos() {
@@ -153,6 +172,22 @@ public class RobotContainer {
 
   public void updatePeriodic() {
     visionSystem.periodic();
+    //control LEDs based on robot state
+    //TODO: use a color when there are no vision tags visible? i.e. !visionSystem.isReceivedNewVisionData
+    if (DriverStation.isAutonomous()) {
+      led.changeColor(Color.kOrange);
+    } else {
+      if (HubStateTracker.isAllianceHubActive()) {
+        led.changeColor(Color.kGreen);
+      } else {
+        led.changeColor(Color.kRed);
+      }
+    }
+
+    if (visionSystem != null) {
+      //blink LED if no valid vision data received
+      led.changeBlink(!visionSystem.isReceivedNewVisionData());
+    }
   }
 
   public void updateTelemetry() {

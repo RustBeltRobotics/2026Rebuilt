@@ -22,8 +22,11 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.generated.TunerConstants;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
@@ -74,22 +77,29 @@ public final class Constants {
     public static final int POWER_DISTRIBUTION = 1;
     public static final int CLIMBER_MOTOR = 19;
     public static final int PIGEON_GYRO = 10;
-    public static final int ELEVATOR_LEFT_MOTOR = 14;
-    public static final int ELEVATOR_RIGHT_MOTOR = 16;
-    public static final int ELEVATOR_EXTEND_RETRACT_MOTOR = 12;
-    public static final int REJECTOR_MOTOR = 20;
-    public static final int SWERVE_MODULE_FRONT_LEFT_DRIVE_MOTOR = 6;
-    public static final int SWERVE_MODULE_FRONT_LEFT_STEER_MOTOR = 13;
-    public static final int SWERVE_MODULE_FRONT_LEFT_STEER_ENCODER = 2;
-    public static final int SWERVE_MODULE_FRONT_RIGHT_DRIVE_MOTOR = 7;
-    public static final int SWERVE_MODULE_FRONT_RIGHT_STEER_MOTOR = 17;
-    public static final int SWERVE_MODULE_FRONT_RIGHT_STEER_ENCODER = 3;
-    public static final int SWERVE_MODULE_BACK_RIGHT_DRIVE_MOTOR = 9;
-    public static final int SWERVE_MODULE_BACK_RIGHT_STEER_MOTOR = 18;
-    public static final int SWERVE_MODULE_BACK_RIGHT_STEER_ENCODER = 5;
-    public static final int SWERVE_MODULE_BACK_LEFT_DRIVE_MOTOR = 8;
-    public static final int SWERVE_MODULE_BACK_LEFT_STEER_MOTOR = 15;
-    public static final int SWERVE_MODULE_BACK_LEFT_STEER_ENCODER = 4;
+    public static final int FEEDER_KRAKEN = 14;
+    public static final int INTAKE_ROTATE_MOTOR = 16;  //NEO Vortex
+    public static final int INTAKE_EXTEND_RETRACT_MOTOR = 12;  //NEO
+    public static final int SHOOTER_KRAKEN_LEFT = 20;  //Kraken x60
+    public static final int SHOOTER_KRAKEN_RIGHT = 21; //Kraken x60
+    public static final int SHOOTER_VORTEX_LEFT = 22;
+    public static final int SHOOTER_VORTEX_RIGHT = 23;
+    public static final int SWERVE_MODULE_FRONT_LEFT_DRIVE_MOTOR = 6; //Kraken x60
+    public static final int SWERVE_MODULE_FRONT_LEFT_STEER_MOTOR = 13; //Kraken x44
+    public static final int SWERVE_MODULE_FRONT_LEFT_STEER_ENCODER = 2; //CANcoder
+    public static final int SWERVE_MODULE_FRONT_RIGHT_DRIVE_MOTOR = 7; //Kraken x60
+    public static final int SWERVE_MODULE_FRONT_RIGHT_STEER_MOTOR = 17; //Kraken x44
+    public static final int SWERVE_MODULE_FRONT_RIGHT_STEER_ENCODER = 3; //CANcoder
+    public static final int SWERVE_MODULE_BACK_RIGHT_DRIVE_MOTOR = 9; //Kraken x60
+    public static final int SWERVE_MODULE_BACK_RIGHT_STEER_MOTOR = 18; //Kraken x44
+    public static final int SWERVE_MODULE_BACK_RIGHT_STEER_ENCODER = 5; //CANcoder
+    public static final int SWERVE_MODULE_BACK_LEFT_DRIVE_MOTOR = 8; //Kraken x60
+    public static final int SWERVE_MODULE_BACK_LEFT_STEER_MOTOR = 15; //Kraken x44
+    public static final int SWERVE_MODULE_BACK_LEFT_STEER_ENCODER = 4; //CANcoder
+  }
+
+  public static final class PwmPort {
+    public static final int LED_PORT = 9;
   }
 
   /**
@@ -97,15 +107,8 @@ public final class Constants {
    */
   public static final class CurrentLimit {
     public static final class SparkMax {
-      public static final int SMART_STEER = 40;
-      public static final int SMART_ELEVATOR = 40;
-      public static final int SECONDARY_STEER = 80;
-      public static final int SECONDARY_ELEVATOR = 80;
-    }
-
-    public static final class Neo {
-      public static final int SMART = 60;
-      public static final int SECONDARY = 80;
+      public static final int SMART_DEFAULT = 60;
+      public static final int SECONDARY_MAX = 80;
     }
   }
 
@@ -217,24 +220,27 @@ public final class Constants {
             new Translation2d(-DRIVETRAIN_TRACKWIDTH_METERS / 2.0, DRIVETRAIN_WHEELBASE_METERS / 2.0),   //Back Left
             new Translation2d(-DRIVETRAIN_TRACKWIDTH_METERS / 2.0, -DRIVETRAIN_WHEELBASE_METERS / 2.0)); //Back Right
 
-    public static final double TIP_THRESHOLD_DEGREES = 7.0;
+    //TODO: test this on the ramp to verify tip detection threshold
+    public static final double TIP_THRESHOLD_DEGREES = 5.0;
+    public static final double ROLL_PITCH_ERROR = 1.0;
 
-    /* Change in linear acceleration greater than this value will trigger collision detected */
-    public static final double COLLISION_THRESHOLD_DELTA_G_TELE_OP = 1.6;  //TODO: verify this value for tele-op using advantagescope gyro graph
-    public static final double COLLISION_THRESHOLD_DELTA_G_AUTONOMOUS = 1.4;
-    /* Pose estimate should not be reset until after this long after collision */
-    public static final long MICROSECONDS_SINCE_COLLISION_THRESHOLD = 250000;  //0.25 seconds
+    //TODO: define/verify these: forward/back, L/R
+    public static final Translation2d SHOOTER_TRANSLATION_FROM_ROBOT_CENTER = new Translation2d(Units.Inches.of(1.0).in(Units.Meters), 0.0);
 
+    //allowable error to consider robot at goal angle when rotating to pose
     public static final Angle EPSILON_ANGLE_TO_GOAL = Units.Degrees.of(1.0);
 
     public static final PIDController ROTATE_TO_POSE_PID_CONTROLLER = getRotateToPoseController();
 
-    private static final PIDController getRotateToPoseController() {
+    public static final PIDController getRotateToPoseController() {
       //TODO: test/tune PID
-        PIDController controller = new PIDController(1.5, 0.0, 0.0);
-        controller.enableContinuousInput(-Math.PI, Math.PI);
+      double kP = SmartDashboard.getNumber("turnToAngle_P", 0.0);
+      double kI = SmartDashboard.getNumber("turnToAngle_I", 0.0);
+      double kD = SmartDashboard.getNumber("turnToAngle_D", 0.0);
+      PIDController controller = new PIDController(kP, kI, kD);
+      controller.enableContinuousInput(-Math.PI, Math.PI);
 
-        return controller;
+      return controller;
     }
 
     // public static final Matrix<N3, N1> WHEEL_ODOMETRY_POSE_STANDARD_DEVIATIONS = VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(5));

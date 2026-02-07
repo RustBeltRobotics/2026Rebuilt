@@ -1,4 +1,4 @@
-package frc.robot.subsystems;
+package frc.robot.vision;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,12 +34,8 @@ import edu.wpi.first.apriltag.AprilTagFields;
 import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.robot.util.AlertManager;
-import frc.robot.vision.CameraPosition;
-import frc.robot.vision.VisionCamera;
-import frc.robot.vision.VisionEstimateConsumer;
-import frc.robot.vision.VisionPoseEstimationResult;
 
-//TODO: MJR review latest photonvision example for 2025 season and update logic below accordingly
+// See latest photonvision examples for reference
 // https://github.com/PhotonVision/photonvision/blob/master/photonlib-java-examples/poseest/src/main/java/frc/robot/Vision.java
 
 /**
@@ -51,6 +47,7 @@ public class VisionSystem {
     private final AprilTagFieldLayout fieldLayout;
     private final List<VisionCamera> visionCameras = new ArrayList<>();
     private final LinearFilter averageLatencyFilter = LinearFilter.movingAverage(40);
+    private boolean receivedNewVisionData = false;
     private VisionEstimateConsumer visionEstimateConsumer;
     private DoublePublisher averageLatencyMsPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Vision/Latency").publish();
     private final StructArrayPublisher<Pose3d> acceptedTagPublisher = NetworkTableInstance.getDefault()
@@ -143,6 +140,8 @@ public class VisionSystem {
 
     public void periodic() {
         List<VisionPoseEstimationResult> newVisionPoseEstimates = getRobotPoseEstimationResults();
+        receivedNewVisionData = !newVisionPoseEstimates.isEmpty();
+        
         for (int i = 0; i < newVisionPoseEstimates.size(); i++) {
             VisionPoseEstimationResult poseEstimationResult = newVisionPoseEstimates.get(i);
             Pose2d visionPoseEstimate = poseEstimationResult.getEstimatedRobotPose().estimatedPose.toPose2d();
@@ -368,5 +367,9 @@ public class VisionSystem {
     public Field2d getSimDebugField() {
         if (!Robot.isSimulation()) return null;
         return visionSim.getDebugField();
+    }
+
+    public boolean isReceivedNewVisionData() {
+        return receivedNewVisionData;
     }
 }

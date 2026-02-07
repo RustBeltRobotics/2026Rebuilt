@@ -2,6 +2,9 @@ package frc.robot.subsystems.drive;
 
 import java.util.function.Supplier;
 
+import org.photonvision.PhotonUtils;
+
+import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -17,6 +20,10 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.networktables.BooleanPublisher;
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -31,6 +38,9 @@ import frc.robot.vision.VisionEstimateConsumer;
 
 public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimateConsumer {
 
+    private StructPublisher<Rotation2d> targetTurnAnglePublisher = NetworkTableInstance.getDefault().getStructTopic("/RBR/AutoTarget/Angle", Rotation2d.struct).publish();
+    private BooleanPublisher isAutoTargetingPublisher = NetworkTableInstance.getDefault().getBooleanTopic("/RBR/AutoTarget/Activated").publish();
+
     private final SwerveRequest.FieldCentric teleopRequest = new SwerveRequest.FieldCentric()
         .withDeadband(Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND * Constants.Controls.CONTROLLER_DEADBAND)
         .withRotationalDeadband(Constants.Kinematics.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND * Constants.Controls.CONTROLLER_DEADBAND)
@@ -43,47 +53,62 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     private final SwerveRequest.ApplyRobotSpeeds pathApplyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
 
     private boolean initialPoseSetViaVision = false;
+    private boolean rampOrTipDetected = false;
+    private boolean needToCorrectOdometryUsingVision = false;
+    private boolean isAutoTargeting = false;
     private Pose2d latestVisionPose;
+    private Rotation2d targetTurnAngle = new Rotation2d();
 
     public Drivetrain() {
         super(TunerConstants.DrivetrainConstants, TunerConstants.FrontLeft, TunerConstants.FrontRight, TunerConstants.BackLeft, TunerConstants.BackRight);
         configureAutoBuilder();
     }
 
+    @Override
+    public void periodic() {
+        super.periodic();
+        Pigeon2 pigeon2 = getPigeon2();
+        double robotPitch = Math.abs(pigeon2.getPitch().getValueAsDouble());
+        double robotRoll = Math.abs(pigeon2.getRoll().getValueAsDouble());
+        //periodically check for ramp/tip condition
+        if (!rampOrTipDetected && (robotPitch > Constants.Kinematics.TIP_THRESHOLD_DEGREES || robotRoll > Constants.Kinematics.TIP_THRESHOLD_DEGREES)) {
+            rampOrTipDetected = true;
+            AlertManager.addAlert("Ramp/Tip", "Ramp/Tip detected! Pitch: " + robotPitch + " Roll: " + robotRoll, AlertType.kInfo);
+        } else if (rampOrTipDetected && robotPitch <= Constants.Kinematics.ROLL_PITCH_ERROR && robotRoll <= Constants.Kinematics.ROLL_PITCH_ERROR) {
+            //reset condition when back within safe limits
+            rampOrTipDetected = false;
+            needToCorrectOdometryUsingVision = true;
+            AlertManager.addAlert("Ramp/Tip", "Ramp/Tip cleared. Pitch: " + robotPitch + " Roll: " + robotRoll, AlertType.kInfo);
+        }
+    }
+
+    public void updateTelemetry() {
+        targetTurnAnglePublisher.accept(targetTurnAngle);
+        isAutoTargetingPublisher.accept(isAutoTargeting);
+    }
+
     public Command teleopDrive(CommandXboxController controller) {
-        return applyRequest(() ->
-                teleopRequest.withVelocityX(-controller.getLeftY() * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND) // Drive forward with negative Y (forward)
+        return applyRequest(() -> {
+            isAutoTargeting = false;
+            return teleopRequest.withVelocityX(-controller.getLeftY() * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND) // Drive forward with negative Y (forward)
                     .withVelocityY(-controller.getLeftX() * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND) // Drive left with negative X (left)
-                    .withRotationalRate(-controller.getRightX() * Constants.Kinematics.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND) // Drive counterclockwise with negative X (left)
-            );
+                    .withRotationalRate(-controller.getRightX() * Constants.Kinematics.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND); // Drive counterclockwise with negative X (left)
+        });
     }
 
     public Command alignToTargetDrive(CommandXboxController controller, Supplier<Pose2d> targetPoseSupplier) {
         return applyRequest(() -> {
+            isAutoTargeting = true;
             double controllerVelX = -controller.getLeftY();  //forward/back
             double controllerVelY = -controller.getLeftX();  //left/right strafe
 
-            //change this to false if our shooter is centered on the robot
-            boolean shooterIsOffsetFromCenter = true;
-            Rotation2d desiredAngle;
             Pose2d drivePose = getState().Pose;
             Pose2d targetPose = targetPoseSupplier.get();
             Rotation2d currentAngle = drivePose.getRotation();
 
-            if (shooterIsOffsetFromCenter) {
-                double targetDistance = drivePose.getTranslation().getDistance(targetPose.getTranslation());
-                double shooterOffset = -DriveConstants.shooterSideOffset.in(Units.Meters);  //lateral offset from center of robot to shooter (negative is left)
-                double shooterAngleRads = Math.acos(shooterOffset / targetDistance); 
-                Rotation2d shooterAngle = Rotation2d.fromRadians(shooterAngleRads);
-                Rotation2d offsetAngle = Rotation2d.kCCW_90deg.minus(shooterAngle);
-                desiredAngle = offsetAngle.plus(drivePose.relativeTo(targetPose).getTranslation().getAngle()).plus(Rotation2d.k180deg);
-                desiredAngle = desiredAngle.plus(Rotation2d.k180deg);
-            } else {
-                desiredAngle = targetPose.getTranslation().minus(drivePose.getTranslation()).getAngle();
-                //TODO: do we need to add 180 degrees here?
-            }
+            targetTurnAngle = PhotonUtils.getYawToPose(drivePose, targetPose);
 
-            Rotation2d deltaAngle = currentAngle.minus(desiredAngle);
+            Rotation2d deltaAngle = currentAngle.minus(targetTurnAngle);
             double wrappedAngleDeg = MathUtil.inputModulus(deltaAngle.getDegrees(), -180.0, 180.0);
 
             boolean notTryingToDrive = Math.hypot(controllerVelX, controllerVelY) < Constants.Controls.CONTROLLER_DEADBAND;
@@ -92,7 +117,9 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
             if (alreadyFacingGoal && notTryingToDrive) {
                 return new SwerveRequest.SwerveDriveBrake();
             } else {
-                double rotationalRate = Constants.Kinematics.ROTATE_TO_POSE_PID_CONTROLLER.calculate(currentAngle.getRadians(), desiredAngle.getRadians());
+                double rotationalRate = Constants.Kinematics.getRotateToPoseController().calculate(currentAngle.getRadians(), targetTurnAngle.getRadians());
+                //TODO: switch to the following form once we have the PID fully tuned to avoid network table reads every loop
+                //double rotationalRate = Constants.Kinematics.ROTATE_TO_POSE_PID_CONTROLLER.calculate(currentAngle.getRadians(), targetTurnAngle.getRadians());
 
                 return alignToTargetDriveRequest.withVelocityX(controllerVelX * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND) // Drive forward with negative Y (forward)
                     .withVelocityY(-controller.getLeftX() * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND) // Drive left with negative X (left)
@@ -118,7 +145,7 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
 
         AutoBuilder.configure(
                 () -> getState().Pose,   // Supplier of current robot pose
-                this::resetPoseCustom,         // Consumer for seeding pose against auto
+                this::resetPoseCustom,   // Consumer for seeding pose against auto
                 () -> getState().Speeds, // Supplier of current robot speeds
                 // Consumer of ChassisSpeeds and feedforwards to drive the robot
                 (speeds, feedforwards) -> setControl(
@@ -138,10 +165,12 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     }
 
     public Distance getShotDistance(Translation2d targetPose) {
-        Pose2d drivePose = getState().Pose;
-        double centerToTargetMeters = drivePose.getTranslation().getDistance(targetPose);
-        double centerToShooterMeters = DriveConstants.shooterSideOffset.in(Units.Meters);
+        Pose2d robotPose = getState().Pose;
+        double centerToTargetMeters = robotPose.getTranslation().getDistance(targetPose);
+        // Constants.Kinematics.SHOOTER_TRANSLATION_FROM_ROBOT_CENTER.
+        double centerToShooterMeters = 123; //TODO: fix this reference
         double shooterToTargetMeters = Math.sqrt(Math.pow(centerToTargetMeters, 2.0) - Math.pow(centerToShooterMeters, 2.0));
+
         return Units.Meters.of(shooterToTargetMeters);
     }
 
@@ -151,6 +180,13 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
 
     @Override
     public void consumeVisionPoseEstimate(Pose2d pose, double timestamp, Matrix<N3, N1> estimationStdDevs) {
+        if (needToCorrectOdometryUsingVision) {
+            //boost vision odometry via lowering standard deviations to compensate for error in wheel odometry after ramp/tip
+            //TODO: test this and tune boost factor
+            estimationStdDevs = estimationStdDevs.times(0.25); //boost by factor of 4
+            needToCorrectOdometryUsingVision = false;
+            AlertManager.addAlert("Vision", "Ramp/Tip compensated using new pose: " + pose, AlertType.kInfo);
+        }
         this.addVisionMeasurement(pose, timestamp, estimationStdDevs);
         this.latestVisionPose = pose;
     }
