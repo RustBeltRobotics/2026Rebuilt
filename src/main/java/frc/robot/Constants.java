@@ -22,7 +22,9 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -37,6 +39,8 @@ import frc.robot.generated.TunerConstants;
  * constants are needed, to reduce verbosity.
  */
 public final class Constants {
+
+  //Note: we consider the "front" of the robot to be the side that game pieces exit the shooter on (the side the battery is on).  Left/Right are in relation to this orientation.
 
   public static final class BasicUnits {
     public static final double SECONDS_PER_MINUTE = 60.0;
@@ -84,6 +88,8 @@ public final class Constants {
     public static final int SHOOTER_KRAKEN_RIGHT = 21; //Kraken x60
     public static final int SHOOTER_VORTEX_LEFT = 22;
     public static final int SHOOTER_VORTEX_RIGHT = 23;
+    public static final int SPINDEXER_LEFT = 24;
+    public static final int SPINDEXER_RIGHT = 25;
     public static final int SWERVE_MODULE_FRONT_LEFT_DRIVE_MOTOR = 6; //Kraken x60
     public static final int SWERVE_MODULE_FRONT_LEFT_STEER_MOTOR = 13; //Kraken x44
     public static final int SWERVE_MODULE_FRONT_LEFT_STEER_ENCODER = 2; //CANcoder
@@ -170,10 +176,10 @@ public final class Constants {
     /** Distance from center of robot to center of swerve module  **/
     public static final double DRIVETRAIN_BASE_RADIUS = Math.hypot(DRIVETRAIN_TRACKWIDTH_METERS, DRIVETRAIN_WHEELBASE_METERS) / 2.0;
 
-    //SDS Mk4i L3 gear ratios - equivalent to 6.12:1 overall ratio
-    public static final double DRIVE_GEAR_RATIO = (14.0 / 50.0) * (28.0 / 16.0) * (15.0 / 45.0); //Note: (14.0 / 50.0) * (28.0 / 16.0) * (15.0 / 45.0) == 1.0/6.12 = 0.1634
+    //SDS Mk5n R3 gear ratio - equivalent to 5.27:1 overall ratio
+    public static final double DRIVE_GEAR_RATIO = 1.0 / 5.27;
 
-    public static final double STEER_GEAR_RATIO = 1.0 / (150.0 / 7.0); //150/7:1 gear ratio
+    public static final double STEER_GEAR_RATIO = 1.0 / 26.09;
 
     //TODO: Figure out why true is needed for correct wheel direction, when in theory it should be false
     public static final boolean DRIVE_MOTOR_INVERTED = true; //should be false for Mk4i, true for Mk4 (tested on Eclipse robot)
@@ -245,6 +251,41 @@ public final class Constants {
 
     // public static final Matrix<N3, N1> WHEEL_ODOMETRY_POSE_STANDARD_DEVIATIONS = VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(5));
     public static final Matrix<N3, N1> WHEEL_ODOMETRY_POSE_STANDARD_DEVIATIONS = VecBuilder.fill(0.1, 0.1, Units.Degrees.of(5.0).in(Units.Radians));
+  }
+
+  public static final class ShooterFeeder {
+    public static final Distance FEEDER_WHEEL_DIAMETER = Units.Inches.of(2.25);
+    public static final Mass FLYWHEEL_MASS = Units.Pounds.of(1.0); //TODO: get this value from CAD - this is just a placeholder
+    public static final double K_P = 0.0;
+    public static final double K_I = 0.0;
+    public static final double K_D = 0.0;
+    public static final double K_S = 0.0;  //static feedforward term
+    public static final double K_V = 0.0;  //velocity feedforward gain (Volts per rotor RPS) 
+    public static final double K_A = 0.0;
+    public static final AngularVelocity FEEDER_RPM = Units.RPM.of(3000); //TODO: tune this
+  }
+
+  public static final class Shooter {
+    public static final Distance SHOOTER_WHEEL_DIAMETER = Units.Inches.of(4.0);
+    public static final Mass FLYWHEEL_MASS = Units.Pounds.of(7.9); //This weight does not include the rotating mass of the Neo Vortex motors, which may ass 0.75 lbs.
+    public static final AngularVelocity SHOOTER_TEST_RPM = Units.RPM.of(3000);
+    //TODO: tune all these
+    public static final class CtrePidf {
+      public static final double K_P = 0.0;
+      public static final double K_I = 0.0;
+      public static final double K_D = 0.0;
+      public static final double K_S = 0.0;  //static feedforward term
+      public static final double K_V = 0.0;  //velocity feedforward gain (Volts per rotor RPS) 
+      public static final double K_A = 0.0;
+    }
+    public static final class RevPidf {
+      public static final double K_P = 0.0;
+      public static final double K_I = 0.0;
+      public static final double K_D = 0.0;
+      public static final double K_S = 0.0;
+      public static final double K_V = 0.0; //velocity feedforward gain (Volts per motor RPM)
+      public static final double K_A = 0.0;
+    }
   }
 
   public static final class PathPlanner {

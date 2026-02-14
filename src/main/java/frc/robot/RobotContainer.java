@@ -20,14 +20,16 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.DefaultLedCommand;
+import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.LED;
-import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.ShooterFeederYams;
+import frc.robot.subsystems.ShooterYams;
+import frc.robot.subsystems.Spindexer;
 import frc.robot.subsystems.drive.Drivetrain;
 import frc.robot.util.HubStateTracker;
 import frc.robot.util.SwerveTelemetryCTRE;
@@ -51,7 +53,10 @@ public class RobotContainer {
 
   private final SwerveTelemetryCTRE swerveTelemetryCTRE = new SwerveTelemetryCTRE(MAX_SPEED_FACTOR * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND);
   private final Drivetrain drivetrain = new Drivetrain();
-  private final Shooter shooter = new Shooter();
+  private final ShooterYams shooter = new ShooterYams();
+  private final ShooterFeederYams shooterFeeder = new ShooterFeederYams();
+  private final Spindexer spindexer = new Spindexer();
+  private final Intake intake = new Intake();
   private final LED led = new LED();
   private final VisionSystem visionSystem;
 
@@ -126,16 +131,26 @@ public class RobotContainer {
         // Reset the field-centric heading (set robot forward direction) on left bumper press.
         driverController.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
+        driverController.rightBumper().whileTrue(intake.intakeFuel());
+        driverController.leftTrigger().whileTrue(shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM));
+        driverController.rightTrigger().whileTrue(spindexer.runAtDutyCycle(0.5));
+        driverController.x().whileTrue(shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TEST_RPM));
+
         Supplier<Pose2d> hubTargetPoseSupplier = () -> Constants.Game.getHubPose().toPose2d();
+        /* 
         // Auto-align drive to hub while holding right bumper.
         driverController.rightBumper().whileTrue(Commands.parallel(
           shooter.prepVariableDistanceShot(() -> drivetrain.getShotDistance(hubTargetPoseSupplier.get().getTranslation())),
           drivetrain.alignToTargetDrive(driverController, hubTargetPoseSupplier)
         ));
+        */
   }
 
   private void setDefaultCommands() {
     drivetrain.setDefaultCommand(drivetrain.teleopDrive(driverController));
+    shooterFeeder.setDefaultCommand(shooterFeeder.stop());
+    spindexer.setDefaultCommand(spindexer.stop());
+    intake.setDefaultCommand(intake.stopIntakeWheelRotation());
     //Default LED command removes all color output (sets to black)
     led.setDefaultCommand(new DefaultLedCommand(led));
   }

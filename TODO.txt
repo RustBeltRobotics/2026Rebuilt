@@ -2,18 +2,22 @@
     - Done
 - Flash Rio if necessary
     - Done
-- Implement LED control
-    - Done (ish) => needs testing and likely tweaks to how we plan to actually use it    
-- Get robot to camera translation values from CAD / physical measurement once placed on robot
-- Generate CTRE swerve code
-- Run SysId routines, import logs and update PID gains in constants
-- Test basic field oriented drive
-- Run robot at full speed with AdvantageScope open to get measured max velocity in M/S
-    - Update MAX_VELOCITY_METERS_PER_SECOND and config in PathPlanner GUI to this value
-- Implement a low RPM idle command for the shooter and set it as the default command for that system
-- Define and test algorithm to auto-aim robot towards center of hub based on current robot pose and known hub pose
-- Define and test algorithm to put shooter hood down automatically when approaching the trench (so we don't rip it off)
 - Implement ramp detection to set flag for ramp encountered (use tilt from gyro)
     - If ramp was encountered and tilt goes back to flat, set a separate flag to indicate vision odometry should be boosted (or just use resetPose)
         - After that is done, clear all flags
     - Done => needs to be tested to verify
+- Implement LED control
+    - Done (ish) => needs testing and likely tweaks to how we plan to actually use it    
+- Update photonvision on Orange Pis to 2026.2.1 (using offline installer method)
+    - installer jar is in C:\frc\2026\photonvision\offline-updates
+- Get robot to camera translation values from CAD / physical measurement once placed on robot
+- Generate CTRE swerve code
+- Run Swerve SysId routines, import logs and update PID gains in constants
+- Test basic field oriented drive
+- Run robot at full speed with AdvantageScope open to get measured max velocity in M/S
+    - Update MAX_VELOCITY_METERS_PER_SECOND and config in PathPlanner GUI to this value
+- Implement a low RPM idle command for the shooter and set it as the default command for that system
+- Run Shooter SysId routines, import logs and update PID gains in constants
+- Define and test algorithm to auto-aim robot towards center of hub based on current robot pose and known hub pose
+- Define and test algorithm to put shooter hood down automatically when approaching the trench (so we don't rip it off)
+- Implement and test robot simulation using CTRE swerve and photonvision support
