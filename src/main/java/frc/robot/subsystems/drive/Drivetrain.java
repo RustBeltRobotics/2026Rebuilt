@@ -93,7 +93,7 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
             return teleopRequest.withVelocityX(-controller.getLeftY() * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND) // Drive forward with negative Y (forward)
                     .withVelocityY(-controller.getLeftX() * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND) // Drive left with negative X (left)
                     .withRotationalRate(-controller.getRightX() * Constants.Kinematics.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND); // Drive counterclockwise with negative X (left)
-        });
+        }).withName("Teleop Drive");
     }
 
     public Command alignToTargetDrive(CommandXboxController controller, Supplier<Pose2d> targetPoseSupplier) {

@@ -207,11 +207,15 @@ public class ShooterYams extends SubsystemBase {
     }
 
     public Command runAtAngularVelocity(AngularVelocity rpmTarget) {
-        return this.run(() -> setShooterAngularVelocity(rpmTarget));
+        return this.run(() -> setShooterAngularVelocity(rpmTarget)).withName("Shooter at velocity: " + rpmTarget);
+    }
+
+    public Command idleAtLowRpm() {
+        return runAtAngularVelocity(Units.RPM.of(500)).withName("Idle Shooter");  //TODO: determine appropriate idle speed
     }
 
     public Command stop() {
-        return this.runOnce(() -> shooterKraken.setMechanismVelocitySetpoint(Units.RPM.of(0)));
+        return this.run(() -> shooterKraken.setMechanismVelocitySetpoint(Units.RPM.of(0))).withName("Stop Shooter");
     }
      
 }

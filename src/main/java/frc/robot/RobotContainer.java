@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.DefaultLedCommand;
+import frc.robot.subsystems.Climber;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.LED;
 import frc.robot.subsystems.ShooterFeederYams;
@@ -57,6 +58,7 @@ public class RobotContainer {
   private final ShooterFeederYams shooterFeeder = new ShooterFeederYams();
   private final Spindexer spindexer = new Spindexer();
   private final Intake intake = new Intake();
+  private final Climber climber = new Climber();
   private final LED led = new LED();
   private final VisionSystem visionSystem;
 
@@ -147,10 +149,11 @@ public class RobotContainer {
   }
 
   private void setDefaultCommands() {
-    drivetrain.setDefaultCommand(drivetrain.teleopDrive(driverController));
+    drivetrain.setDefaultCommand(drivetrain.teleopDrive(driverController).withName("Teleop Drive"));
     shooterFeeder.setDefaultCommand(shooterFeeder.stop());
     spindexer.setDefaultCommand(spindexer.stop());
     intake.setDefaultCommand(intake.stopIntakeWheelRotation());
+    climber.setDefaultCommand(climber.stopCommand());
     //Default LED command removes all color output (sets to black)
     led.setDefaultCommand(new DefaultLedCommand(led));
   }

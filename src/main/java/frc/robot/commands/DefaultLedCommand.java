@@ -11,7 +11,7 @@ public class DefaultLedCommand extends Command {
 
     public DefaultLedCommand(LED ledSubsystem) {
         this.ledSubsystem = ledSubsystem;
-        this.setName("LED");
+        this.setName("LED Default - Off");
         addRequirements(ledSubsystem);
     }
 

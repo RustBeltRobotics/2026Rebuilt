@@ -101,10 +101,10 @@ public class ShooterFeederYams extends SubsystemBase {
     }
 
     public Command runAtAngularVelocity(AngularVelocity rpmTarget) {
-        return this.run(() -> setFeederAngularVelocity(rpmTarget));
+        return this.run(() -> setFeederAngularVelocity(rpmTarget)).withName("Feeder velocity: " + rpmTarget);
     }
 
     public Command stop() {
-        return this.runOnce(() -> shooterKraken.setMechanismVelocitySetpoint(Units.RPM.of(0)));
+        return this.run(() -> shooterKraken.setMechanismVelocitySetpoint(Units.RPM.of(0))).withName("Stop Shooter Feeder");
     }
 }

@@ -38,7 +38,7 @@ public class LED extends SubsystemBase {
         colorPattern.applyTo(buffer);
         addressableLED.setData(buffer);
 
-        return runOnce(() -> changeColor(color));
+        return runOnce(() -> changeColor(color)).withName("Set LED Color: " + color);
     }
 
     public void changeColor(Color color) {

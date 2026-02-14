@@ -2,6 +2,7 @@
     - Done
 - Flash Rio if necessary
     - Done
+- Assign CAN IDs to all devices
 - Implement ramp detection to set flag for ramp encountered (use tilt from gyro)
     - If ramp was encountered and tilt goes back to flat, set a separate flag to indicate vision odometry should be boosted (or just use resetPose)
         - After that is done, clear all flags

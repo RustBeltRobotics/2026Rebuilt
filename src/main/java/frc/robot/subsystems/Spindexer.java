@@ -1,6 +1,5 @@
 package frc.robot.subsystems;
 
-import com.ctre.phoenix6.SignalLogger;
 import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
@@ -13,7 +12,6 @@ import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 
 public class Spindexer extends SubsystemBase {
@@ -25,7 +23,6 @@ public class Spindexer extends SubsystemBase {
     
     private final DoublePublisher leftNeoVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Spindexer/Velocity/Left").publish();
     private final DoublePublisher rightNeoVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Spindexer/Velocity/Right").publish();
-
 
     public Spindexer() {
         var rightRevConfig = new SparkMaxConfig();
@@ -53,10 +50,10 @@ public class Spindexer extends SubsystemBase {
     }
 
     public Command runAtDutyCycle(double speed) {
-        return this.run(() -> setDutyCycleSpeed(speed));
+        return this.run(() -> setDutyCycleSpeed(speed)).withName("Run Spindexer at speed: " + speed);
     }
 
     public Command stop() {
-        return this.runOnce(() -> setDutyCycleSpeed(0.0));
+        return this.run(() -> setDutyCycleSpeed(0.0)).withName("Stop Spindexer");
     }
 }

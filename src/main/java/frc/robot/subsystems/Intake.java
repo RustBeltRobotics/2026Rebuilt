@@ -45,11 +45,11 @@ public class Intake extends SubsystemBase {
     }
 
     public Command intakeFuel() {
-        return this.startEnd(() -> runIntakeWheelsAtDutyCycle(0.5), () -> runIntakeWheelsAtDutyCycle(0.0));
+        return this.startEnd(() -> runIntakeWheelsAtDutyCycle(0.5), () -> runIntakeWheelsAtDutyCycle(0.0)).withName("Intake rotate fuel");
     }
 
     public Command stopIntakeWheelRotation() {
-        return this.runOnce(() -> runIntakeWheelsAtDutyCycle(0.0));
+        return this.runOnce(() -> runIntakeWheelsAtDutyCycle(0.0)).withName("Stop Intake Wheel Rotation");
     }
 
     public Command extend() {
