@@ -77,7 +77,6 @@ public final class Constants {
    * CAN bus IDs
    */
   public static final class CanID {
-    //TODO: these values are all from last year and are not valid - update once available for Rebuilt game
     public static final int POWER_DISTRIBUTION = 1;
     public static final int CLIMBER_MOTOR = 19;
     public static final int PIGEON_GYRO = 10;
@@ -88,8 +87,9 @@ public final class Constants {
     public static final int SHOOTER_KRAKEN_RIGHT = 21; //Kraken x60
     public static final int SHOOTER_VORTEX_LEFT = 22;
     public static final int SHOOTER_VORTEX_RIGHT = 23;
-    public static final int SPINDEXER_LEFT = 24;
-    public static final int SPINDEXER_RIGHT = 25;
+    public static final int SHOOTER_HOOD = 24;
+    public static final int SPINDEXER_LEFT = 25;
+    public static final int SPINDEXER_RIGHT = 26;
     public static final int SWERVE_MODULE_FRONT_LEFT_DRIVE_MOTOR = 6; //Kraken x60
     public static final int SWERVE_MODULE_FRONT_LEFT_STEER_MOTOR = 13; //Kraken x44
     public static final int SWERVE_MODULE_FRONT_LEFT_STEER_ENCODER = 2; //CANcoder
@@ -230,8 +230,9 @@ public final class Constants {
     public static final double TIP_THRESHOLD_DEGREES = 5.0;
     public static final double ROLL_PITCH_ERROR = 1.0;
 
-    //TODO: define/verify these: forward/back, L/R
-    public static final Translation2d SHOOTER_TRANSLATION_FROM_ROBOT_CENTER = new Translation2d(Units.Inches.of(1.0).in(Units.Meters), 0.0);
+    //8 inches back from center - left shooter is 3.5 inches to the left of center, right shooter is 3.5 inches to the right of center
+    //Note: we model the left/right translation as 0 to simplify the geometry and control of aiming, and instead rely on the robot's rotation to aim with either shooter
+    public static final Translation2d SHOOTER_TRANSLATION_FROM_ROBOT_CENTER = new Translation2d(Units.Inches.of(-8.0).in(Units.Meters), 0.0);
 
     //allowable error to consider robot at goal angle when rotating to pose
     public static final Angle EPSILON_ANGLE_TO_GOAL = Units.Degrees.of(1.0);
@@ -255,7 +256,7 @@ public final class Constants {
 
   public static final class ShooterFeeder {
     public static final Distance FEEDER_WHEEL_DIAMETER = Units.Inches.of(2.25);
-    public static final Mass FLYWHEEL_MASS = Units.Pounds.of(1.0); //TODO: get this value from CAD - this is just a placeholder
+    public static final Mass FLYWHEEL_MASS = Units.Pounds.of(2.5);
     public static final double K_P = 0.0;
     public static final double K_I = 0.0;
     public static final double K_D = 0.0;
@@ -263,6 +264,19 @@ public final class Constants {
     public static final double K_V = 0.0;  //velocity feedforward gain (Volts per rotor RPS) 
     public static final double K_A = 0.0;
     public static final AngularVelocity FEEDER_RPM = Units.RPM.of(3000); //TODO: tune this
+  }
+
+  public static final class ShooterHood {
+    public static final double MOTOR_ROTATIONS_PER_HOOD_ROTATION = 108.0;  //108:1 gear ratio
+    public static final double THROUGH_BORE_ZERO_OFFSET = 0.0; //TODO: update this value based on telemetry - initial absolute encoder value to treat as zero degrees
+    public static final double MIN_DEGREES = 0.0; //Max hood angle
+    public static final double MAX_DEGREES = 30.0; //Max hood angle
+    public static final double K_P = 0.0;
+    public static final double K_I = 0.0;
+    public static final double K_D = 0.0;
+    public static final double K_S = 0.0;  //static feedforward term
+    public static final double K_V = 0.0;  
+    public static final double K_A = 0.0;
   }
 
   public static final class Shooter {
