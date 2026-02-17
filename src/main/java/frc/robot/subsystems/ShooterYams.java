@@ -157,13 +157,13 @@ public class ShooterYams extends SubsystemBase {
     }
 
     private void setBrakeModeForAllMotors(boolean isBrake) {
-        var leftKrakenConfigurator = shooterKrakenLeft.getConfigurator()
+        var leftKrakenConfigurator = shooterKrakenLeft.getConfigurator();
         var leftKrakenConfigs = new TalonFXConfiguration();
         leftKrakenConfigurator.refresh(leftKrakenConfigs);  //read device settings from the motor and store them in the config object
         leftKrakenConfigs.MotorOutput.NeutralMode = isBrake ? NeutralModeValue.Brake : NeutralModeValue.Coast;  //modify the config object to set the desired brake mode
         leftKrakenConfigurator.apply(leftKrakenConfigs);  //write the updated config back to the motor
 
-        var rightKrakenConfigurator = shooterKrakenRight.getConfigurator()
+        var rightKrakenConfigurator = shooterKrakenRight.getConfigurator();
         var rightKrakenConfigs = new TalonFXConfiguration();
         rightKrakenConfigurator.refresh(rightKrakenConfigs);
         rightKrakenConfigs.MotorOutput.NeutralMode = isBrake ? NeutralModeValue.Brake : NeutralModeValue.Coast;
