@@ -11,9 +11,11 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
+import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.Pair;
@@ -43,35 +45,12 @@ public class ShooterYams extends SubsystemBase {
 
     private final TalonFX shooterKrakenLeft = new TalonFX(Constants.CanID.SHOOTER_KRAKEN_LEFT, CANBus.roboRIO()); //follower
     private final TalonFX shooterKrakenRight = new TalonFX(Constants.CanID.SHOOTER_KRAKEN_RIGHT, CANBus.roboRIO());  //primary
-    private final SparkMax shooterVortexLeft = new SparkMax(Constants.CanID.SHOOTER_VORTEX_LEFT, MotorType.kBrushless);  //follower - negative rotation spins in the direction we want
+    private final SparkFlex shooterVortexLeft = new SparkFlex(Constants.CanID.SHOOTER_VORTEX_LEFT, MotorType.kBrushless);  //follower - negative rotation spins in the direction we want
     private final RelativeEncoder leftVortexEncoder = shooterVortexLeft.getEncoder();
     private final SparkMax shooterVortexRight = new SparkMax(Constants.CanID.SHOOTER_VORTEX_RIGHT, MotorType.kBrushless);  //primary - positive rotation spins in the direction we want
     private final RelativeEncoder rightVortexEncoder = shooterVortexRight.getEncoder();
 
-    SmartMotorControllerConfig shooterSparkConfig = new SmartMotorControllerConfig(this)
-            .withControlMode(ControlMode.CLOSED_LOOP)
-            .withFollowers(Pair.of(shooterVortexLeft, true))
-            // Feedback Constants (PID Constants)
-            .withClosedLoopController(Constants.Shooter.RevPidf.K_P, Constants.Shooter.RevPidf.K_I,
-                    Constants.Shooter.RevPidf.K_D, Units.RadiansPerSecond.of(524.0),
-                    Units.RadiansPerSecondPerSecond.of(1400.0))
-            .withSimClosedLoopController(Constants.Shooter.RevPidf.K_P, Constants.Shooter.RevPidf.K_I,
-                    Constants.Shooter.RevPidf.K_D, Units.RadiansPerSecond.of(524.0),
-                    Units.RadiansPerSecondPerSecond.of(1400.0))
-            // Feedforward Constants
-            .withFeedforward(new SimpleMotorFeedforward(Constants.Shooter.RevPidf.K_S, Constants.Shooter.RevPidf.K_V, Constants.Shooter.RevPidf.K_A))
-            .withSimFeedforward(new SimpleMotorFeedforward(Constants.Shooter.RevPidf.K_S, Constants.Shooter.RevPidf.K_V, Constants.Shooter.RevPidf.K_A))
-            // Telemetry name and verbosity level
-            .withTelemetry("RevShooterMotors", TelemetryVerbosity.HIGH)
-            // Gearing from the motor rotor to final shaft - 1:1 (direct drive)
-            .withGearing(new MechanismGearing(1))
-            .withMotorInverted(false)
-            .withIdleMode(MotorMode.COAST)
-            .withVoltageCompensation(Units.Volts.of(12))
-            // Motor properties to prevent over currenting.
-            .withStatorCurrentLimit(Units.Amps.of(80));  //TODO: verify this limit is not being hit during operation using telemetry, and adjust if necessary
-
-        SmartMotorControllerConfig shooterKrakenConfig = new SmartMotorControllerConfig(this)
+    private final SmartMotorControllerConfig shooterKrakenConfig = new SmartMotorControllerConfig(this)
             .withControlMode(ControlMode.CLOSED_LOOP)
             .withFollowers(Pair.of(shooterKrakenLeft, true))
             // Feedback Constants (PID Constants)
@@ -94,18 +73,7 @@ public class ShooterYams extends SubsystemBase {
             // Motor properties to prevent over currenting.
             .withStatorCurrentLimit(Units.Amps.of(100));  //TODO: verify this limit is not being hit during operation using telemetry, and adjust if necessary
 
-    SmartMotorController shooterVortexSmartMotorController = new SparkWrapper(shooterVortexRight, DCMotor.getNeoVortex(1), shooterSparkConfig);
-    SmartMotorController shooterKrakenSmartMotorController = new TalonFXWrapper(shooterKrakenRight, DCMotor.getKrakenX60(1), shooterKrakenConfig);
-
-    private final FlyWheelConfig shooterVortexShooterConfig = new FlyWheelConfig(shooterVortexSmartMotorController)
-            // Diameter of the flywheel.
-            .withDiameter(Constants.Shooter.SHOOTER_WHEEL_DIAMETER)
-            // Mass of the flywheel.
-            .withMass(Constants.Shooter.FLYWHEEL_MASS)
-            // Maximum speed of the shooter.
-            .withUpperSoftLimit(Units.RPM.of(6500))
-            // Telemetry name and verbosity for the arm.
-            .withTelemetry("RevShooter", TelemetryVerbosity.HIGH);
+    private final SmartMotorController shooterKrakenSmartMotorController = new TalonFXWrapper(shooterKrakenRight, DCMotor.getKrakenX60(1), shooterKrakenConfig);
 
     private final FlyWheelConfig shooterKrakenShooterConfig = new FlyWheelConfig(shooterKrakenSmartMotorController)
             // Diameter of the flywheel.
@@ -118,7 +86,6 @@ public class ShooterYams extends SubsystemBase {
             .withTelemetry("CtreShooter", TelemetryVerbosity.HIGH);
 
     // Shooter Mechanism
-    private FlyWheel shooterVortex = new FlyWheel(shooterVortexShooterConfig);
     private FlyWheel shooterKraken = new FlyWheel(shooterKrakenShooterConfig);
 
     // SysId setup for characterization
@@ -167,43 +134,54 @@ public class ShooterYams extends SubsystemBase {
 
     public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
         //ensure motors are in brake mode for quasistatic characterization to prevent coasting from skewing results
-        setBrakeModeForAllMotors();
+        setBrakeModeForAllMotors(true);
         return unifiedSysIdRoutine.quasistatic(direction);
     }
 
     public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-        setBrakeModeForAllMotors();
+        setBrakeModeForAllMotors(true);
         return unifiedSysIdRoutine.dynamic(direction);
     }
 
     @Override
     public void simulationPeriodic() {
-        shooterVortex.simIterate();
         shooterKraken.simIterate();
     }
 
     public void setShooterAngularVelocity(AngularVelocity rpmTarget) {
+        setBrakeModeForAllMotors(false);
         shooterKraken.setMechanismVelocitySetpoint(rpmTarget);
         double leaderVolts = shooterKrakenRight.getMotorVoltage().getValueAsDouble();
         shooterVortexLeft.setVoltage(leaderVolts);
         shooterVortexRight.setVoltage(leaderVolts);
     }
 
-    private void setBrakeModeForAllMotors() {
-        var talonConfig = new TalonFXConfiguration();
-        talonConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        shooterKrakenLeft.getConfigurator().apply(talonConfig);
-        shooterKrakenRight.getConfigurator().apply(talonConfig);
-        var revConfig = new SparkMaxConfig();
-        revConfig.idleMode(IdleMode.kBrake);
-        shooterVortexLeft.configure(revConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
-        shooterVortexRight.configure(revConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+    private void setBrakeModeForAllMotors(boolean isBrake) {
+        var leftKrakenConfigurator = shooterKrakenLeft.getConfigurator()
+        var leftKrakenConfigs = new TalonFXConfiguration();
+        leftKrakenConfigurator.refresh(leftKrakenConfigs);  //read device settings from the motor and store them in the config object
+        leftKrakenConfigs.MotorOutput.NeutralMode = isBrake ? NeutralModeValue.Brake : NeutralModeValue.Coast;  //modify the config object to set the desired brake mode
+        leftKrakenConfigurator.apply(leftKrakenConfigs);  //write the updated config back to the motor
+
+        var rightKrakenConfigurator = shooterKrakenRight.getConfigurator()
+        var rightKrakenConfigs = new TalonFXConfiguration();
+        rightKrakenConfigurator.refresh(rightKrakenConfigs);
+        rightKrakenConfigs.MotorOutput.NeutralMode = isBrake ? NeutralModeValue.Brake : NeutralModeValue.Coast;
+        rightKrakenConfigurator.apply(rightKrakenConfigs);
+
+        var sparkMaxConfig = new SparkMaxConfig();
+        sparkMaxConfig.idleMode(isBrake ? IdleMode.kBrake : IdleMode.kCoast);
+        var sparkFlexConfig = new SparkFlexConfig();
+        sparkFlexConfig.idleMode(isBrake ? IdleMode.kBrake : IdleMode.kCoast);
+        shooterVortexLeft.configure(sparkFlexConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+        shooterVortexRight.configure(sparkMaxConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
     }
 
     public void stopShooter() {
-        setBrakeModeForAllMotors();
-        shooterKraken.setMechanismVelocitySetpoint(Units.RPM.of(0));
-        shooterVortex.setMechanismVelocitySetpoint(Units.RPM.of(0));
+        setBrakeModeForAllMotors(true);
+        shooterKraken.set(0);
+        shooterVortexLeft.setVoltage(0);
+        shooterVortexRight.setVoltage(0);
     }
 
     public Command runAtAngularVelocity(AngularVelocity rpmTarget) {
@@ -215,7 +193,7 @@ public class ShooterYams extends SubsystemBase {
     }
 
     public Command stop() {
-        return this.run(() -> shooterKraken.setMechanismVelocitySetpoint(Units.RPM.of(0))).withName("Stop Shooter");
+        return this.run(() -> stopShooter()).withName("Stop Shooter");
     }
      
 }

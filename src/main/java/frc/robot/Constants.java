@@ -85,11 +85,11 @@ public final class Constants {
     public static final int INTAKE_EXTEND_RETRACT_MOTOR = 12;  //NEO
     public static final int SHOOTER_KRAKEN_LEFT = 20;  //Kraken x60
     public static final int SHOOTER_KRAKEN_RIGHT = 21; //Kraken x60
-    public static final int SHOOTER_VORTEX_LEFT = 22;
-    public static final int SHOOTER_VORTEX_RIGHT = 23;
+    public static final int SHOOTER_VORTEX_LEFT = 22; //SparkFlex
+    public static final int SHOOTER_VORTEX_RIGHT = 23; //SparkMax
     public static final int SHOOTER_HOOD = 24;
-    public static final int SPINDEXER_LEFT = 25;
-    public static final int SPINDEXER_RIGHT = 26;
+    public static final int SPINDEXER_LEFT = 25;  //SparkMax with NEO motor
+    public static final int SPINDEXER_RIGHT = 26; //SparkMax with NEO motor
     public static final int SWERVE_MODULE_FRONT_LEFT_DRIVE_MOTOR = 6; //Kraken x60
     public static final int SWERVE_MODULE_FRONT_LEFT_STEER_MOTOR = 13; //Kraken x44
     public static final int SWERVE_MODULE_FRONT_LEFT_STEER_ENCODER = 2; //CANcoder

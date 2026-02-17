@@ -3,6 +3,7 @@
 - Flash Rio if necessary
     - Done
 - Assign CAN IDs to all devices
+- Verify pigeon 2 yaw increases when turning robot to left (CCW) and decreases when turning to right (CW)
 - Implement ramp detection to set flag for ramp encountered (use tilt from gyro)
     - If ramp was encountered and tilt goes back to flat, set a separate flag to indicate vision odometry should be boosted (or just use resetPose)
         - After that is done, clear all flags
@@ -19,6 +20,8 @@
     - Update MAX_VELOCITY_METERS_PER_SECOND and config in PathPlanner GUI to this value
 - Implement a low RPM idle command for the shooter and set it as the default command for that system
 - Run Shooter SysId routines, import logs and update PID gains in constants
+- Run Feeder SysId routines, import logs and update PID gains in constants
+- Run Hood SysId routines, import logs and update PID gains in constants
 - Define and test algorithm to auto-aim robot towards center of hub based on current robot pose and known hub pose
 - Define and test algorithm to put shooter hood down automatically when approaching the trench (so we don't rip it off)
 - Implement and test robot simulation using CTRE swerve and photonvision support
