@@ -1,0 +1,28 @@
+Core Feedforward Constants
+ (Static Gain): Voltage to overcome static friction.
+ (Velocity Gain): Voltage to maintain a specific velocity.
+ (Acceleration Gain): Voltage to accelerate the mechanism.
+ (Gravity Gain): Voltage required to counteract gravity (for arms/elevators). 
+
+Method 1: Manual Testing (Recommended)
+    This method involves applying increasing voltage and observing the motor's behavior to determine the constants.
+
+1. Find Ks (Static Friction):
+    a. Apply a very small voltage (e.g., 0.1V) to the motor and increase it slowly until the mechanism just begins to move.
+    b. Do this in both directions and average the voltages.
+    c. The voltage required to initiate movement is your Ks (in Volts).
+
+2. Find Kv (Velocity Constant):
+    a. Run the motor at a constant velocity (e.g., a known RPM or native units).
+    b. Measure the voltage required to maintain that steady speed.
+    c. Calculate Kv = (Voltage - Ks) / Velocity.
+    d. A good starting point is 12V / Motor Free Speed (in Units / s).
+
+3. Find Ka (Acceleration Constant):
+    a. Ka is generally harder to measure manually.
+    b. Alternatively, you can estimate it or, if the motor is not accelerating very fast, leave it at a low value or zero, relying on PID to pick up the slack.
+
+4. Find Kg (Gravity Gain - Arms/Elevators):
+    a. For Arms: Move the arm to the horizontal position. Apply voltage until it holds that position. Kg is the voltage needed to hold it there, which is Vholding * cos(angle).
+    b. For Elevators: Apply voltage to hold it steady. Kg is simply that voltage. 
+    

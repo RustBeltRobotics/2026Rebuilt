@@ -22,6 +22,7 @@ public class Climber extends SubsystemBase {
     public Climber() {
         climberMotor = new SparkMax(Constants.CanID.CLIMBER_MOTOR, MotorType.kBrushless);
         SparkMaxConfig climbermotorConfig = getMotorConfig(IdleMode.kBrake);
+        climbermotorConfig.smartCurrentLimit(65).secondaryCurrentLimit(Constants.CurrentLimit.SparkMax.Neo.SECONDARY_MAX); 
         climberMotor.configure(climbermotorConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
     }
 

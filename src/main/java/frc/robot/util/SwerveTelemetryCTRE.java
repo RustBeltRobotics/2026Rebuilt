@@ -31,7 +31,6 @@ public class SwerveTelemetryCTRE {
      */
     public SwerveTelemetryCTRE(double maxSpeed) {
         this.maxSpeed = maxSpeed;
-        SignalLogger.start();
 
         /* Set up the module state Mechanism2d telemetry */
         for (int i = 0; i < 4; ++i) {

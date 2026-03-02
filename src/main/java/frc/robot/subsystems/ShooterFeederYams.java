@@ -6,6 +6,9 @@ import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.revrobotics.RelativeEncoder;
+
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.Units;
@@ -26,9 +29,11 @@ import yams.motorcontrollers.remote.TalonFXWrapper;
 
 public class ShooterFeederYams extends SubsystemBase {
 
-    private final TalonFX feederKraken = new TalonFX(Constants.CanID.FEEDER_KRAKEN, CANBus.roboRIO());
+    private final TalonFX feederKrakenLeft = new TalonFX(Constants.CanID.FEEDER_KRAKEN_LEFT, CANBus.roboRIO()); //primary
+    private final TalonFX feederKrakenRight = new TalonFX(Constants.CanID.FEEDER_KRAKEN_RIGHT, CANBus.roboRIO()); //follower
     
     private final VoltageOut sysIdControl = new VoltageOut(0);
+    private boolean sysIdTestsStarted = false;
 
     private final SysIdRoutine sysIdRoutine = new SysIdRoutine(
         new SysIdRoutine.Config(
@@ -40,7 +45,8 @@ public class ShooterFeederYams extends SubsystemBase {
         ),
         new SysIdRoutine.Mechanism(
             volts -> {
-                feederKraken.setControl(sysIdControl.withOutput(volts));
+                feederKrakenLeft.setControl(sysIdControl.withOutput(volts.in(Volts)));
+                feederKrakenRight.setControl(sysIdControl.withOutput(volts.unaryMinus().in(Volts)));
             },
             null,
             this
@@ -49,6 +55,7 @@ public class ShooterFeederYams extends SubsystemBase {
 
     SmartMotorControllerConfig feederKrakenConfig = new SmartMotorControllerConfig(this)
             .withControlMode(ControlMode.CLOSED_LOOP)
+            .withFollowers(Pair.of(feederKrakenRight, true))
             // Feedback Constants (PID Constants)
             .withClosedLoopController(Constants.ShooterFeeder.K_P, Constants.ShooterFeeder.K_I,
                     Constants.ShooterFeeder.K_D, Units.RadiansPerSecond.of(524.0),
@@ -65,13 +72,13 @@ public class ShooterFeederYams extends SubsystemBase {
             .withGearing(new MechanismGearing(1))
             .withMotorInverted(false)
             .withIdleMode(MotorMode.BRAKE)
-            .withVoltageCompensation(Units.Volts.of(12))
+            // .withVoltageCompensation(Units.Volts.of(12))  //Note: we can't use this - apparently it's a Pro/paid feature
             // Motor properties to prevent over currenting.
-            .withStatorCurrentLimit(Units.Amps.of(100));
+            .withStatorCurrentLimit(Units.Amps.of(100));  //was 100
 
-    SmartMotorController krakenSmartMotorController = new TalonFXWrapper(feederKraken, DCMotor.getKrakenX60(1), feederKrakenConfig);
+    SmartMotorController krakenSmartMotorController = new TalonFXWrapper(feederKrakenLeft, DCMotor.getKrakenX60(1), feederKrakenConfig);
 
-    private final FlyWheelConfig shooterKrakenShooterConfig = new FlyWheelConfig(krakenSmartMotorController)
+    private final FlyWheelConfig feederKrakenShooterConfig = new FlyWheelConfig(krakenSmartMotorController)
             // Diameter of the flywheel.
             .withDiameter(Constants.ShooterFeeder.FEEDER_WHEEL_DIAMETER)
             // Mass of the flywheel.
@@ -81,23 +88,40 @@ public class ShooterFeederYams extends SubsystemBase {
             // Telemetry name and verbosity for the arm.
             .withTelemetry("ShooterFeeder", TelemetryVerbosity.HIGH);
 
-    private FlyWheel shooterKraken = new FlyWheel(shooterKrakenShooterConfig);
+    private FlyWheel feederFlywheel = new FlyWheel(feederKrakenShooterConfig);
 
     public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-        return sysIdRoutine.quasistatic(direction);
+        return startSysIdLogging().andThen(sysIdRoutine.quasistatic(direction));
     }
 
     public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-        return sysIdRoutine.dynamic(direction);
+        return startSysIdLogging().andThen(sysIdRoutine.dynamic(direction));
+    }
+
+    public Command startSysIdLogging() {
+        return runOnce(() -> {
+            if (!sysIdTestsStarted) {
+                SignalLogger.stop();
+                sysIdTestsStarted = true;
+                SignalLogger.start();
+            }
+        });
+    }
+
+    public Command stopSysIdLogging() {
+        return runOnce(() -> {
+            sysIdTestsStarted = false;
+            SignalLogger.stop();
+        });
     }
 
     @Override
     public void simulationPeriodic() {
-        shooterKraken.simIterate();
+        feederFlywheel.simIterate();
     }
 
     public void setFeederAngularVelocity(AngularVelocity rpmTarget) {
-        shooterKraken.setMechanismVelocitySetpoint(rpmTarget);
+        feederFlywheel.setMechanismVelocitySetpoint(rpmTarget);
     }
 
     public Command runAtAngularVelocity(AngularVelocity rpmTarget) {
@@ -105,6 +129,7 @@ public class ShooterFeederYams extends SubsystemBase {
     }
 
     public Command stop() {
-        return this.run(() -> shooterKraken.setMechanismVelocitySetpoint(Units.RPM.of(0))).withName("Stop Shooter Feeder");
+        return this.run(() -> feederFlywheel.setMechanismVelocitySetpoint(Units.RPM.of(0))).withName("Stop Shooter Feeder");
     }
+
 }

@@ -56,6 +56,7 @@ public class Robot extends TimedRobot {
 
     // Log Phoenix / CTRE device signals (this code is only necessary outside of competition)
     // SignalLogger.setPath("/media/sdb1/logs/");
+
     SignalLogger.start();
 
     // Log Rev device signals (see https://github.com/Mechanical-Advantage/AdvantageScope/blob/main/docs/REV-LOGGING.md)
@@ -82,7 +83,7 @@ public class Robot extends TimedRobot {
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
 
-    powerManagement.updateTelemetry(); //check for brownouts and breaker faults on the PDH
+    // powerManagement.updateTelemetry(); //check for brownouts and breaker faults on the PDH
     robotContainer.updateTelemetry();
   }
 

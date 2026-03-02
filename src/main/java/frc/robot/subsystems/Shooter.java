@@ -156,6 +156,7 @@ public class Shooter extends SubsystemBase {
 
     //change this to switch between CTRE and REV SysId routines
     private final SysIdRoutine effectiveSysIdRoutine = unifiedSysIdRoutine;
+    
     public Shooter() {
         //TODO: test and assign these values properly - those listed are placeholders
         rpmTable.put(2.0, 1500.0); // At 2m, 1500 RPM

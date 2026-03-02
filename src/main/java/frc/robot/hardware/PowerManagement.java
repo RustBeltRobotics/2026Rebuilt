@@ -21,14 +21,12 @@ public class PowerManagement {
     private final Set<Integer> channelsInUse;  //avoid alerting on channels we know are not in active use
     private final Map<Integer, String> channelToDeviceMap; //map of PDH channel IDs to device names for clearer alerting
 
-    //Note: not all powered devices go through the PDH!
-    // The following devices are on the VRM and won't be monitored here as there is no API access to telemetry from the VRM:
-    // Pigeon2
     public PowerManagement() {
         powerDistributionHub = new PowerDistribution(Constants.CanID.POWER_DISTRIBUTION, ModuleType.kRev);
         channelsInUse = new HashSet<>();
         channelToDeviceMap = new HashMap<>();
         //TODO: Keep this up to date as new devices are added or removed
+        //Note: uncommented rows with Device ? are in use, but we aren't sure which device is on that channel yet - need to trace wiring to confirm and update for better alerting
         channelsInUse.add(0);
         channelToDeviceMap.put(0, "Back Right Steer");
         channelsInUse.add(1);
@@ -49,6 +47,34 @@ public class PowerManagement {
         channelToDeviceMap.put(8, "Back Left Steer");
         channelsInUse.add(9);
         channelToDeviceMap.put(9, "Back Left Drive");
+        // channelsInUse.add(10);
+        // channelToDeviceMap.put(10, "Device ?");
+        // channelsInUse.add(11);
+        // channelToDeviceMap.put(11, "Device ?");
+        // channelsInUse.add(12);
+        // channelToDeviceMap.put(12, "Device ?");
+        // channelsInUse.add(13);
+        // channelToDeviceMap.put(13, "Device ?");
+        // channelsInUse.add(14);
+        // channelToDeviceMap.put(14, "Device ?");
+        // channelsInUse.add(15);
+        // channelToDeviceMap.put(15, "Device ?");
+        // channelsInUse.add(16);
+        // channelToDeviceMap.put(16, "Device ?");
+        // channelsInUse.add(17);
+        // channelToDeviceMap.put(17, "Device ?");
+        // channelsInUse.add(18);
+        // channelToDeviceMap.put(18, "Device ?");
+        // channelsInUse.add(19);
+        // channelToDeviceMap.put(19, "Device ?");
+        // channelsInUse.add(20);
+        // channelToDeviceMap.put(20, "Device ?");
+        // channelsInUse.add(21);
+        // channelToDeviceMap.put(21, "Rio");
+        // channelsInUse.add(22);
+        // channelToDeviceMap.put(22, "Pigeon 2");
+        // channelsInUse.add(23);
+        // channelToDeviceMap.put(23, "Device ?");
     }
 
     public void updateTelemetry() {

@@ -50,7 +50,7 @@ public final class Constants {
   public static final class Controls {
     public static final int CONTROLLER_PORT_DRIVER = 0;
     public static final int CONTROLLER_PORT_OPERATOR = 1;
-    public static final double CONTROLLER_DEADBAND = 0.1;
+    public static final double CONTROLLER_DEADBAND = 0.05;
   }
 
   public static final class Game {
@@ -78,14 +78,15 @@ public final class Constants {
    */
   public static final class CanID {
     public static final int POWER_DISTRIBUTION = 1;
-    public static final int CLIMBER_MOTOR = 19;
+    public static final int CLIMBER_MOTOR = 99;
     public static final int PIGEON_GYRO = 10;
-    public static final int FEEDER_KRAKEN = 14;
+    public static final int FEEDER_KRAKEN_LEFT = 14;
+    public static final int FEEDER_KRAKEN_RIGHT = 27; //TODO: Assign this CAN ID in Phoenix Tuner
     public static final int INTAKE_ROTATE_MOTOR = 16;  //NEO Vortex
     public static final int INTAKE_EXTEND_RETRACT_MOTOR = 12;  //NEO
     public static final int SHOOTER_KRAKEN_LEFT = 20;  //Kraken x60
     public static final int SHOOTER_KRAKEN_RIGHT = 21; //Kraken x60
-    public static final int SHOOTER_VORTEX_LEFT = 22; //SparkFlex
+    public static final int SHOOTER_VORTEX_LEFT = 19; //SparkMax
     public static final int SHOOTER_VORTEX_RIGHT = 23; //SparkMax
     public static final int SHOOTER_HOOD = 24;
     public static final int SPINDEXER_LEFT = 25;  //SparkMax with NEO motor
@@ -113,8 +114,14 @@ public final class Constants {
    */
   public static final class CurrentLimit {
     public static final class SparkMax {
-      public static final int SMART_DEFAULT = 60;
-      public static final int SECONDARY_MAX = 80;
+      public static final class Neo {
+        public static final int SMART_DEFAULT = 40;
+        public static final int SECONDARY_MAX = 80;
+      }
+      public static final class Neo550 {
+        public static final int SMART_DEFAULT = 20;
+        public static final int SECONDARY_MAX = 40;
+      }
     }
   }
 
@@ -133,7 +140,7 @@ public final class Constants {
 
     public static final double LOADED_MASS = Units.Pounds.of(135.0).in(Units.Kilograms); //Note: this weight includes the battery and bumpers
 
-    public static final double MOMENT_OF_INTERIA = 6.883; //TODO: get this value from CAD from Dillan - 6.883 is the default UI value
+    public static final double MOMENT_OF_INTERIA = 5.37; //Note: This value is for when the intake is extended / down (From CAD)
 
     /* Robot frame width in meters */
     public static final double WIDTH = Units.Inches.of(27.5).in(Units.Meters);  //from 2026 CAD
@@ -158,7 +165,7 @@ public final class Constants {
 
     /* COF of wheels */
     public static final double WHEEL_COEFFECIENT_OF_FRICTION = 2.2;  //MK5N Spiky Wheels - see https://www.chiefdelphi.com/t/orbit-1690-new-custom-swerve-reveal/508927/30
-    
+
     /**
      * The left-to-right distance between the drivetrain wheels
      * <p>
@@ -257,41 +264,47 @@ public final class Constants {
   public static final class ShooterFeeder {
     public static final Distance FEEDER_WHEEL_DIAMETER = Units.Inches.of(2.25);
     public static final Mass FLYWHEEL_MASS = Units.Pounds.of(2.5);
-    public static final double K_P = 0.0;
+    //TODO: We should re-run sysId tests and update these gains after the shaft and collars are mechanically tightened!
+    public static final double K_P = 0.1812;
     public static final double K_I = 0.0;
     public static final double K_D = 0.0;
-    public static final double K_S = 0.0;  //static feedforward term
-    public static final double K_V = 0.0;  //velocity feedforward gain (Volts per rotor RPS) 
-    public static final double K_A = 0.0;
-    public static final AngularVelocity FEEDER_RPM = Units.RPM.of(3000); //TODO: tune this
+    public static final double K_S = 0.59465;  //static feedforward term
+    public static final double K_V = 0.12833;  //velocity feedforward gain (Volts per rotor RPS) 
+    public static final double K_A = 0.0032739;
+    public static final AngularVelocity FEEDER_RPM = Units.RPM.of(4800); //TODO: tune this
   }
 
   public static final class ShooterHood {
-    public static final double MOTOR_ROTATIONS_PER_HOOD_ROTATION = 108.0;  //108:1 gear ratio
+    public static final double MOTOR_ROTATIONS_PER_HOOD_ROTATION = 700.0;  //700:1 overall gear ratio (gear boxes and gear teeth)
     public static final double THROUGH_BORE_ZERO_OFFSET = 0.0; //TODO: update this value based on telemetry - initial absolute encoder value to treat as zero degrees
     public static final double MIN_DEGREES = 0.0; //Max hood angle
     public static final double MAX_DEGREES = 30.0; //Max hood angle
-    public static final double K_P = 0.0;
+    public static final double K_P = 1.8826;
     public static final double K_I = 0.0;
-    public static final double K_D = 0.0;
-    public static final double K_S = 0.0;  //static feedforward term
-    public static final double K_V = 0.0;  
-    public static final double K_A = 0.0;
+    public static final double K_D = 0.076164;
+    public static final double K_S = 0.033505;  //static feedforward term
+    public static final double K_V = 0.95192;  
+    public static final double K_A = 0.03179;
   }
 
   public static final class Shooter {
     public static final Distance SHOOTER_WHEEL_DIAMETER = Units.Inches.of(4.0);
     public static final Mass FLYWHEEL_MASS = Units.Pounds.of(7.9); //This weight does not include the rotating mass of the Neo Vortex motors, which may ass 0.75 lbs.
-    public static final AngularVelocity SHOOTER_TEST_RPM = Units.RPM.of(3000);
-    //TODO: tune all these
+    public static final AngularVelocity SHOOTER_TEST_RPM = Units.RPM.of(3100);
+    //3000 RPM for distance from field edge (blue left)
+    //4000 RPM for distance from table testing
+
+    //3000 RPM 
+    
     public static final class CtrePidf {
-      public static final double K_P = 0.0;
+      public static final double K_P = 0.17349;
       public static final double K_I = 0.0;
       public static final double K_D = 0.0;
-      public static final double K_S = 0.0;  //static feedforward term
-      public static final double K_V = 0.0;  //velocity feedforward gain (Volts per rotor RPS) 
-      public static final double K_A = 0.0;
+      public static final double K_S = 0.19687;
+      public static final double K_V = 0.11469; //velocity feedforward gain (Volts per motor RPS)
+      public static final double K_A = 0.011082;
     }
+    //TODO: remove this class
     public static final class RevPidf {
       public static final double K_P = 0.0;
       public static final double K_I = 0.0;
@@ -300,6 +313,15 @@ public final class Constants {
       public static final double K_V = 0.0; //velocity feedforward gain (Volts per motor RPM)
       public static final double K_A = 0.0;
     }
+  }
+
+  public static final class Spindexer {
+    public static final double SPIN_DUTY_CYCLE = -0.6; //Negative equates to the direction we want - inward to feed balls towards the feeder
+    public static final double SHOOT_SEQUENCE_SPIN_START_DELAY_SECONDS = 1.5; //TODO: graph and tune this delay based on time for shooter to get up to speed (adjust if we leave the shooter running at low RPM idle between shots)
+  }
+
+  public static final class Intake {
+    public static final double ENCODER_POSITION_ZERO_THRESHOLD = 5; //If encoder position is at this value at less, we'll consider it zero (the inner stop)
   }
 
   public static final class PathPlanner {

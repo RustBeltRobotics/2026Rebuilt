@@ -4,6 +4,7 @@ import java.util.function.Supplier;
 
 import org.photonvision.PhotonUtils;
 
+import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -21,7 +22,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.networktables.BooleanPublisher;
-import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.units.Units;
@@ -31,6 +31,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.util.AlertManager;
@@ -90,15 +91,24 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     public Command teleopDrive(CommandXboxController controller) {
         return applyRequest(() -> {
             isAutoTargeting = false;
-            return teleopRequest.withVelocityX(-controller.getLeftY() * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND) // Drive forward with negative Y (forward)
-                    .withVelocityY(-controller.getLeftX() * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND) // Drive left with negative X (left)
-                    .withRotationalRate(-controller.getRightX() * Constants.Kinematics.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND); // Drive counterclockwise with negative X (left)
+            double xControllerValue = modifyDriverControllerInput(controller.getLeftY());  //forward/back
+            double yControllerValue = modifyDriverControllerInput(controller.getLeftX());  //left/right
+            double rotationalControllerValue = modifyDriverControllerInput(controller.getRightX());  //rotation
+            return teleopRequest.withVelocityX(-xControllerValue * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND) // Drive forward with negative Y (forward)
+                    .withVelocityY(-yControllerValue * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND) // Drive left with negative X (left)
+                    .withRotationalRate(-rotationalControllerValue * Constants.Kinematics.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND); // Drive counterclockwise with negative X (left)
         }).withName("Teleop Drive");
+    }
+
+    private double modifyDriverControllerInput(double input) {
+        // scale the controller input - See https://www.desmos.com/calculator/bnqnldev69 for function graph
+        return (Math.signum(input) * Math.pow(Math.abs(input), 3.7) + (input * 0.43)) / (1 + 0.42);
     }
 
     public Command alignToTargetDrive(CommandXboxController controller, Supplier<Pose2d> targetPoseSupplier) {
         return applyRequest(() -> {
             isAutoTargeting = true;
+            //TODO: update this to use the modified controller inputs once we verify it works well for teleop driving
             double controllerVelX = -controller.getLeftY();  //forward/back
             double controllerVelY = -controller.getLeftX();  //left/right strafe
 
@@ -128,7 +138,7 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
         });
     }
 
-    public void resetPoseCustom(Pose2d pose) {
+    public void resetPoseForAutoStart(Pose2d pose) {
         Pose2d targetPose = pose;
         //if this is autonomous and we have valid vision data, override the provided pose with vision data
         if (DriverStation.isAutonomous() && Constants.Vision.VISION_ENABLED && !initialPoseSetViaVision && this.latestVisionPose != null) {
@@ -145,7 +155,7 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
 
         AutoBuilder.configure(
                 () -> getState().Pose,   // Supplier of current robot pose
-                this::resetPoseCustom,   // Consumer for seeding pose against auto
+                this::resetPoseForAutoStart,   // Consumer for seeding robot pose against auto
                 () -> getState().Speeds, // Supplier of current robot speeds
                 // Consumer of ChassisSpeeds and feedforwards to drive the robot
                 (speeds, feedforwards) -> setControl(
@@ -190,4 +200,5 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
         this.addVisionMeasurement(pose, timestamp, estimationStdDevs);
         this.latestVisionPose = pose;
     }
+
 }

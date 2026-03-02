@@ -1,26 +1,32 @@
-- Update firmware on Radio to latest
-    - Done
-- Flash Rio if necessary
-    - Done
-- Assign CAN IDs to all devices
-- Verify pigeon 2 yaw increases when turning robot to left (CCW) and decreases when turning to right (CW)
+TODO:
+- Add output current logging to NT for Rev devices
+- Add SmartCurrentLimit values to all Rev devices
+- Implement position control on hood using relative encoder
+    - Convert relative encoder position output to degrees
+        - (position / 108.0 (gear reduction)) * 360 : this is sort of done, need verification on gear ratio from Dillan
+    - Run SysId and geet FF/PID values
+- Update photonvision on Orange Pis to 2026.2.1 (using offline installer method)
+    - installer jar is in C:\frc\2026\photonvision\offline-updates
+- Run robot at full speed forward in a straight linewith AdvantageScope open to get measured max velocity in M/S
+    - Plot DriveState/Speeds/vxMetersPerSecond
+    - Update MAX_VELOCITY_METERS_PER_SECOND and config in PathPlanner GUI to this value
+        - https://pathplanner.dev/robot-config.html#-ntfiad_50
+- Test / update CTRE Swerve constants kSlipCurrent
+    - https://docs.advantagekit.org/getting-started/template-projects/talonfx-swerve-template/#slip-current-measurement
+--------
+Implemented, needs testing:
 - Implement ramp detection to set flag for ramp encountered (use tilt from gyro)
     - If ramp was encountered and tilt goes back to flat, set a separate flag to indicate vision odometry should be boosted (or just use resetPose)
         - After that is done, clear all flags
     - Done => needs to be tested to verify
 - Implement LED control
     - Done (ish) => needs testing and likely tweaks to how we plan to actually use it    
-- Update photonvision on Orange Pis to 2026.2.1 (using offline installer method)
-    - installer jar is in C:\frc\2026\photonvision\offline-updates
+
 - Get robot to camera translation values from CAD / physical measurement once placed on robot
-- Generate CTRE swerve code
 - Run Swerve SysId routines, import logs and update PID gains in constants
-- Test basic field oriented drive
-- Run robot at full speed with AdvantageScope open to get measured max velocity in M/S
-    - Update MAX_VELOCITY_METERS_PER_SECOND and config in PathPlanner GUI to this value
-- Implement a low RPM idle command for the shooter and set it as the default command for that system
-- Run Shooter SysId routines, import logs and update PID gains in constants
-- Run Feeder SysId routines, import logs and update PID gains in constants
+
+- Re-run Shooter SysId routines, import logs and update PID gains in constants (with vortex motors out of the loop)
+- Re-run Feeder SysId routines, import logs and update PID gains in constants
 - Run Hood SysId routines, import logs and update PID gains in constants
 - Define and test algorithm to auto-aim robot towards center of hub based on current robot pose and known hub pose
 - Define and test algorithm to put shooter hood down automatically when approaching the trench (so we don't rip it off)
