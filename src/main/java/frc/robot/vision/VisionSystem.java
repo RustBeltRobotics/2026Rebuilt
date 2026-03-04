@@ -58,10 +58,10 @@ public class VisionSystem {
         .getStructArrayTopic("/RBR/Vision/PoseEstimates/Accepted", Pose3d.struct).publish();
     private final StructArrayPublisher<Pose3d> rejectedVisionPosePublisher = NetworkTableInstance.getDefault()
         .getStructArrayTopic("/RBR/Vision/PoseEstimates/Rejected", Pose3d.struct).publish();
-    private final StructPublisher<Pose2d> frontCenterCameraPosePublisher = NetworkTableInstance.getDefault()
-        .getStructTopic("/RBR/Vision/PoseEstimates/Camera/FC", Pose2d.struct).publish();
-    private final StructPublisher<Pose2d> frontRightCameraPosePublisher = NetworkTableInstance.getDefault()
-        .getStructTopic("/RBR/Vision/PoseEstimates/Camera/FR", Pose2d.struct).publish();
+    // private final StructPublisher<Pose2d> frontCenterCameraPosePublisher = NetworkTableInstance.getDefault()
+    //     .getStructTopic("/RBR/Vision/PoseEstimates/Camera/FC", Pose2d.struct).publish();
+    // private final StructPublisher<Pose2d> frontRightCameraPosePublisher = NetworkTableInstance.getDefault()
+    //     .getStructTopic("/RBR/Vision/PoseEstimates/Camera/FR", Pose2d.struct).publish();
     private final StructPublisher<Pose2d> backLeftCameraPosePublisher = NetworkTableInstance.getDefault()
         .getStructTopic("/RBR/Vision/PoseEstimates/Camera/BL", Pose2d.struct).publish();
     private final StructPublisher<Pose2d> backRightCameraPosePublisher = NetworkTableInstance.getDefault()
@@ -85,15 +85,15 @@ public class VisionSystem {
         fieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
         fieldLayout.setOrigin(OriginPosition.kBlueAllianceWallRightSide);
 
-        VisionCamera frontCenterCamera = new VisionCamera(Constants.Vision.CameraName.FRONT_CENTER, CameraPosition.FRONT_CENTER,
-            Constants.Vision.CameraPose.FRONT_CENTER, fieldLayout);   
+        // VisionCamera frontCenterCamera = new VisionCamera(Constants.Vision.CameraName.FRONT_CENTER, CameraPosition.FRONT_CENTER,
+        //     Constants.Vision.CameraPose.FRONT_CENTER, fieldLayout);   
         // VisionCamera frontRightCamera = new VisionCamera(Constants.Vision.CameraName.FRONT_RIGHT, CameraPosition.FRONT_RIGHT,
         //     Constants.Vision.CameraPose.FRONT_RIGHT, fieldLayout);
         VisionCamera backRightCamera = new VisionCamera(Constants.Vision.CameraName.BACK_RIGHT, CameraPosition.BACK_RIGHT,
             Constants.Vision.CameraPose.BACK_RIGHT, fieldLayout);
         VisionCamera backLeftCamera = new VisionCamera(Constants.Vision.CameraName.BACK_LEFT, CameraPosition.BACK_LEFT,
             Constants.Vision.CameraPose.BACK_LEFT, fieldLayout);
-        visionCameras.add(frontCenterCamera);           
+        // visionCameras.add(frontCenterCamera);           
         // visionCameras.add(frontRightCamera);           
         visionCameras.add(backRightCamera);           
         visionCameras.add(backLeftCamera);
@@ -271,11 +271,12 @@ public class VisionSystem {
                 acceptedPoses.add(poseEstimate);
                 estimationResults.add(new VisionPoseEstimationResult(visionCamera, poseEstimate, getVisionMeasurementStandardDeviation(poseEstimate, visionCamera.getCameraPosition())));
 
-                if (visionCamera.getCameraPosition() == CameraPosition.FRONT_CENTER) {
-                    frontCenterCameraPosePublisher.set(estimatedPose2d, networkTablesPoseTimestampMicroSeconds);
-                } else if (visionCamera.getCameraPosition() == CameraPosition.FRONT_RIGHT) {
-                    frontRightCameraPosePublisher.set(estimatedPose2d, networkTablesPoseTimestampMicroSeconds);
-                } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_LEFT) {
+                // if (visionCamera.getCameraPosition() == CameraPosition.FRONT_CENTER) {
+                //     frontCenterCameraPosePublisher.set(estimatedPose2d, networkTablesPoseTimestampMicroSeconds);
+                // } else if (visionCamera.getCameraPosition() == CameraPosition.FRONT_RIGHT) {
+                //     frontRightCameraPosePublisher.set(estimatedPose2d, networkTablesPoseTimestampMicroSeconds);
+                // } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_LEFT) {
+                if (visionCamera.getCameraPosition() == CameraPosition.BACK_LEFT) {
                     backLeftCameraPosePublisher.set(estimatedPose2d, networkTablesPoseTimestampMicroSeconds);
                 } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_RIGHT) {
                     backRightCameraPosePublisher.set(estimatedPose2d, networkTablesPoseTimestampMicroSeconds);

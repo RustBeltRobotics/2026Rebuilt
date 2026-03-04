@@ -2,3 +2,5 @@
     - https://www.youtube.com/watch?v=3QqltCdH_Qk
 - YAMS / motor code technical docs/ref:
     - https://www.chiefdelphi.com/uploads/short-url/dx8EE8MAC1raoOUDkIRvDPym1Zl.pdf
+- Review current limiting as part of programming slides:
+    - https://www.chiefdelphi.com/t/current-limiting-on-swerve/454392/2

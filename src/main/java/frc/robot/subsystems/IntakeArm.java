@@ -12,16 +12,18 @@ import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.Tracer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
+import frc.robot.util.AlertManager;
 
-public class Intake extends SubsystemBase {
+public class IntakeArm extends SubsystemBase {
 
-    private final SparkMax rotateIntakeShaftMotor = new SparkMax(Constants.CanID.INTAKE_ROTATE_MOTOR, MotorType.kBrushless);
-    private final RelativeEncoder rotateIntakeShaftEncoder = rotateIntakeShaftMotor.getEncoder();
     private final SparkMax extendRetractMotor = new SparkMax(Constants.CanID.INTAKE_EXTEND_RETRACT_MOTOR, MotorType.kBrushless); //27:1 gear ratio on extend/retract motor
     private final RelativeEncoder extendRetractEncoder = extendRetractMotor.getEncoder();
     private double extendRetractMotorOutputCurrentAmps;
@@ -38,14 +40,10 @@ public class Intake extends SubsystemBase {
         }
     });
 
-    private final DoublePublisher rotateIntakeShaftVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Intake/Rotation/Velocity").publish();
     private final DoublePublisher extendRetractVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Intake/ExtendRetract/Velocity").publish();
-    
-    public Intake() {
-        var rotateIntakeShaftConfig = new SparkMaxConfig();
-        rotateIntakeShaftConfig.idleMode(IdleMode.kBrake);
-        rotateIntakeShaftMotor.configure(rotateIntakeShaftConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    private final DoublePublisher extendRetractCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Intake/ExtendRetract/Current").publish();
 
+    public IntakeArm() {
         var extendRetractConfig = new SparkMaxConfig();
         extendRetractConfig.idleMode(IdleMode.kBrake);
         extendRetractMotor.configure(extendRetractConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
@@ -54,34 +52,27 @@ public class Intake extends SubsystemBase {
     @Override
     public void periodic() {
         extendRetractMotorOutputCurrentAmps = extendRetractMotor.getOutputCurrent();
-        // If the current exceeds 10 amps for more than 0.25 seconds, we consider the mechanism to be stalled
-        //TODO: Test this amperage
-        stallDetected = stallDetectionDebouncer.calculate(extendRetractMotorOutputCurrentAmps >= 10.0);
-        if (stallDetected) {
-            extendRetractEncoder.setPosition(0.0);
-        }
-        rotateIntakeShaftVelocityPublisher.set(rotateIntakeShaftEncoder.getVelocity());
-        extendRetractVelocityPublisher.set(extendRetractEncoder.getVelocity());
-    }
+        extendRetractCurrentPublisher.set(extendRetractMotorOutputCurrentAmps);
+        //TODO: Try and re-enable this debouncer to see if it works - it was causing issues previous;y
+        stallDetected = stallDetectionDebouncer.calculate(extendRetractMotorOutputCurrentAmps >= 65.0);
+        // stallDetected = extendRetractMotorOutputCurrentAmps >= 65.0;
 
-    public void runIntakeWheelsAtDutyCycle(double dutyCycle) {
-        rotateIntakeShaftMotor.set(dutyCycle);
+        if (stallDetected) {
+            // extendRetractEncoder.setPosition(0.0);
+        }
+        extendRetractVelocityPublisher.set(extendRetractEncoder.getVelocity());
+        AlertManager.addAlert("IntakeArm", "IntakeArm stallDetected? " + (stallDetected ? "Yes" : "No"), AlertType.kInfo);
     }
 
     public void runExtendRetractAtDutyCycle(double dutyCycle) {
         extendRetractMotor.set(dutyCycle);
     }
 
-    public Command intakeFuel() {
-        return this.startEnd(() -> runIntakeWheelsAtDutyCycle(-1.0), () -> runIntakeWheelsAtDutyCycle(0.0)).withName("Intake rotate fuel");
-    }
-
-    public Command stopIntakeWheelRotation() {
-        return this.runOnce(() -> runIntakeWheelsAtDutyCycle(0.0)).withName("Stop Intake Wheel Rotation");
-    }
-
     public Command stopExtendRetract() {
-        return this.runOnce(() -> runExtendRetractAtDutyCycle(0.0)).withName("Stop Intake Extend/Retract");
+        return runOnce(() -> {
+            isExtending = true;
+            runExtendRetractAtDutyCycle(0.0);
+        }).withName("Stop Intake Extend/Retract");
     }
 
     public Command extend() {
@@ -95,21 +86,44 @@ public class Intake extends SubsystemBase {
 
     public Command extendForIntakeSequence() {
        return this.startEnd(() -> { 
-            runIntakeWheelsAtDutyCycle(-1.0); 
-            runExtendRetractAtDutyCycle(-0.03);
+            runExtendRetractAtDutyCycle(-0.06);
         }, () -> {
-            runIntakeWheelsAtDutyCycle(0.0);
             stopExtendRetract();
-        }).withName("Intake rotate fuel with extension");
-
+        }).withName("Extending intake arm for fuel intake sequence");
     }
 
     public Command retract() {
         return run(() -> {
             isExtending = false;
-            runExtendRetractAtDutyCycle(0.35);
+            runExtendRetractAtDutyCycle(0.45);
         })
         .until(() -> shouldStopExtendRetract.getAsBoolean())
         .andThen(stopExtendRetract());
     }
+
+    public Command retractForAgitate() {
+        return run(() -> {
+            isExtending = false;
+            runExtendRetractAtDutyCycle(0.45);
+        })
+        .andThen(stopExtendRetract());
+    }
+
+    /* 
+    //TODO: Test this bound to a button first, then integrate it into the shoot sequence
+    public Command agitate() {
+        Command intakeFuelCommand = run(() -> runIntakeWheelsAtDutyCycle(-1.0));
+        Command liftAndDropIntakeArmCommand = run(() -> runExtendRetractAtDutyCycle(0.35)).withTimeout(0.10)
+                .andThen(run(() -> runExtendRetractAtDutyCycle(-0.20)).withTimeout(0.10))
+                .repeatedly();
+
+                //TODO: can't run these in parallel since both require this subsystem
+        // return new ParallelCommandGroup(intakeFuelCommand, liftAndDropIntakeArmCommand.finallyDo(() -> {
+        //     runIntakeWheelsAtDutyCycle(0.0);
+        //     stopExtendRetract();
+        // }).withName("Agitate Intake"));
+
+        return idle();
+    }
+        */
 }

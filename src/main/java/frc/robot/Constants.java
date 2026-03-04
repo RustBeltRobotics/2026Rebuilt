@@ -81,7 +81,7 @@ public final class Constants {
     public static final int CLIMBER_MOTOR = 99;
     public static final int PIGEON_GYRO = 10;
     public static final int FEEDER_KRAKEN_LEFT = 14;
-    public static final int FEEDER_KRAKEN_RIGHT = 27; //TODO: Assign this CAN ID in Phoenix Tuner
+    public static final int FEEDER_KRAKEN_RIGHT = 27;
     public static final int INTAKE_ROTATE_MOTOR = 16;  //NEO Vortex
     public static final int INTAKE_EXTEND_RETRACT_MOTOR = 12;  //NEO
     public static final int SHOOTER_KRAKEN_LEFT = 20;  //Kraken x60
@@ -183,8 +183,8 @@ public final class Constants {
     /** Distance from center of robot to center of swerve module  **/
     public static final double DRIVETRAIN_BASE_RADIUS = Math.hypot(DRIVETRAIN_TRACKWIDTH_METERS, DRIVETRAIN_WHEELBASE_METERS) / 2.0;
 
-    //SDS Mk5n R3 gear ratio - equivalent to 5.27:1 overall ratio
-    public static final double DRIVE_GEAR_RATIO = 1.0 / 5.27;
+    //SDS Mk5n R2 gear ratio - equivalent to 6.03:1 overall ratio
+    public static final double DRIVE_GEAR_RATIO = 1.0 / 6.03;
 
     public static final double STEER_GEAR_RATIO = 1.0 / 26.09;
 
@@ -247,7 +247,7 @@ public final class Constants {
     public static final PIDController ROTATE_TO_POSE_PID_CONTROLLER = getRotateToPoseController();
 
     public static final PIDController getRotateToPoseController() {
-      //TODO: test/tune PID
+      //TODO: test/tune PID: try with the m_sysIdRoutineRotation SysId routine from CommandSwerveDrivetrain
       double kP = SmartDashboard.getNumber("turnToAngle_P", 0.0);
       double kI = SmartDashboard.getNumber("turnToAngle_I", 0.0);
       double kD = SmartDashboard.getNumber("turnToAngle_D", 0.0);
@@ -264,14 +264,21 @@ public final class Constants {
   public static final class ShooterFeeder {
     public static final Distance FEEDER_WHEEL_DIAMETER = Units.Inches.of(2.25);
     public static final Mass FLYWHEEL_MASS = Units.Pounds.of(2.5);
-    //TODO: We should re-run sysId tests and update these gains after the shaft and collars are mechanically tightened!
-    public static final double K_P = 0.1812;
+    //OLD VALUES
+    // public static final double K_P = 0.1812;
+    // public static final double K_I = 0.0;
+    // public static final double K_D = 0.0;
+    // public static final double K_S = 0.59465;  //static feedforward term
+    // public static final double K_V = 0.12833;  //velocity feedforward gain (Volts per rotor RPS) 
+    // public static final double K_A = 0.0032739;
+    //NEW VALUES
+    public static final double K_P = 0.22726;
     public static final double K_I = 0.0;
     public static final double K_D = 0.0;
-    public static final double K_S = 0.59465;  //static feedforward term
-    public static final double K_V = 0.12833;  //velocity feedforward gain (Volts per rotor RPS) 
-    public static final double K_A = 0.0032739;
-    public static final AngularVelocity FEEDER_RPM = Units.RPM.of(4800); //TODO: tune this
+    public static final double K_S = 0.38692;  //static feedforward term
+    public static final double K_V = 0.23861;  //velocity feedforward gain (Volts per rotor RPS) 
+    public static final double K_A = 0.0043052;
+    public static final AngularVelocity FEEDER_RPM = Units.RPM.of(5000); //TODO: tune this
   }
 
   public static final class ShooterHood {
@@ -297,26 +304,25 @@ public final class Constants {
     //3000 RPM 
     
     public static final class CtrePidf {
-      public static final double K_P = 0.17349;
+      //OLD VALUES
+      // public static final double K_P = 0.17349;
+      // public static final double K_I = 0.0;
+      // public static final double K_D = 0.0;
+      // public static final double K_S = 0.19687;
+      // public static final double K_V = 0.11469; //velocity feedforward gain (Volts per motor RPS)
+      // public static final double K_A = 0.011082;
+      //NEW VALUES
+      public static final double K_P = 0.1018;
       public static final double K_I = 0.0;
       public static final double K_D = 0.0;
-      public static final double K_S = 0.19687;
-      public static final double K_V = 0.11469; //velocity feedforward gain (Volts per motor RPS)
-      public static final double K_A = 0.011082;
-    }
-    //TODO: remove this class
-    public static final class RevPidf {
-      public static final double K_P = 0.0;
-      public static final double K_I = 0.0;
-      public static final double K_D = 0.0;
-      public static final double K_S = 0.0;
-      public static final double K_V = 0.0; //velocity feedforward gain (Volts per motor RPM)
-      public static final double K_A = 0.0;
+      public static final double K_S = 0.098519;
+      public static final double K_V = 0.11928; //velocity feedforward gain (Volts per motor RPS)
+      public static final double K_A = 0.029765;
     }
   }
 
   public static final class Spindexer {
-    public static final double SPIN_DUTY_CYCLE = -0.6; //Negative equates to the direction we want - inward to feed balls towards the feeder
+    public static final double SPIN_DUTY_CYCLE = -0.85; //Negative equates to the direction we want - inward to feed balls towards the feeder
     public static final double SHOOT_SEQUENCE_SPIN_START_DELAY_SECONDS = 1.5; //TODO: graph and tune this delay based on time for shooter to get up to speed (adjust if we leave the shooter running at low RPM idle between shots)
   }
 
@@ -367,6 +373,7 @@ public final class Constants {
     public static final Matrix<N3, N1> DEFAULT_VISION_MEASUREMENT_STANDARD_DEVIATIONS = VecBuilder.fill(0.9, 0.9, 0.9);
     public static final Matrix<N3, N1> SINGLE_TAG_MEASUREMENT_STANDARD_DEVIATIONS = VecBuilder.fill(0.8, 0.8, Units.Degrees.of(30.0).in(Units.Radians));
     public static final Matrix<N3, N1> FRONT_CAMERA_STANDARD_DEVIATIONS = VecBuilder.fill(0.85, 0.85, Units.Degrees.of(20.0).in(Units.Radians));
+    //TODO: we should be able to bump trust in the rear cameras after some testing
     public static final Matrix<N3, N1> OTHER_CAMERA_STANDARD_DEVIATIONS = VecBuilder.fill(1.2, 1.2, Units.Degrees.of(30.0).in(Units.Radians));
     public static final double MULTI_TAG_XY_PER_TAG_STANDARD_DEVIATION = 0.3;
     public static final double MULTI_TAG_THETA_STANDARD_DEVIATION = Units.Degrees.of(20.0).in(Units.Radians);
@@ -397,17 +404,17 @@ public final class Constants {
 
       //TODO: these values are all from last year - need to update for new positions this year
 
-      public static final Transform3d FRONT_CENTER = new Transform3d(Units.Inches.of(14.0).in(Units.Meters), 0.0, Units.Inches.of(11.5).in(Units.Meters), 
-        new Rotation3d(0, 0, 0));  //front center - photonvision1
+      // public static final Transform3d FRONT_CENTER = new Transform3d(Units.Inches.of(14.0).in(Units.Meters), 0.0, Units.Inches.of(11.5).in(Units.Meters), 
+      //   new Rotation3d(0, 0, 0));  //front center - photonvision1
       //x+, y-, z+, (0, -degrees, 0).rotateBy(0, 0, -45 degrees)
       // public static final Transform3d FRONT_RIGHT = new Transform3d(CAM_XY_FROM_CENTER_OF_ROBOT, -CAM_XY_FROM_CENTER_OF_ROBOT, CAM_Z_FROM_FLOOR, 
       //   new Rotation3d(0, CAM_PITCH_ANGLE, 0).rotateBy(new Rotation3d(0, 0, -Units.degreesToRadians(45))));  //front right - photonvision2
       //x-, y-, z+, (0, -degrees, 0).rotateBy(0, 0, -135 degrees)
-      public static final Transform3d BACK_RIGHT = new Transform3d(Units.Inches.of(9.5).in(Units.Meters), -Units.Inches.of(9.0).in(Units.Meters), Units.Inches.of(11.0).in(Units.Meters), 
+      public static final Transform3d BACK_RIGHT = new Transform3d(-Units.Inches.of(12.0).in(Units.Meters), -Units.Inches.of(9.0).in(Units.Meters), Units.Inches.of(18.5).in(Units.Meters), 
         new Rotation3d(0, 0, 0).rotateBy(new Rotation3d(0, 0, -Units.Degrees.of(90.0).in(Units.Radians))));  //back right - photonvision1
       //x-, y+, z+, (0, -degrees, 0).rotateBy(0, 0, 135 degrees)
-      public static final Transform3d BACK_LEFT = new Transform3d(Units.Inches.of(9.5).in(Units.Meters), Units.Inches.of(9.0).in(Units.Meters), Units.Inches.of(11.0).in(Units.Meters),
-        new Rotation3d(0, 0, 0).rotateBy(new Rotation3d(0, 0, Units.Degrees.of(90.0).in(Units.Radians))));  //back left - photonvision2
+      public static final Transform3d BACK_LEFT = new Transform3d(-Units.Inches.of(12.0).in(Units.Meters), Units.Inches.of(9.0).in(Units.Meters), Units.Inches.of(18.5).in(Units.Meters),
+        new Rotation3d(0, 0, 0).rotateBy(new Rotation3d(0, 0, Units.Degrees.of(90.0).in(Units.Radians))));  //back left - photonvision1
     }
   }
 

@@ -1,18 +1,19 @@
 TODO:
-- Add output current logging to NT for Rev devices
-- Add SmartCurrentLimit values to all Rev devices
-- Implement position control on hood using relative encoder
-    - Convert relative encoder position output to degrees
-        - (position / 108.0 (gear reduction)) * 360 : this is sort of done, need verification on gear ratio from Dillan
-    - Run SysId and geet FF/PID values
-- Update photonvision on Orange Pis to 2026.2.1 (using offline installer method)
-    - installer jar is in C:\frc\2026\photonvision\offline-updates
+- Run SysId tests on drivetrain (including m_sysIdRoutineRotation)
+    - Evaluate / test gains from SysId tool
+    - Use PID values for m_sysIdRoutineRotation test in Constants.getRotateToPoseController()
+- Run SysId tests on hood
+    - Implement position control on hood using relative encoder and PIDF values
+- Test / update CTRE Swerve constants kSlipCurrent
+    - https://docs.advantagekit.org/getting-started/template-projects/talonfx-swerve-template/#slip-current-measurement
+    - https://v6.docs.ctr-electronics.com/en/stable/docs/hardware-reference/talonfx/improving-performance-with-current-limits.html#preventing-wheel-slip
 - Run robot at full speed forward in a straight linewith AdvantageScope open to get measured max velocity in M/S
+    - TODO: we don't really have enough space in the lab to do this :(
+        - it's definitely above 5.0 m/s though
     - Plot DriveState/Speeds/vxMetersPerSecond
     - Update MAX_VELOCITY_METERS_PER_SECOND and config in PathPlanner GUI to this value
         - https://pathplanner.dev/robot-config.html#-ntfiad_50
-- Test / update CTRE Swerve constants kSlipCurrent
-    - https://docs.advantagekit.org/getting-started/template-projects/talonfx-swerve-template/#slip-current-measurement
+
 --------
 Implemented, needs testing:
 - Implement ramp detection to set flag for ramp encountered (use tilt from gyro)

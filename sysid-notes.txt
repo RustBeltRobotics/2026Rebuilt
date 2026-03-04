@@ -1,0 +1,9 @@
+- when running sysid tests, qusistatic tests should be run for approx 10 seconds if possible
+- after loading sysid log into the SysId tool: 
+    - Choose the correct Analysis Type in the Data Selector window (use Simple for most mechanisms, Elevator for elevator, Arm for arms - these last 2 will give you Kg)
+    - Ensure you select the proper gain Preset and Loop Type
+    - adjust window size to try to get the highest Acceleration R^2 and Sim velocity R^2 value in the plots
+    - Use the "Test Duration" slider to run for the fullest duration possible (all the way to the right)
+    - Review plots against documentation to ensure a good fit: 
+        - https://docs.wpilib.org/en/stable/docs/software/advanced-controls/system-identification/viewing-diagnostics.html
+- Copy FF gains for Ks, Kv, Ka and Feedback gains for Kp, Kd into your Constants.java / PID config

@@ -6,22 +6,8 @@ import java.util.function.Supplier;
 
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.SignalLogger;
-import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.revrobotics.PersistMode;
-import com.revrobotics.RelativeEncoder;
-import com.revrobotics.ResetMode;
-import com.revrobotics.spark.SparkAbsoluteEncoder;
-import com.revrobotics.spark.SparkFlex;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.config.AlternateEncoderConfig;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-import com.revrobotics.spark.config.SparkFlexConfig;
-import com.revrobotics.spark.config.SparkMaxConfig;
-
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -37,11 +23,14 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.MutAngle;
 import edu.wpi.first.units.measure.MutAngularVelocity;
 import edu.wpi.first.units.measure.MutVoltage;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
+import frc.robot.util.AlertManager;
 import yams.gearing.MechanismGearing;
 import yams.mechanisms.config.FlyWheelConfig;
 import yams.mechanisms.velocity.FlyWheel;
@@ -56,20 +45,18 @@ public class ShooterYams extends SubsystemBase {
 
     private final TalonFX shooterKrakenLeft = new TalonFX(Constants.CanID.SHOOTER_KRAKEN_LEFT, CANBus.roboRIO()); //follower
     private final TalonFX shooterKrakenRight = new TalonFX(Constants.CanID.SHOOTER_KRAKEN_RIGHT, CANBus.roboRIO());  //primary
-    // private final SparkFlex shooterVortexLeft = new SparkFlex(Constants.CanID.SHOOTER_VORTEX_LEFT, MotorType.kBrushless);  //follower - negative rotation spins in the direction we want
-    // private final RelativeEncoder leftVortexEncoder = shooterVortexLeft.getEncoder();
-    // private final SparkMax shooterVortexRight = new SparkMax(Constants.CanID.SHOOTER_VORTEX_RIGHT, MotorType.kBrushless);  //primary - positive rotation spins in the direction we want
-    // private final RelativeEncoder rightVortexEncoder = shooterVortexRight.getEncoder();
     private boolean defaultCommandIsStop = true;
+    private boolean atTargetRpm = false;
+    private double targetRpm;
+    private final Trigger atRpmTrigger = new Trigger(() -> atTargetRpm);
 
     private final DoublePublisher rightKrakenVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Kraken/Right/Velocity").publish();
     private final DoublePublisher rightKrakenVoltagePublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Kraken/Right/Voltage").publish();
     private final DoublePublisher leftKrakenVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Kraken/Left/Velocity").publish();
     private final DoublePublisher leftKrakenVoltagePublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Kraken/Left/Voltage").publish();
-    // private final DoublePublisher rightVortexVoltagePublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Vortex/Right/Voltage").publish();
-    // private final DoublePublisher rightVortexVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Vortex/Right/Velocity").publish();
-    // private final DoublePublisher leftVortexVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Vortex/Left/Velocity").publish();
-    // private final DoublePublisher leftVortexVoltagePublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Vortex/Left/Voltage").publish();
+    
+    private final DoublePublisher shooterCurrentVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Velocity/Current").publish();
+    private final DoublePublisher shooterTargetVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Velocity/Target").publish();
 
     private final InterpolatingDoubleTreeMap rpmTable = new InterpolatingDoubleTreeMap();
 
@@ -144,14 +131,6 @@ public class ShooterYams extends SubsystemBase {
                     .voltage(sysIdAppliedVoltage.mut_replace(shooterKrakenRight.getMotorVoltage().getValueAsDouble(), Volts))
                     .angularPosition(sysIdPosition.mut_replace(shooterKrakenRight.getRotorPosition().getValueAsDouble(), Units.Rotations))
                     .angularVelocity(sysIdVelocity.mut_replace(shooterKrakenRight.getRotorVelocity().getValueAsDouble(), Units.RotationsPerSecond));
-                // log.motor("shooter-vortex-left")
-                //     .voltage(sysIdAppliedVoltage.mut_replace(shooterVortexLeft.getAppliedOutput() * shooterVortexLeft.getBusVoltage(), Volts))
-                //     .angularPosition(sysIdPosition.mut_replace(leftVortexEncoder.getPosition(), Units.Rotations))
-                //     .angularVelocity(sysIdVelocity.mut_replace(leftVortexEncoder.getVelocity() / 60.0, Units.RotationsPerSecond));  //divide by 60 to convert RPM to RPS
-                // log.motor("shooter-vortex-right")
-                //     .voltage(sysIdAppliedVoltage.mut_replace(shooterVortexRight.getAppliedOutput() * shooterVortexRight.getBusVoltage(), Volts))
-                //     .angularPosition(sysIdPosition.mut_replace(rightVortexEncoder.getPosition(), Units.Rotations))
-                //     .angularVelocity(sysIdVelocity.mut_replace(rightVortexEncoder.getVelocity() / 60.0, Units.RotationsPerSecond));
             },
             this
         )
@@ -162,18 +141,6 @@ public class ShooterYams extends SubsystemBase {
         rpmTable.put(2.0, 1500.0); // At 2m, 1500 RPM
         rpmTable.put(4.0, 2500.0); // At 4m, 2500 RPM
         rpmTable.put(6.0, 3000.0); // At 6m, 3000 RPM
-
-        var sparkMaxConfig = new SparkMaxConfig();
-        sparkMaxConfig.idleMode(IdleMode.kCoast);
-        sparkMaxConfig.voltageCompensation(12.0);
-
-        // var sparkFlexConfig = new SparkFlexConfig();
-        // sparkFlexConfig.idleMode(IdleMode.kCoast);
-        // sparkFlexConfig.follow(Constants.CanID.SHOOTER_VORTEX_RIGHT, true);
-        // sparkFlexConfig.voltageCompensation(12.0);
-
-        // shooterVortexLeft.configure(sparkFlexConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
-        // shooterVortexRight.configure(sparkMaxConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
     }
 
     public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
@@ -213,48 +180,30 @@ public class ShooterYams extends SubsystemBase {
         leftKrakenVelocityPublisher.set(shooterKrakenLeft.getVelocity().getValueAsDouble() / 60);
         leftKrakenVoltagePublisher.set(shooterKrakenLeft.getMotorVoltage().getValueAsDouble());
 
-        // rightVortexVoltagePublisher.set(shooterVortexRight.getAppliedOutput() * shooterVortexRight.getBusVoltage());
-        // rightVortexVelocityPublisher.set(rightVortexEncoder.getVelocity());
-        // leftVortexVoltagePublisher.set(shooterVortexLeft.getAppliedOutput() * shooterVortexLeft.getBusVoltage());
-        // leftVortexVelocityPublisher.set(leftVortexEncoder.getVelocity());
+        double currentRpm = shooterKraken.getSpeed().in(Units.RPM);
+        shooterCurrentVelocityPublisher.set(currentRpm);
+        shooterTargetVelocityPublisher.set(targetRpm);
+
+        if (targetRpm != 0.0 && !atTargetRpm) {
+            if ((targetRpm - currentRpm) <= 100.00) {
+                atTargetRpm = true;
+                targetRpm = 0.0;
+            }
+        }
+
+        AlertManager.addAlert("ShooterRPM", "At Target? " + (atTargetRpm ? "Yes" : "No"), AlertType.kInfo);
     }
 
     public void setShooterAngularVelocity(AngularVelocity rpmTarget) {
+        targetRpm = rpmTarget.in(Units.RPM);
+        atTargetRpm = false;
         shooterKraken.setMechanismVelocitySetpoint(rpmTarget);
-        double leaderVolts = shooterKrakenRight.getMotorVoltage().getValueAsDouble();
-        // shooterVortexLeft.setVoltage(-leaderVolts);  //left is follow, will auto apply voltage from primary
-        //TODO: uncomment the below again when done  testing
-        // shooterVortexRight.setVoltage(leaderVolts);
-    }
-
-    private void setBrakeModeForAllMotors(boolean isBrake) {
-        var leftKrakenConfigurator = shooterKrakenLeft.getConfigurator();
-        var leftKrakenConfigs = new TalonFXConfiguration();
-        leftKrakenConfigurator.refresh(leftKrakenConfigs);  //read device settings from the motor and store them in the config object
-        leftKrakenConfigs.MotorOutput.NeutralMode = isBrake ? NeutralModeValue.Brake : NeutralModeValue.Coast;  //modify the config object to set the desired brake mode
-        leftKrakenConfigurator.apply(leftKrakenConfigs);  //write the updated config back to the motor
-
-        var rightKrakenConfigurator = shooterKrakenRight.getConfigurator();
-        var rightKrakenConfigs = new TalonFXConfiguration();
-        rightKrakenConfigurator.refresh(rightKrakenConfigs);
-        rightKrakenConfigs.MotorOutput.NeutralMode = isBrake ? NeutralModeValue.Brake : NeutralModeValue.Coast;
-        rightKrakenConfigurator.apply(rightKrakenConfigs);
-
-        // var sparkMaxConfig = new SparkMaxConfig();
-        // sparkMaxConfig.idleMode(isBrake ? IdleMode.kBrake : IdleMode.kCoast);
-        // var sparkFlexConfig = new SparkFlexConfig();
-        // sparkFlexConfig.idleMode(isBrake ? IdleMode.kBrake : IdleMode.kCoast);
-        // shooterVortexLeft.configure(sparkFlexConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
-        // shooterVortexRight.configure(sparkMaxConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
     }
 
     public void stopShooter() {
-        // setBrakeModeForAllMotors(true);
+        targetRpm = 0.0;
+        atTargetRpm = true;
         shooterKraken.setMechanismVelocitySetpoint(Units.RPM.of(0));
-        double krakenVolts = shooterKrakenRight.getMotorVoltage().getValueAsDouble();
-        //TODO: uncomment the below again when done testing
-        // shooterVortexLeft.setVoltage(krakenVolts);
-        // shooterVortexRight.setVoltage(krakenVolts);
     }
 
     public Command prepVariableDistanceShot(Supplier<Distance> shotDistanceSupplier) {
@@ -334,5 +283,8 @@ public class ShooterYams extends SubsystemBase {
         this.defaultCommandIsStop = defaultCommandIsStop;
     }
 
-    
+    public Trigger getAtRpmTrigger() {
+        return atRpmTrigger;
+    }
+
 }

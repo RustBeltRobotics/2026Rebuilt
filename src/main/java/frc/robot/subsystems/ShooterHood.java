@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.Volts;
 
 import java.util.function.DoubleSupplier;
 
+import com.ctre.phoenix6.SignalLogger;
 import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
@@ -16,6 +17,8 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -25,13 +28,16 @@ import edu.wpi.first.units.measure.MutAngle;
 import edu.wpi.first.units.measure.MutAngularVelocity;
 import edu.wpi.first.units.measure.MutVoltage;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
+import frc.robot.util.AlertManager;
 
 public class ShooterHood extends SubsystemBase {
 
@@ -44,6 +50,16 @@ public class ShooterHood extends SubsystemBase {
     // private SparkAbsoluteEncoder throughBoreAbsoluteEncoder = hoodMotor.getAbsoluteEncoder();
     private final SimpleMotorFeedforward hoodAngleFeedforward;
     private final PIDController hoodAnglePidController;
+    private boolean hoodRunning;
+    private boolean stallDetected;
+    private Debouncer stallDetectionDebouncer = new Debouncer(0.25, DebounceType.kRising);
+    private Trigger shouldStopHoodTrigger = new Trigger(() -> {
+        if (hoodRunning && stallDetected) {
+            return true;
+        } else {
+            return false;
+        }
+    });
 
     // private final DoublePublisher absoluteEncoderPositionPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Hood/Absolute/Position").publish();
     // private final DoublePublisher quadratureEncoderPositionPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Hood/Quadrature/Position").publish();
@@ -53,6 +69,7 @@ public class ShooterHood extends SubsystemBase {
     private final MutVoltage sysIdAppliedVoltage = Volts.mutable(0);
     private final MutAngle sysIdPosition = Units.Rotations.mutable(0);
     private final MutAngularVelocity sysIdVelocity = Units.RotationsPerSecond.mutable(0);
+    private boolean sysIdTestsStarted = false;
 
     public ShooterHood() {
         //108:1 gear ratio, 360 degrees per revolution of the output shaft
@@ -123,7 +140,12 @@ public class ShooterHood extends SubsystemBase {
         // }
         // quadratureEncoderPositionPublisher.set(throughBoreRelativeEncoder.getPosition());
         relativeEncoderPositionPublisher.set(relativeEncoder.getPosition());
-        currentPublisher.set(hoodMotor.getOutputCurrent());
+        double hoodOutputCurrent = hoodMotor.getOutputCurrent();
+        currentPublisher.set(hoodOutputCurrent);
+
+        // stallDetected = stallDetectionDebouncer.calculate(hoodOutputCurrent >= 25.0);
+        stallDetected = hoodOutputCurrent >= 25.0;
+        AlertManager.addAlert("ShooterHood", "ShooterHood stallDetected? " + (stallDetected ? "Yes" : "No"), AlertType.kInfo);
     }
     
     @Override
@@ -155,15 +177,46 @@ public class ShooterHood extends SubsystemBase {
         return this.run(() -> hoodMotor.set(speedSupplier.getAsDouble())).withName("Hood run duty cycle");
     }
 
+    public Command runUpToHardStop() {
+        return this.run(() -> {
+            hoodRunning = true;
+            hoodMotor.set(0.15);
+        }).until(() -> shouldStopHoodTrigger.getAsBoolean()).andThen(() -> hoodRunning = false).andThen(stop()).withName("Hood runUpToHardStop");
+    }
+
+    public Command runDownToHardStop() {
+        return this.run(() -> {
+            hoodRunning = true;
+             hoodMotor.set(-0.15);
+        }).until(() -> shouldStopHoodTrigger.getAsBoolean()).andThen(() -> hoodRunning = false).andThen(stop()).withName("Hood runDownToHardStop");
+    }
+
     public Command stop() {
         return this.run(() -> hoodMotor.stopMotor()).withName("Stop Hood");
     }
 
+    public Command startSysIdLogging() {
+        return runOnce(() -> {
+            if (!sysIdTestsStarted) {
+                SignalLogger.stop();
+                sysIdTestsStarted = true;
+                SignalLogger.start();
+            }
+        });
+    }
+
+    public Command stopSysIdLogging() {
+        return runOnce(() -> {
+            sysIdTestsStarted = false;
+            SignalLogger.stop();
+        });
+    }
+
     public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-        return sysIdRoutine.quasistatic(direction);
+        return startSysIdLogging().andThen(sysIdRoutine.quasistatic(direction));
     }
 
     public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-        return sysIdRoutine.dynamic(direction);
+        return startSysIdLogging().andThen(sysIdRoutine.dynamic(direction));
     }
 }

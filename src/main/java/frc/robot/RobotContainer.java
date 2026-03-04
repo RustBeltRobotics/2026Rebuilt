@@ -10,11 +10,13 @@ import java.util.function.Supplier;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.FollowPathCommand;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.XboxController;
@@ -22,13 +24,15 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.DefaultLedCommand;
 import frc.robot.subsystems.Climber;
-import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.IntakeArm;
+import frc.robot.subsystems.IntakeRoller;
 import frc.robot.subsystems.LED;
 import frc.robot.subsystems.ShooterFeederYams;
 import frc.robot.subsystems.ShooterHood;
@@ -62,7 +66,8 @@ public class RobotContainer {
   private final ShooterFeederYams shooterFeeder = new ShooterFeederYams();
   private final ShooterHood shooterHood = new ShooterHood();
   private final Spindexer spindexer = new Spindexer();
-  private final Intake intake = new Intake();
+  private final IntakeRoller intakeRoller = new IntakeRoller();
+  private final IntakeArm intakeArm = new IntakeArm();
   // private final Climber climber = new Climber();
   private final LED led = new LED();
   private final VisionSystem visionSystem;
@@ -110,6 +115,16 @@ public class RobotContainer {
 
   private void registerPathPlannerNamedCommands() {
     //TODO: implement
+
+    //TODO: Create named commands to run shooter for set number of seconds (however long it takes to empty expected number of fuel from the hopper)
+    Command runFullShootingSystem = Commands.parallel(
+          shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TEST_RPM),
+          Commands.sequence(Commands.waitSeconds(Constants.Spindexer.SHOOT_SEQUENCE_SPIN_START_DELAY_SECONDS), shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM)),
+          Commands.sequence(Commands.waitSeconds(Constants.Spindexer.SHOOT_SEQUENCE_SPIN_START_DELAY_SECONDS), spindexer.spin())  //TODO: graph and tune this delay based on time for shooter to get up to speed (adjust if we leave the shooter running at low RPM idle between shots)
+        ).withTimeout(9.0);  //TODO: We may want to lower the timeout here, evaluate after testing
+
+    NamedCommands.registerCommand("basic-shoot", runFullShootingSystem);
+    NamedCommands.registerCommand("shooter-low-idle", Commands.runOnce(() -> shooter.setShooterAngularVelocity(Units.RPM.of(1000)), shooter));
   }
 
   /**
@@ -142,13 +157,26 @@ public class RobotContainer {
 
         // Reset the field-centric heading (set robot forward direction) on left bumper press.
         driverController.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));  
+        
 
-        driverController.rightBumper().whileTrue(intake.extendForIntakeSequence());
-        driverController.rightBumper().onFalse(intake.stopExtendRetract());
+        Command intakeFuelSequence = Commands.parallel(intakeRoller.intakeFuel(), intakeArm.extendForIntakeSequence());
+
+        driverController.rightBumper().whileTrue(intakeFuelSequence);
+        driverController.rightBumper().onFalse(Commands.parallel(intakeRoller.stopIntakeWheelRotation(), intakeArm.stopExtendRetract()));
         // driverController.leftTrigger().whileTrue(shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM));
         // driverController.rightTrigger().whileTrue(spindexer.spin());
 
-        driverController.x().whileTrue(shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TEST_RPM));
+        //TODO: test this, then integrate it into the shoot sequence command to run in parallel with the shooter, feeder and spindexer commands. This is intended to help prevent jams by agitating the fuel in the hopper while shooting.
+        // driverController.b().whileTrue(intakeRoller.agitate());
+
+        //TODO: swap out and test replacing the runFullShootingSystem command sequence below with this new one:
+        // Command newFullSequence = new SequentialCommandGroup(
+        //     shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TEST_RPM),
+        //     Commands.waitUntil(shooter.getAtRpmTrigger()),
+        //     Commands.parallel(
+        //       shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM)),
+        //       spindexer.spin()
+        // );
 
         Command runFullShootingSystem = Commands.parallel(
           shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TEST_RPM),
@@ -157,12 +185,15 @@ public class RobotContainer {
         );
 
         Command runFullShootingSystemInReverse = Commands.parallel(
-          shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TEST_RPM.unaryMinus()),
+          shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TEST_RPM),
           shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM.unaryMinus()),
           spindexer.runAtDutyCycle(-Constants.Spindexer.SPIN_DUTY_CYCLE)
         );
         driverController.rightTrigger().whileTrue(runFullShootingSystem);
         driverController.leftTrigger().whileTrue(runFullShootingSystemInReverse);
+
+        // Command intakeFuelSequence = Commands.parallel(intakeRoller.intakeFuel(), intakeArm.extendForIntakeSequence());
+
 
         //When x is pressed, toggle between running shooter at low RPM idle vs. stopped when not shooting.
         Command toggleShooterLowIdleEnabledCommand = Commands.runOnce(() -> {
@@ -171,15 +202,19 @@ public class RobotContainer {
           shooter.setDefaultCommand(newState ? shooter.stop() : shooter.idleAtLowRpm());
           shooter.setDefaultCommandIsStop(newState);
         }, shooter);
-        driverController.x().onTrue(toggleShooterLowIdleEnabledCommand);
+        driverController.b().onTrue(toggleShooterLowIdleEnabledCommand);
 
-        driverController.povLeft().whileTrue(intake.extend());
-        driverController.povRight().whileTrue(intake.retract());
+        driverController.povLeft().whileTrue(intakeArm.extend());
+        Command fullRetractCommand = Commands.parallel(intakeArm.retractForAgitate(), intakeRoller.intakeFuel());
+        driverController.povRight().whileTrue(fullRetractCommand);  //press and relese to 'agitate'
         // driverController.povDown().onTrue(intake.stopExtendRetract());
-        driverController.povUp().whileTrue(shooterHood.runDutyCycle(() -> 0.2));  //hood up
+        driverController.povUp().whileTrue(shooterHood.runDutyCycle(() -> 0.15));  //hood up
         driverController.povUp().onFalse(shooterHood.stop());
-        driverController.povDown().whileTrue(shooterHood.runDutyCycle(() -> -0.2));  //hood down
+        driverController.povDown().whileTrue(shooterHood.runDutyCycle(() -> -0.15));  //hood down
         driverController.povDown().onFalse(shooterHood.stop());
+
+        // driverController.start().onTrue(shooterHood.runUpToHardStop());
+        // driverController.back().onTrue(shooterHood.runDownToHardStop());
 
         //For testing hood control with triggers - run hood at duty cycle based on trigger value (right trigger positive, left trigger negative)
         //don't run these at duty cycle, it applies too much power at the upper ranges and can damage the shaft
@@ -190,6 +225,7 @@ public class RobotContainer {
         // driverController.leftTrigger().whileTrue(shooterHood.runDutyCycle(() -> -0.2));
         // driverController.leftTrigger().onFalse(shooterHood.stop());
 
+        //TODO: uncomment for sysid (need to comment out hood on same buttons)
         // driverController.back().and(driverController.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
         // driverController.back().and(driverController.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
         // driverController.start().and(driverController.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
@@ -214,7 +250,9 @@ public class RobotContainer {
     shooterFeeder.setDefaultCommand(shooterFeeder.stop());
     shooter.setDefaultCommand(shooter.stop());
     spindexer.setDefaultCommand(spindexer.stop());
-    intake.setDefaultCommand(intake.stopIntakeWheelRotation());
+    intakeRoller.setDefaultCommand(intakeRoller.stopIntakeWheelRotation());
+    intakeArm.setDefaultCommand(intakeArm.stopExtendRetract());
+    shooterHood.setDefaultCommand(shooterHood.stop());
     // climber.setDefaultCommand(climber.stopCommand());
     //Default LED command removes all color output (sets to black)
     led.setDefaultCommand(new DefaultLedCommand(led));
@@ -284,5 +322,9 @@ public class RobotContainer {
 
   public static void setMaxSpeedFactor(double newSpeedFactor) {
     MAX_SPEED_FACTOR = newSpeedFactor;
+  }
+
+  public ShooterHood getShooterHood() {
+    return shooterHood;
   }
 }

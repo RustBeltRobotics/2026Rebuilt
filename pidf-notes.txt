@@ -25,4 +25,3 @@ Method 1: Manual Testing (Recommended)
 4. Find Kg (Gravity Gain - Arms/Elevators):
     a. For Arms: Move the arm to the horizontal position. Apply voltage until it holds that position. Kg is the voltage needed to hold it there, which is Vholding * cos(angle).
     b. For Elevators: Apply voltage to hold it steady. Kg is simply that voltage. 
-    

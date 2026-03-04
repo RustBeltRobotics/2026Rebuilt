@@ -68,8 +68,8 @@ public class ShooterFeederYams extends SubsystemBase {
             .withSimFeedforward(new SimpleMotorFeedforward(Constants.ShooterFeeder.K_S, Constants.ShooterFeeder.K_V, Constants.ShooterFeeder.K_A))
             // Telemetry name and verbosity level
             .withTelemetry("FeederMotor", TelemetryVerbosity.HIGH)
-            // Gearing from the motor rotor to final shaft - 1:1 (direct drive)
-            .withGearing(new MechanismGearing(1))
+            // Gearing from the motor rotor to final shaft - 2:1 (direct drive)
+            .withGearing(new MechanismGearing(2.0))
             .withMotorInverted(false)
             .withIdleMode(MotorMode.BRAKE)
             // .withVoltageCompensation(Units.Volts.of(12))  //Note: we can't use this - apparently it's a Pro/paid feature

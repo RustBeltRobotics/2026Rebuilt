@@ -39,8 +39,8 @@ public class Spindexer extends SubsystemBase {
         leftRevConfig.idleMode(IdleMode.kBrake);
         leftRevConfig.voltageCompensation(12.0);
         leftRevConfig.smartCurrentLimit(Constants.CurrentLimit.SparkMax.Neo.SMART_DEFAULT).secondaryCurrentLimit(Constants.CurrentLimit.SparkMax.Neo.SECONDARY_MAX);
-        leftRevConfig.inverted(true);
-        // leftRevConfig.follow(Constants.CanID.SPINDEXER_RIGHT, true);
+        // leftRevConfig.inverted(true);
+        leftRevConfig.follow(Constants.CanID.SPINDEXER_RIGHT, true);
         neoLeft.configure(leftRevConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 

@@ -4,7 +4,6 @@ import java.util.function.Supplier;
 
 import org.photonvision.PhotonUtils;
 
-import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -12,6 +11,7 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.util.FlippingUtil;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
@@ -22,6 +22,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.networktables.BooleanPublisher;
+import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.units.Units;
@@ -31,7 +32,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.util.AlertManager;
@@ -39,8 +40,10 @@ import frc.robot.vision.VisionEstimateConsumer;
 
 public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimateConsumer {
 
-    private StructPublisher<Rotation2d> targetTurnAnglePublisher = NetworkTableInstance.getDefault().getStructTopic("/RBR/AutoTarget/Angle", Rotation2d.struct).publish();
-    private BooleanPublisher isAutoTargetingPublisher = NetworkTableInstance.getDefault().getBooleanTopic("/RBR/AutoTarget/Activated").publish();
+    private final StructPublisher<Rotation2d> targetTurnAnglePublisher = NetworkTableInstance.getDefault().getStructTopic("/RBR/AutoTarget/Angle", Rotation2d.struct).publish();
+    private final BooleanPublisher isAutoTargetingPublisher = NetworkTableInstance.getDefault().getBooleanTopic("/RBR/AutoTarget/Activated").publish();
+    private final DoublePublisher driveForwardSpeedPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/ChassisSpeeds/vxMetersPerSecond").publish();
+    private final DoublePublisher frontLeftDriveCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/Drive/Current/FL").publish();
 
     private final SwerveRequest.FieldCentric teleopRequest = new SwerveRequest.FieldCentric()
         .withDeadband(Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND * Constants.Controls.CONTROLLER_DEADBAND)
@@ -60,6 +63,12 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     private Pose2d latestVisionPose;
     private Rotation2d targetTurnAngle = new Rotation2d();
 
+    Supplier<Pose2d> currentPoseSupplier = () -> getState().Pose;
+    private Trigger nearingUpperTrenchLeftTrigger = nearFieldPositionAutoFlipped(new Translation2d(4.0, 6.772), 2.0, currentPoseSupplier);
+    private Trigger nearingUpperTrenchRightTrigger = nearFieldPositionAutoFlipped(new Translation2d(5.223, 6.597), 2.0, currentPoseSupplier);
+    private Trigger nearingLowerTrenchLeftTrigger = nearFieldPositionAutoFlipped(new Translation2d(4.0, 1.314), 2.0, currentPoseSupplier);
+    private Trigger nearingLowerTrenchRightTrigger = nearFieldPositionAutoFlipped(new Translation2d(5.223, 1.330), 2.0, currentPoseSupplier);
+
     public Drivetrain() {
         super(TunerConstants.DrivetrainConstants, TunerConstants.FrontLeft, TunerConstants.FrontRight, TunerConstants.BackLeft, TunerConstants.BackRight);
         configureAutoBuilder();
@@ -68,6 +77,11 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     @Override
     public void periodic() {
         super.periodic();
+
+        SwerveDriveState swerveDriveState = getState();
+        driveForwardSpeedPublisher.set(swerveDriveState.Speeds.vxMetersPerSecond);
+        frontLeftDriveCurrentPublisher.set(getModule(0).getDriveMotor().getStatorCurrent().getValueAsDouble());
+
         Pigeon2 pigeon2 = getPigeon2();
         double robotPitch = Math.abs(pigeon2.getPitch().getValueAsDouble());
         double robotRoll = Math.abs(pigeon2.getRoll().getValueAsDouble());
@@ -101,6 +115,7 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     }
 
     private double modifyDriverControllerInput(double input) {
+       
         // scale the controller input - See https://www.desmos.com/calculator/bnqnldev69 for function graph
         return (Math.signum(input) * Math.pow(Math.abs(input), 3.7) + (input * 0.43)) / (1 + 0.42);
     }
@@ -199,6 +214,21 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
         }
         this.addVisionMeasurement(pose, timestamp, estimationStdDevs);
         this.latestVisionPose = pose;
+    }
+
+    //Taken from PathPlanner's AutoBuilder class for use outside the context of autnomous
+    private Trigger nearFieldPositionAutoFlipped(Translation2d blueFieldPosition, double toleranceMeters, Supplier<Pose2d> currentPoseSupplier) {
+        return new Trigger(
+            () -> {
+                boolean shouldFlipProvidedPosition = DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
+                if (shouldFlipProvidedPosition) {
+                    Translation2d redFieldPosition = FlippingUtil.flipFieldPosition(blueFieldPosition);
+                    return currentPoseSupplier.get().getTranslation().getDistance(redFieldPosition) <= toleranceMeters;
+                } else {
+                    return currentPoseSupplier.get().getTranslation().getDistance(blueFieldPosition) <= toleranceMeters;
+                }
+            }
+        );
     }
 
 }

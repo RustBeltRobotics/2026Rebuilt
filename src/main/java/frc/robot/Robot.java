@@ -8,13 +8,17 @@ import org.littletonrobotics.urcl.URCL;
 
 import com.ctre.phoenix6.HootAutoReplay;
 import com.ctre.phoenix6.SignalLogger;
+import com.pathplanner.lib.commands.PathPlannerAuto;
 
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.hardware.PowerManagement;
 
 /**
@@ -55,7 +59,7 @@ public class Robot extends TimedRobot {
     DriverStation.startDataLog(DataLogManager.getLog());
 
     // Log Phoenix / CTRE device signals (this code is only necessary outside of competition)
-    // SignalLogger.setPath("/media/sdb1/logs/");
+    SignalLogger.setPath("/media/sda1/logs/");
 
     SignalLogger.start();
 
@@ -101,6 +105,15 @@ public class Robot extends TimedRobot {
 
     // schedule the autonomous command (example)
     if (autonomousCommand != null) {
+      if (autonomousCommand instanceof PathPlannerAuto) {
+        PathPlannerAuto ppAuto = (PathPlannerAuto) autonomousCommand;
+
+        //TODO: automatically lower the hood when approaching the trench so we don't rip it off
+       
+        //Something like this, but likely we need more criteria than just being near the trench to lower the hood, so this is just a placeholder for now
+        // nearingUpperTrenchLeftTrigger.onTrue(Commands.runOnce(() -> robotContainer.getShooterHood().runToAngle(0.0)));
+      }
+
       CommandScheduler.getInstance().schedule(autonomousCommand);
     }
   }
