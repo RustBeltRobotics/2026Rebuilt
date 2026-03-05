@@ -46,6 +46,7 @@ public class IntakeArm extends SubsystemBase {
     public IntakeArm() {
         var extendRetractConfig = new SparkMaxConfig();
         extendRetractConfig.idleMode(IdleMode.kBrake);
+        extendRetractConfig.smartCurrentLimit(35).secondaryCurrentLimit(60);
         extendRetractMotor.configure(extendRetractConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 
@@ -54,7 +55,7 @@ public class IntakeArm extends SubsystemBase {
         extendRetractMotorOutputCurrentAmps = extendRetractMotor.getOutputCurrent();
         extendRetractCurrentPublisher.set(extendRetractMotorOutputCurrentAmps);
         //TODO: Try and re-enable this debouncer to see if it works - it was causing issues previous;y
-        stallDetected = stallDetectionDebouncer.calculate(extendRetractMotorOutputCurrentAmps >= 65.0);
+        stallDetected = stallDetectionDebouncer.calculate(extendRetractMotorOutputCurrentAmps >= 35.0);
         // stallDetected = extendRetractMotorOutputCurrentAmps >= 65.0;
 
         if (stallDetected) {

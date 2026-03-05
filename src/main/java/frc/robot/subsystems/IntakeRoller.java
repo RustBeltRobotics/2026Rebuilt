@@ -8,16 +8,10 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
-import edu.wpi.first.math.filter.Debouncer;
-import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.Tracer;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
 
 public class IntakeRoller extends SubsystemBase {
@@ -31,6 +25,8 @@ public class IntakeRoller extends SubsystemBase {
         var rotateIntakeShaftConfig = new SparkMaxConfig();
         rotateIntakeShaftConfig.idleMode(IdleMode.kBrake);
         rotateIntakeShaftConfig.inverted(true);
+        rotateIntakeShaftConfig.smartCurrentLimit(35).secondaryCurrentLimit(60);
+
         rotateIntakeShaftMotor.configure(rotateIntakeShaftConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 
