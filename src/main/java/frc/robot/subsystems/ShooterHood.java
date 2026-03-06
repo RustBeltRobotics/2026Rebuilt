@@ -52,7 +52,7 @@ public class ShooterHood extends SubsystemBase {
     private final PIDController hoodAnglePidController;
     private boolean hoodRunning;
     private boolean stallDetected;
-    private Debouncer stallDetectionDebouncer = new Debouncer(0.25, DebounceType.kRising);
+    private Debouncer stallDetectionDebouncer = new Debouncer(0.02, DebounceType.kRising);
     private Trigger shouldStopHoodTrigger = new Trigger(() -> {
         if (hoodRunning && stallDetected) {
             return true;
@@ -64,6 +64,7 @@ public class ShooterHood extends SubsystemBase {
     // private final DoublePublisher absoluteEncoderPositionPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Hood/Absolute/Position").publish();
     // private final DoublePublisher quadratureEncoderPositionPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Hood/Quadrature/Position").publish();
     private final DoublePublisher relativeEncoderPositionPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Hood/Relative/Position").publish();
+    private final DoublePublisher relativeEncoderVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Hood/Relative/Velocity").publish();
     private final DoublePublisher currentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Hood/Current").publish();
 
     private final MutVoltage sysIdAppliedVoltage = Volts.mutable(0);
@@ -88,7 +89,7 @@ public class ShooterHood extends SubsystemBase {
         motorConfig.encoder.positionConversionFactor(conversionFactor).velocityConversionFactor(conversionFactor);
         motorConfig.smartCurrentLimit(Constants.CurrentLimit.SparkMax.Neo550.SMART_DEFAULT).secondaryCurrentLimit(Constants.CurrentLimit.SparkMax.Neo550.SECONDARY_MAX);
         hoodMotor.configure(motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-        relativeEncoder.setPosition(0.0);
+        relativeEncoder.setPosition(0.0);  //zero the encoder on startup
         // throughBoreRelativeEncoder.setPosition(0.0);  //Zero the through bore relative encoder on startup
 
         // if (throughBoreAbsoluteEncoder != null) {
@@ -142,9 +143,12 @@ public class ShooterHood extends SubsystemBase {
         relativeEncoderPositionPublisher.set(relativeEncoder.getPosition());
         double hoodOutputCurrent = hoodMotor.getOutputCurrent();
         currentPublisher.set(hoodOutputCurrent);
+        double rawVelocity = relativeEncoder.getVelocity();
+        relativeEncoderVelocityPublisher.set(rawVelocity);
+        double armMotorVelocityRps = Math.abs(rawVelocity / 60);
 
-        // stallDetected = stallDetectionDebouncer.calculate(hoodOutputCurrent >= 25.0);
-        stallDetected = hoodOutputCurrent >= 25.0;
+        // stallDetected = hoodOutputCurrent >= 25.0;
+        stallDetected = stallDetectionDebouncer.calculate(armMotorVelocityRps < 1 && hoodOutputCurrent >= 20.0);
         AlertManager.addAlert("ShooterHood", "ShooterHood stallDetected? " + (stallDetected ? "Yes" : "No"), AlertType.kInfo);
     }
     
@@ -181,14 +185,21 @@ public class ShooterHood extends SubsystemBase {
         return this.run(() -> {
             hoodRunning = true;
             hoodMotor.set(0.15);
-        }).until(() -> shouldStopHoodTrigger.getAsBoolean()).andThen(() -> hoodRunning = false).andThen(stop()).withName("Hood runUpToHardStop");
+        }).until(() -> shouldStopHoodTrigger.getAsBoolean())
+        .andThen(() -> hoodRunning = false)
+        .andThen(stop())
+        .withName("Hood runUpToHardStop");
     }
 
     public Command runDownToHardStop() {
         return this.run(() -> {
             hoodRunning = true;
-             hoodMotor.set(-0.15);
-        }).until(() -> shouldStopHoodTrigger.getAsBoolean()).andThen(() -> hoodRunning = false).andThen(stop()).withName("Hood runDownToHardStop");
+            hoodMotor.set(-0.15);
+        }).until(() -> shouldStopHoodTrigger.getAsBoolean())
+        .andThen(() -> hoodRunning = false)
+        .andThen(stop())
+        .andThen(() -> relativeEncoder.setPosition(0.0))
+        .withName("Hood runDownToHardStop");
     }
 
     public Command stop() {

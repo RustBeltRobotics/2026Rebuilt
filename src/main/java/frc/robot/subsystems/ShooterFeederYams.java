@@ -6,7 +6,6 @@ import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.revrobotics.RelativeEncoder;
 
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
@@ -133,7 +132,7 @@ public class ShooterFeederYams extends SubsystemBase {
         feederTargetVelocityPublisher.set(targetRpm);
 
         if (targetRpm != 0.0 && !atTargetRpm) {
-            if ((targetRpm - currentRpm) <= 100.00) {
+            if ((Math.abs(targetRpm) - Math.abs(currentRpm)) <= 100.00) {
                 atTargetRpm = true;
                 targetRpm = 0.0;
             }
@@ -165,6 +164,10 @@ public class ShooterFeederYams extends SubsystemBase {
 
     public Command stop() {
         return this.run(() -> stopFeeder()).withName("Stop Shooter Feeder");
+    }
+
+    public Trigger getAtRpmTrigger() {
+        return atRpmTrigger;
     }
 
 }

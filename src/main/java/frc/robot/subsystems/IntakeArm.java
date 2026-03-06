@@ -13,10 +13,7 @@ import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Alert.AlertType;
-import edu.wpi.first.wpilibj.Tracer;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
@@ -29,7 +26,7 @@ public class IntakeArm extends SubsystemBase {
     private double extendRetractMotorOutputCurrentAmps;
     private boolean isExtending;
     private boolean stallDetected;
-    private Debouncer stallDetectionDebouncer = new Debouncer(0.25, DebounceType.kRising);
+    private Debouncer stallDetectionDebouncer = new Debouncer(0.1, DebounceType.kRising);
     private Trigger shouldStopExtendRetract = new Trigger(() -> {
         if (isExtending && stallDetected) {
             return true;
@@ -48,20 +45,18 @@ public class IntakeArm extends SubsystemBase {
         extendRetractConfig.idleMode(IdleMode.kBrake);
         extendRetractConfig.smartCurrentLimit(70).secondaryCurrentLimit(60);
         extendRetractMotor.configure(extendRetractConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        extendRetractEncoder.setPosition(0.0);  //zero the encoder on startup
     }
 
     @Override
     public void periodic() {
         extendRetractMotorOutputCurrentAmps = extendRetractMotor.getOutputCurrent();
         extendRetractCurrentPublisher.set(extendRetractMotorOutputCurrentAmps);
-        //TODO: Try and re-enable this debouncer to see if it works - it was causing issues previous;y
-        stallDetected = stallDetectionDebouncer.calculate(extendRetractMotorOutputCurrentAmps >= 50.0);
-        // stallDetected = extendRetractMotorOutputCurrentAmps >= 65.0;
-
-        if (stallDetected) {
-            // extendRetractEncoder.setPosition(0.0);
-        }
-        extendRetractVelocityPublisher.set(extendRetractEncoder.getVelocity());
+        double rawVelocity = extendRetractEncoder.getVelocity();
+        extendRetractVelocityPublisher.set(rawVelocity);
+        double extendRetractMotorVelocityRps = Math.abs(rawVelocity / 60);
+        stallDetected = stallDetectionDebouncer.calculate(extendRetractMotorVelocityRps < 1 && extendRetractMotorOutputCurrentAmps >= 50.0);
+        
         AlertManager.addAlert("IntakeArm", "IntakeArm stallDetected? " + (stallDetected ? "Yes" : "No"), AlertType.kInfo);
     }
 

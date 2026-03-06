@@ -185,7 +185,7 @@ public class ShooterYams extends SubsystemBase {
         shooterTargetVelocityPublisher.set(targetRpm);
 
         if (targetRpm != 0.0 && !atTargetRpm) {
-            if ((targetRpm - currentRpm) <= 100.00) {
+            if ((Math.abs(targetRpm) - Math.abs(currentRpm)) <= 100.00) {
                 atTargetRpm = true;
                 targetRpm = 0.0;
             }
