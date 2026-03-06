@@ -11,12 +11,17 @@ import com.revrobotics.RelativeEncoder;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
+import frc.robot.util.AlertManager;
 import yams.gearing.MechanismGearing;
 import yams.mechanisms.config.FlyWheelConfig;
 import yams.mechanisms.velocity.FlyWheel;
@@ -31,6 +36,12 @@ public class ShooterFeederYams extends SubsystemBase {
 
     private final TalonFX feederKrakenLeft = new TalonFX(Constants.CanID.FEEDER_KRAKEN_LEFT, CANBus.roboRIO()); //primary
     private final TalonFX feederKrakenRight = new TalonFX(Constants.CanID.FEEDER_KRAKEN_RIGHT, CANBus.roboRIO()); //follower
+    private double targetRpm;
+    private boolean atTargetRpm = false;
+    private final Trigger atRpmTrigger = new Trigger(() -> atTargetRpm);
+
+    private final DoublePublisher feederCurrentVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Feeder/Velocity/Current").publish();
+    private final DoublePublisher feederTargetVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Feeder/Velocity/Target").publish();
     
     private final VoltageOut sysIdControl = new VoltageOut(0);
     private boolean sysIdTestsStarted = false;
@@ -116,11 +127,29 @@ public class ShooterFeederYams extends SubsystemBase {
     }
 
     @Override
+    public void periodic() {
+        double currentRpm = feederFlywheel.getSpeed().in(Units.RPM);
+        feederCurrentVelocityPublisher.set(currentRpm);
+        feederTargetVelocityPublisher.set(targetRpm);
+
+        if (targetRpm != 0.0 && !atTargetRpm) {
+            if ((targetRpm - currentRpm) <= 100.00) {
+                atTargetRpm = true;
+                targetRpm = 0.0;
+            }
+        }
+
+        AlertManager.addAlert("FeederRPM", "FeederRPM At Target? " + (atTargetRpm ? "Yes" : "No"), AlertType.kInfo);
+    }
+
+    @Override
     public void simulationPeriodic() {
         feederFlywheel.simIterate();
     }
 
     public void setFeederAngularVelocity(AngularVelocity rpmTarget) {
+        targetRpm = rpmTarget.in(Units.RPM);
+        atTargetRpm = false;
         feederFlywheel.setMechanismVelocitySetpoint(rpmTarget);
     }
 
@@ -128,8 +157,14 @@ public class ShooterFeederYams extends SubsystemBase {
         return this.run(() -> setFeederAngularVelocity(rpmTarget)).withName("Feeder velocity: " + rpmTarget);
     }
 
+    public void stopFeeder() {
+        targetRpm = 0.0;
+        atTargetRpm = true;
+        feederFlywheel.setMechanismVelocitySetpoint(Units.RPM.of(0));
+    }
+
     public Command stop() {
-        return this.run(() -> feederFlywheel.setMechanismVelocitySetpoint(Units.RPM.of(0))).withName("Stop Shooter Feeder");
+        return this.run(() -> stopFeeder()).withName("Stop Shooter Feeder");
     }
 
 }

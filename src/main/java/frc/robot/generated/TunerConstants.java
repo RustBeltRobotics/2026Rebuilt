@@ -32,9 +32,8 @@ public class TunerConstants {
 
     //these are the values from running sysid tests
     // private static final Slot0Configs steerGains = new Slot0Configs()
-    //     .withKP(23.36).withKI(0).withKD(0.45325)
-    //     .withKS(0.38774).withKV(2.4207).withKA(0.040089)
-    //     .withKS(0.1).withKV(2.49).withKA(0)
+    //     .withKP(26.673).withKI(0).withKD(1.1781)
+    //     .withKS(0.25682).withKV(2.4386).withKA(0.083418)
     //     .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
 
         

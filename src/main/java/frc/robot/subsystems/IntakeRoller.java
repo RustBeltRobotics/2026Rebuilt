@@ -19,8 +19,9 @@ public class IntakeRoller extends SubsystemBase {
     private final SparkMax rotateIntakeShaftMotor = new SparkMax(Constants.CanID.INTAKE_ROTATE_MOTOR, MotorType.kBrushless);
     private final RelativeEncoder rotateIntakeShaftEncoder = rotateIntakeShaftMotor.getEncoder();
 
+    private final DoublePublisher rotateIntakeShaftCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Intake/Rotation/Current").publish();
     private final DoublePublisher rotateIntakeShaftVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Intake/Rotation/Velocity").publish();
-    
+
     public IntakeRoller() {
         var rotateIntakeShaftConfig = new SparkMaxConfig();
         rotateIntakeShaftConfig.idleMode(IdleMode.kBrake);
@@ -32,6 +33,7 @@ public class IntakeRoller extends SubsystemBase {
 
     @Override
     public void periodic() {
+        rotateIntakeShaftCurrentPublisher.set(rotateIntakeShaftMotor.getOutputCurrent());
         rotateIntakeShaftVelocityPublisher.set(rotateIntakeShaftEncoder.getVelocity());
     }
 
@@ -41,6 +43,10 @@ public class IntakeRoller extends SubsystemBase {
 
     public Command intakeFuel() {
         return startEnd(() -> runIntakeWheelsAtDutyCycle(-1.0), () -> runIntakeWheelsAtDutyCycle(0.0)).withName("Intake rotate fuel");
+    }
+
+    public Command outtakeFuel() {
+        return startEnd(() -> runIntakeWheelsAtDutyCycle(1.0), () -> runIntakeWheelsAtDutyCycle(0.0)).withName("Outtake rotate fuel");
     }
 
     public Command stopIntakeWheelRotation() {

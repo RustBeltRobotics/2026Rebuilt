@@ -191,7 +191,7 @@ public class ShooterYams extends SubsystemBase {
             }
         }
 
-        AlertManager.addAlert("ShooterRPM", "At Target? " + (atTargetRpm ? "Yes" : "No"), AlertType.kInfo);
+        AlertManager.addAlert("ShooterRPM", "ShooterRPM At Target? " + (atTargetRpm ? "Yes" : "No"), AlertType.kInfo);
     }
 
     public void setShooterAngularVelocity(AngularVelocity rpmTarget) {

@@ -5,13 +5,14 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
-import frc.robot.util.AlertManager;
 
 public class PowerManagement {
 
@@ -20,6 +21,9 @@ public class PowerManagement {
     private final Alert brownoutAlert = new Alert("PDH Brownout detected!", AlertType.kWarning);
     private final Set<Integer> channelsInUse;  //avoid alerting on channels we know are not in active use
     private final Map<Integer, String> channelToDeviceMap; //map of PDH channel IDs to device names for clearer alerting
+
+    // private final DoublePublisher totalCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/PDH/Current/Total").publish();
+    // private final DoublePublisher voltageInputPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/PDH/Voltage/Input").publish();
 
     public PowerManagement() {
         powerDistributionHub = new PowerDistribution(Constants.CanID.POWER_DISTRIBUTION, ModuleType.kRev);
@@ -78,19 +82,19 @@ public class PowerManagement {
     }
 
     public void updateTelemetry() {
-        SmartDashboard.putNumber("PDH Input Voltage", powerDistributionHub.getVoltage());
-        SmartDashboard.putNumber("PDH Total Current", powerDistributionHub.getTotalCurrent());
+        SmartDashboard.putData("PDH", powerDistributionHub);
 
         if (powerDistributionHub.getFaults().Brownout) {
             brownoutAlert.set(true);
         }
 
-        for (int channel = 0; channel < NUM_PDH_CHANNELS; channel++) {
-            if (powerDistributionHub.getFaults().getBreakerFault(channel) && channelsInUse.contains(channel)) {
-                AlertManager.addAlert("PDH-Channel-" + channel, "PDH Breaker fault detected on channel " + channel + " (" + channelToDeviceMap.get(channel) + ") - current = " + powerDistributionHub.getCurrent(channel), AlertType.kWarning);
-            } else {
-                AlertManager.removeAlert("PDH-Channel-" + channel);
-            }
-        }
+        //TODO: commented this out for now since it's not overly useful given we do not have channel ID -> device mappings
+        // for (int channel = 0; channel < NUM_PDH_CHANNELS; channel++) {
+        //     if (powerDistributionHub.getFaults().getBreakerFault(channel) && channelsInUse.contains(channel)) {
+        //         AlertManager.addAlert("PDH-Channel-" + channel, "PDH Breaker fault detected on channel " + channel + " (" + channelToDeviceMap.get(channel) + ") - current = " + powerDistributionHub.getCurrent(channel), AlertType.kWarning);
+        //     } else {
+        //         AlertManager.removeAlert("PDH-Channel-" + channel);
+        //     }
+        // }
     }
 }

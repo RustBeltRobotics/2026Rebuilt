@@ -96,8 +96,7 @@ public class RobotContainer {
     });
     Constants.Shuffleboard.COMPETITION_TAB.add("Drive Speed Selector", driveTrainSpeedChooser).withPosition(0, 2).withSize(2, 1);
 
-    //TODO: MJR re-enable this when done performing SysId characterization tests
-    // drivetrain.registerTelemetry(swerveTelemetryCTRE::telemeterize);
+    drivetrain.registerTelemetry(swerveTelemetryCTRE::telemeterize);
 
     if (Constants.Vision.VISION_ENABLED) {
       visionSystem = new VisionSystem(drivetrain::consumeVisionPoseEstimate);
@@ -157,7 +156,6 @@ public class RobotContainer {
 
         // Reset the field-centric heading (set robot forward direction) on left bumper press.
         driverController.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));  
-        
 
         Command intakeFuelSequence = Commands.parallel(intakeRoller.intakeFuel(), intakeArm.extendForIntakeSequence());
 
@@ -178,6 +176,9 @@ public class RobotContainer {
         //       spindexer.spin()
         // );
 
+        //TODO: test integrating this into the runFullShootingSystem command to see if it helps with agitation
+        Command runIntakeRollerAlternating = Commands.sequence(intakeRoller.intakeFuel().withTimeout(0.1), intakeRoller.outtakeFuel().withTimeout(0.1));
+
         Command runFullShootingSystem = Commands.parallel(
           shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TEST_RPM),
           Commands.sequence(Commands.waitSeconds(Constants.Spindexer.SHOOT_SEQUENCE_SPIN_START_DELAY_SECONDS), shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM)),
@@ -195,7 +196,7 @@ public class RobotContainer {
         // Command intakeFuelSequence = Commands.parallel(intakeRoller.intakeFuel(), intakeArm.extendForIntakeSequence());
 
 
-        //When x is pressed, toggle between running shooter at low RPM idle vs. stopped when not shooting.
+        //When b is pressed, toggle between running shooter at low RPM idle vs. stopped when not shooting.
         Command toggleShooterLowIdleEnabledCommand = Commands.runOnce(() -> {
           boolean currentState = shooter.isDefaultCommandIsStop();
           boolean newState = !currentState;
@@ -226,11 +227,11 @@ public class RobotContainer {
         // driverController.leftTrigger().onFalse(shooterHood.stop());
 
         //TODO: uncomment for sysid (need to comment out hood on same buttons)
-        // driverController.back().and(driverController.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
-        // driverController.back().and(driverController.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
-        // driverController.start().and(driverController.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
-        // driverController.start().and(driverController.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
-        // driverController.start().and(driverController.a()).onTrue(drivetrain.stopSysIdLogging());
+        driverController.back().and(driverController.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
+        driverController.back().and(driverController.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
+        driverController.start().and(driverController.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
+        driverController.start().and(driverController.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
+        driverController.start().and(driverController.a()).onTrue(drivetrain.stopSysIdLogging());
 
         //shoot sequence = in parallel(run spindexer, run feeder, run shooter at velocity based on distance to hub)
 

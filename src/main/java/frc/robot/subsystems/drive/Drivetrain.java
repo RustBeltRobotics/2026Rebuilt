@@ -5,6 +5,7 @@ import java.util.function.Supplier;
 import org.photonvision.PhotonUtils;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
+import com.ctre.phoenix6.swerve.SwerveModule;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -44,6 +45,13 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     private final BooleanPublisher isAutoTargetingPublisher = NetworkTableInstance.getDefault().getBooleanTopic("/RBR/AutoTarget/Activated").publish();
     private final DoublePublisher driveForwardSpeedPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/ChassisSpeeds/vxMetersPerSecond").publish();
     private final DoublePublisher frontLeftDriveCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/Drive/Current/FL").publish();
+    private final DoublePublisher frontRightDriveCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/Drive/Current/FR").publish();
+    private final DoublePublisher backLeftDriveCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/Drive/Current/BL").publish();
+    private final DoublePublisher backRightDriveCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/Drive/Current/BR").publish();
+    private final DoublePublisher frontLeftSteerCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/Steer/Current/FL").publish();
+    private final DoublePublisher frontRightSteerCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/Steer/Current/FR").publish();
+    private final DoublePublisher backLeftSteerCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/Steer/Current/BL").publish();
+    private final DoublePublisher backRightSteerCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/Steer/Current/BR").publish();
 
     private final SwerveRequest.FieldCentric teleopRequest = new SwerveRequest.FieldCentric()
         .withDeadband(Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND * Constants.Controls.CONTROLLER_DEADBAND)
@@ -64,6 +72,7 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     private Rotation2d targetTurnAngle = new Rotation2d();
 
     Supplier<Pose2d> currentPoseSupplier = () -> getState().Pose;
+    //TODO: test these for auto-lowering the hood when approaching the trench 
     private Trigger nearingUpperTrenchLeftTrigger = nearFieldPositionAutoFlipped(new Translation2d(4.0, 6.772), 2.0, currentPoseSupplier);
     private Trigger nearingUpperTrenchRightTrigger = nearFieldPositionAutoFlipped(new Translation2d(5.223, 6.597), 2.0, currentPoseSupplier);
     private Trigger nearingLowerTrenchLeftTrigger = nearFieldPositionAutoFlipped(new Translation2d(4.0, 1.314), 2.0, currentPoseSupplier);
@@ -80,7 +89,19 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
 
         SwerveDriveState swerveDriveState = getState();
         driveForwardSpeedPublisher.set(swerveDriveState.Speeds.vxMetersPerSecond);
-        frontLeftDriveCurrentPublisher.set(getModule(0).getDriveMotor().getStatorCurrent().getValueAsDouble());
+
+        SwerveModule<?, ?, ?> frontLeftModule = getModule(0);
+        SwerveModule<?, ?, ?> frontRightModule = getModule(1);
+        SwerveModule<?, ?, ?> backLeftModule = getModule(2);
+        SwerveModule<?, ?, ?> backRightModule = getModule(3);
+        frontLeftDriveCurrentPublisher.set(frontLeftModule.getDriveMotor().getStatorCurrent().getValueAsDouble());
+        frontLeftSteerCurrentPublisher.set(frontLeftModule.getSteerMotor().getStatorCurrent().getValueAsDouble());
+        frontRightDriveCurrentPublisher.set(frontRightModule.getDriveMotor().getStatorCurrent().getValueAsDouble());
+        frontRightSteerCurrentPublisher.set(frontRightModule.getSteerMotor().getStatorCurrent().getValueAsDouble());
+        backLeftDriveCurrentPublisher.set(backLeftModule.getDriveMotor().getStatorCurrent().getValueAsDouble());
+        backLeftSteerCurrentPublisher.set(backLeftModule.getSteerMotor().getStatorCurrent().getValueAsDouble());
+        backRightDriveCurrentPublisher.set(backRightModule.getDriveMotor().getStatorCurrent().getValueAsDouble());
+        backRightSteerCurrentPublisher.set(backRightModule.getSteerMotor().getStatorCurrent().getValueAsDouble());
 
         Pigeon2 pigeon2 = getPigeon2();
         double robotPitch = Math.abs(pigeon2.getPitch().getValueAsDouble());
@@ -160,6 +181,8 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
             targetPose = this.latestVisionPose;
             initialPoseSetViaVision = true;
             AlertManager.addAlert("AutoVision", "Initial AutoPose [" + pose + "] overriden with vision to [" + this.latestVisionPose + "]", AlertType.kInfo);
+        } else {
+            AlertManager.addAlert("AutoVision", "Initial AutoPose [" + pose + "] from PathPlanner accepted as is", AlertType.kInfo);
         }
 
         resetPose(targetPose);

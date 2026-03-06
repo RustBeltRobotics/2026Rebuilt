@@ -1,9 +1,22 @@
 TODO:
+- Review Swerve tab state in AdvantageScope to try and confirm PID behavior on drivetrain
+    - Test new steer gains from sysid
+- Test hood running up/down to hard stop commands to ensure current based stall detection still works
+    - Graph the hood current if it does not, and adjust threshold/debounce time accordingly
+    - See https://www.chiefdelphi.com/t/how-often-are-you-losing-your-kraken-x44-x60-encoder-zeroes/514626/6 for hardStop detection
+- Test intake arm extending in/out to hard stop commands to ensure current based stall detection still works
+    - Graph the intake arm current if it does not, and adjust threshold/debounce time accordingly
+- Test shooter full sequence auto-stop using target RPM reached trigger
+- Test shooter full sequence with runIntakeRollerAlternating integrated for ball agitation
+    - this command needs to be run with the intake arm down/extended and NOT folded up into the robot
+- Create/measure distance (or set field locations) -> shooter RPM and hood angle (or top/bottom) mappings for shots
 - Run SysId tests on drivetrain (including m_sysIdRoutineRotation)
     - Evaluate / test gains from SysId tool
     - Use PID values for m_sysIdRoutineRotation test in Constants.getRotateToPoseController()
 - Run SysId tests on hood
     - Implement position control on hood using relative encoder and PIDF values
+- Test basic auto paths using PathPlanner and tune translation and rotation PIDs
+- Document controller button mappings for driver + operator
 - Test / update CTRE Swerve constants kSlipCurrent
     - https://docs.advantagekit.org/getting-started/template-projects/talonfx-swerve-template/#slip-current-measurement
     - https://v6.docs.ctr-electronics.com/en/stable/docs/hardware-reference/talonfx/improving-performance-with-current-limits.html#preventing-wheel-slip

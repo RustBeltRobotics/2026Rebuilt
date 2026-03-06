@@ -297,7 +297,7 @@ public final class Constants {
   public static final class Shooter {
     public static final Distance SHOOTER_WHEEL_DIAMETER = Units.Inches.of(4.0);
     public static final Mass FLYWHEEL_MASS = Units.Pounds.of(7.9); //This weight does not include the rotating mass of the Neo Vortex motors, which may ass 0.75 lbs.
-    public static final AngularVelocity SHOOTER_TEST_RPM = Units.RPM.of(3100);
+    public static final AngularVelocity SHOOTER_TEST_RPM = Units.RPM.of(3400);  //was 3100
     //3000 RPM for distance from field edge (blue left)
     //4000 RPM for distance from table testing
 
@@ -357,12 +357,11 @@ public final class Constants {
     public static final double POSE_AMBIGUITY_CUTOFF = 0.2;  //https://docs.photonvision.org/en/latest/docs/apriltag-pipelines/3D-tracking.html#ambiguity
     public static final double POSE_AMBIGUITY_SHIFTER = 0.2;
     public static final double POSE_AMBIGUITY_MULTIPLIER = 4.0;
-    public static final double NOISY_DISTANCE_METERS = 2.5;  //distance beyond which vision measurements are noisy
+    public static final double NOISY_DISTANCE_METERS = 2.5;  //distance beyond which vision measurements are noisy (2.5m =~ 8ft)
     public static final double DISTANCE_CUTOFF = 3.0;  //Tag readings beyond this distance (in meters) will be considered invalid
     public static final double DISTANCE_WEIGHT = 7.0;
     public static final int TAG_PRESENCE_WEIGHT = 10;
   
-
     /**
      * Standard deviations for vision measurements. Increase these numbers to trust your
      * vision measurements less. This matrix is in the form [x, y, theta]ᵀ, with units in meters and radians.
@@ -385,7 +384,7 @@ public final class Constants {
       //TODO: update these constants for this year, these values are from last years game
       //Note: these names are set in hardware via https://docs.arducam.com/UVC-Camera/Serial-Number-Tool-Guide/
       public static final String FRONT_CENTER = "Arducam_OV9281_USB_Camera-4";
-      public static final String BACK_RIGHT = "Arducam_OV9281_USB_Camera-3";
+      public static final String BACK_RIGHT = "Arducam_OV9281_USB_Camera-2";
       public static final String BACK_LEFT = "Arducam_OV9281_USB_Camera-1";
     }
 
