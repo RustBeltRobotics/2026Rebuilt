@@ -121,8 +121,8 @@ public class RobotContainer {
           Commands.sequence(Commands.waitSeconds(Constants.Spindexer.SHOOT_SEQUENCE_SPIN_START_DELAY_SECONDS), spindexer.spin())  //TODO: graph and tune this delay based on time for shooter to get up to speed (adjust if we leave the shooter running at low RPM idle between shots)
         ).withTimeout(9.0);  //TODO: We may want to lower the timeout here, evaluate after testing
 
-    NamedCommands.registerCommand("extend-intake", intakeArm.extend().withTimeout(0.5));
-    Command intakeFuelSequence = Commands.parallel(intakeRoller.intakeFuel(), intakeArm.extendForIntakeSequence()).repeatedly();
+    NamedCommands.registerCommand("extend-intake", intakeArm.extend().withTimeout(0.75));
+    Command intakeFuelSequence = Commands.parallel(intakeRoller.intakeFuelForAuto(), intakeArm.extendForIntakeSequenceAuto());
     Command stopIntakeFuelSequence = Commands.parallel(intakeRoller.stopIntakeWheelRotation(), intakeArm.stopExtendRetract());
     NamedCommands.registerCommand("intake-fuel", intakeFuelSequence);
     //TODO: add an .andThen(intakeArm.retract()) to the end of this?
@@ -216,10 +216,12 @@ public class RobotContainer {
         }, shooter);
         driverController.b().onTrue(toggleShooterLowIdleEnabledCommand);
         // driverController.b().whileTrue(runIntakeArmAlternating);
-
-        driverController.povLeft().whileTrue(intakeArm.extend());
         Command fullRetractCommand = Commands.parallel(intakeArm.retractForAgitate(), intakeRoller.intakeFuel());
-        driverController.povRight().whileTrue(fullRetractCommand);  //press and relese to 'agitate'
+
+        // driverController.povLeft().whileTrue(intakeArm.extend());
+        driverController.povLeft().whileTrue(fullRetractCommand);
+        // driverController.povRight().whileTrue(fullRetractCommand);  //press and relese to 'agitate'
+        driverController.povRight().whileTrue(intakeArm.extend());  //press and relese to 'agitate'
         // driverController.povDown().onTrue(intake.stopExtendRetract());
         driverController.povUp().whileTrue(shooterHood.runDutyCycle(() -> 0.15));  //hood up
         driverController.povUp().onFalse(shooterHood.stop());
@@ -306,7 +308,9 @@ public class RobotContainer {
   }
 
   public void updatePeriodic() {
-    visionSystem.periodic();
+    if (visionSystem != null) {
+      visionSystem.periodic();
+    }
     //control LEDs based on robot state
     //TODO: use a color when there are no vision tags visible? i.e. !visionSystem.isReceivedNewVisionData
     if (DriverStation.isAutonomous()) {

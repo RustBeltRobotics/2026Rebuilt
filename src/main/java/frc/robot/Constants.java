@@ -345,12 +345,13 @@ public final class Constants {
 
     //TODO: tune this - max xy error seen roughly 1 - 0.33
     // public static final double translation_P = 1.0;
-    public static final double translation_P = 2.5;
+    public static final double translation_P = 3.5;
     public static final double translation_I = 0.0;
     public static final double translation_D = 0.0;
   }
 
   public static final class Vision {
+    //TODO: re-enable
     public static final boolean VISION_ENABLED = true;
     public static final int APRIL_TAG_PIPELINE_INDEX = 0;
     public static final String ARDUCAM_MODEL = "OV9281";
@@ -409,7 +410,9 @@ public final class Constants {
       // public static final Transform3d FRONT_RIGHT = new Transform3d(CAM_XY_FROM_CENTER_OF_ROBOT, -CAM_XY_FROM_CENTER_OF_ROBOT, CAM_Z_FROM_FLOOR, 
       //   new Rotation3d(0, CAM_PITCH_ANGLE, 0).rotateBy(new Rotation3d(0, 0, -Units.degreesToRadians(45))));  //front right - photonvision2
       //x-, y-, z+, (0, -degrees, 0).rotateBy(0, 0, -135 degrees)
-      public static final Transform3d BACK_RIGHT = new Transform3d(-Units.Inches.of(12.0).in(Units.Meters), -Units.Inches.of(9.0).in(Units.Meters), Units.Inches.of(18.5).in(Units.Meters), 
+
+      // 6" back, 10.5" to the right
+      public static final Transform3d BACK_RIGHT = new Transform3d(-Units.Inches.of(6.0).in(Units.Meters), -Units.Inches.of(10.5).in(Units.Meters), Units.Inches.of(18.5).in(Units.Meters), 
         new Rotation3d(0, 0, 0).rotateBy(new Rotation3d(0, 0, -Units.Degrees.of(90.0).in(Units.Radians))));  //back right - photonvision1
       //x-, y+, z+, (0, -degrees, 0).rotateBy(0, 0, 135 degrees)
       public static final Transform3d BACK_LEFT = new Transform3d(-Units.Inches.of(12.0).in(Units.Meters), Units.Inches.of(9.0).in(Units.Meters), Units.Inches.of(18.5).in(Units.Meters),

@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 public class AlertManager {
 
     private static final Map<String, Alert> ALERTS_BY_KEY = new HashMap<>();
+    private static final Map<String, AlertType> ALERT_TYPES_BY_KEY = new HashMap<>();
 
     /**
      * Add an active alert

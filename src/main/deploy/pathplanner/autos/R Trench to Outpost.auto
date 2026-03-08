@@ -5,15 +5,21 @@
     "data": {
       "commands": [
         {
-          "type": "named",
-          "data": {
-            "name": "shooter-low-idle"
-          }
-        },
-        {
           "type": "path",
           "data": {
             "pathName": "R Trench To R Neutral"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "extend-intake"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "intake-fuel"
           }
         },
         {
@@ -29,6 +35,12 @@
           }
         },
         {
+          "type": "path",
+          "data": {
+            "pathName": "R Neutral to Trench Shot"
+          }
+        },
+        {
           "type": "named",
           "data": {
             "name": "trench-shoot"
@@ -37,7 +49,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "R Neutral to Outpost"
+            "pathName": "R Trench Shot to Neutral"
           }
         }
       ]

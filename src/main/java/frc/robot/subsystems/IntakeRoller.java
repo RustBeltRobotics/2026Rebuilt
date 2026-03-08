@@ -45,6 +45,10 @@ public class IntakeRoller extends SubsystemBase {
         return startEnd(() -> runIntakeWheelsAtDutyCycle(-1.0), () -> runIntakeWheelsAtDutyCycle(0.0)).withName("Intake rotate fuel");
     }
 
+    public Command intakeFuelForAuto() {
+        return runOnce(() -> runIntakeWheelsAtDutyCycle(-1.0));
+    }
+
     public Command outtakeFuel() {
         return startEnd(() -> runIntakeWheelsAtDutyCycle(1.0), () -> runIntakeWheelsAtDutyCycle(0.0)).withName("Outtake rotate fuel");
     }

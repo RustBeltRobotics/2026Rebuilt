@@ -52,9 +52,11 @@ public class ShooterYams extends SubsystemBase {
 
     private final DoublePublisher rightKrakenVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Kraken/Right/Velocity").publish();
     private final DoublePublisher rightKrakenVoltagePublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Kraken/Right/Voltage").publish();
+    private final DoublePublisher rightKrakenCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Kraken/Right/Current").publish();
     private final DoublePublisher leftKrakenVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Kraken/Left/Velocity").publish();
     private final DoublePublisher leftKrakenVoltagePublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Kraken/Left/Voltage").publish();
-    
+    private final DoublePublisher leftKrakenCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Kraken/Left/Current").publish();
+
     private final DoublePublisher shooterCurrentVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Velocity/Current").publish();
     private final DoublePublisher shooterTargetVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Velocity/Target").publish();
 
@@ -82,6 +84,8 @@ public class ShooterYams extends SubsystemBase {
             // .withVoltageCompensation(Units.Volts.of(12)) //Note: we can't use this - apparently it's a Pro/paid feature
             // Motor properties to prevent over currenting.
             .withStatorCurrentLimit(Units.Amps.of(80));  //TODO: verify this limit is not being hit during operation using telemetry, and adjust if necessary
+
+//TODO: use vendor config to potentially set min motor closed loop output to 0 to avoid driving flywheel backwords with PID
 
     private final SmartMotorController shooterKrakenSmartMotorController = new TalonFXWrapper(shooterKrakenRight, DCMotor.getKrakenX60(1), shooterKrakenConfig);
 
@@ -177,8 +181,10 @@ public class ShooterYams extends SubsystemBase {
     public void periodic() {
         rightKrakenVelocityPublisher.set(shooterKrakenRight.getVelocity().getValueAsDouble() / 60);  //Convert RPS to RPM
         rightKrakenVoltagePublisher.set(shooterKrakenRight.getMotorVoltage().getValueAsDouble());
+        rightKrakenCurrentPublisher.set(shooterKrakenRight.getStatorCurrent().getValueAsDouble());
         leftKrakenVelocityPublisher.set(shooterKrakenLeft.getVelocity().getValueAsDouble() / 60);
         leftKrakenVoltagePublisher.set(shooterKrakenLeft.getMotorVoltage().getValueAsDouble());
+        leftKrakenVoltagePublisher.set(shooterKrakenLeft.getStatorCurrent().getValueAsDouble());
 
         double currentRpm = shooterKraken.getSpeed().in(Units.RPM);
         shooterCurrentVelocityPublisher.set(currentRpm);
