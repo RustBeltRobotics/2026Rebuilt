@@ -29,6 +29,8 @@ import edu.wpi.first.units.measure.MutAngularVelocity;
 import edu.wpi.first.units.measure.MutVoltage;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.DataLogManager;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
@@ -65,7 +67,10 @@ public class ShooterHood extends SubsystemBase {
     // private final DoublePublisher quadratureEncoderPositionPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Hood/Quadrature/Position").publish();
     private final DoublePublisher relativeEncoderPositionPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Hood/Relative/Position").publish();
     private final DoublePublisher relativeEncoderVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Hood/Relative/Velocity").publish();
+    private final DoublePublisher voltagePublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Hood/Voltage").publish();
     private final DoublePublisher currentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Hood/Current").publish();
+    private final DoublePublisher feedforwardPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Hood/PIDF/Feedforward").publish();
+    private final DoublePublisher feedbackPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Hood/PIDF/Feedback").publish();
 
     private final MutVoltage sysIdAppliedVoltage = Volts.mutable(0);
     private final MutAngle sysIdPosition = Units.Rotations.mutable(0);
@@ -110,8 +115,8 @@ public class ShooterHood extends SubsystemBase {
 
     private final SysIdRoutine sysIdRoutine = new SysIdRoutine(
          new SysIdRoutine.Config(
-            null,        // Use default ramp rate (1 V/s)
-            Volts.of(4), // Reduce dynamic step voltage to 4 to prevent brownout
+            Volts.of(0.5).per(Units.Second), 
+            Volts.of(3), // Reduce dynamic step voltage to 4 to prevent brownout
             null,        // Use default timeout (10 s)s
             null
         ),
@@ -143,6 +148,7 @@ public class ShooterHood extends SubsystemBase {
         relativeEncoderPositionPublisher.set(relativeEncoder.getPosition());
         double hoodOutputCurrent = hoodMotor.getOutputCurrent();
         currentPublisher.set(hoodOutputCurrent);
+        voltagePublisher.set(hoodMotor.getAppliedOutput() * hoodMotor.getBusVoltage());
         double rawVelocity = relativeEncoder.getVelocity();
         relativeEncoderVelocityPublisher.set(rawVelocity);
         double armMotorVelocityRps = Math.abs(rawVelocity / 60);
@@ -165,7 +171,9 @@ public class ShooterHood extends SubsystemBase {
     public void setAngle(double targetAngleInDegrees) {
         double currentAngle = getAngle();
         double feedforwardVolts = hoodAngleFeedforward.calculate(targetAngleInDegrees);
+        feedforwardPublisher.set(feedforwardVolts);
         double feedbackVolts = hoodAnglePidController.calculate(currentAngle, targetAngleInDegrees);
+        feedbackPublisher.set(feedbackVolts);
         hoodMotor.setVoltage(feedforwardVolts + feedbackVolts);
     }
 
@@ -209,17 +217,20 @@ public class ShooterHood extends SubsystemBase {
     public Command startSysIdLogging() {
         return runOnce(() -> {
             if (!sysIdTestsStarted) {
-                SignalLogger.stop();
+                DataLogManager.stop();
                 sysIdTestsStarted = true;
-                SignalLogger.start();
+                DataLogManager.start();
+                DriverStation.startDataLog(DataLogManager.getLog());
             }
         });
     }
 
     public Command stopSysIdLogging() {
         return runOnce(() -> {
+            DataLogManager.stop();
             sysIdTestsStarted = false;
-            SignalLogger.stop();
+            DataLogManager.start();
+            DriverStation.startDataLog(DataLogManager.getLog());
         });
     }
 

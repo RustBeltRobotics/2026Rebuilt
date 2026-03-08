@@ -43,6 +43,7 @@ public class IntakeArm extends SubsystemBase {
     public IntakeArm() {
         var extendRetractConfig = new SparkMaxConfig();
         extendRetractConfig.idleMode(IdleMode.kBrake);
+        //Note: the gear ratio on this mechanism is 64:1 (4x4x4)
         extendRetractConfig.smartCurrentLimit(70).secondaryCurrentLimit(60);
         extendRetractMotor.configure(extendRetractConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         extendRetractEncoder.setPosition(0.0);  //zero the encoder on startup
@@ -74,7 +75,7 @@ public class IntakeArm extends SubsystemBase {
     public Command extend() {
        return run(() -> {
             isExtending = true;
-            runExtendRetractAtDutyCycle(-0.2);
+            runExtendRetractAtDutyCycle(-0.4);
         })
         .until(() -> shouldStopExtendRetract.getAsBoolean())
         .andThen(stopExtendRetract());

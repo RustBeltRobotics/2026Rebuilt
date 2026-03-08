@@ -84,9 +84,9 @@ public class PowerManagement {
     public void updateTelemetry() {
         SmartDashboard.putData("PDH", powerDistributionHub);
 
-        if (powerDistributionHub.getFaults().Brownout) {
-            brownoutAlert.set(true);
-        }
+        // if (powerDistributionHub.getFaults().Brownout) {
+        //     brownoutAlert.set(true);
+        // }
 
         //TODO: commented this out for now since it's not overly useful given we do not have channel ID -> device mappings
         // for (int channel = 0; channel < NUM_PDH_CHANNELS; channel++) {

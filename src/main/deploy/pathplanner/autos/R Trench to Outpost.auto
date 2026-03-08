@@ -13,13 +13,31 @@
         {
           "type": "path",
           "data": {
-            "pathName": "L Trench"
+            "pathName": "R Trench To R Neutral"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "R Neutral Grab Fuel"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "R Neutral Fuel to Trench"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "trench-shoot"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "R Neutral to Outpost"
           }
         }
       ]

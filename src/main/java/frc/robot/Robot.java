@@ -87,7 +87,7 @@ public class Robot extends TimedRobot {
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
 
-    powerManagement.updateTelemetry(); //check for brownouts and breaker faults on the PDH
+    // powerManagement.updateTelemetry(); //check for brownouts and breaker faults on the PDH
     robotContainer.updateTelemetry();
   }
 

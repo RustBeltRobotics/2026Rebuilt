@@ -44,6 +44,7 @@ public class AlertManager {
             ALERTS_BY_KEY.put(key, alert);
         } else {
             alert.setText(text);
+            //TODO: cache the initial AlertType and if it's different, create a new Alert object as the type cannot be changed via setter
         }
         
         alert.set(true);

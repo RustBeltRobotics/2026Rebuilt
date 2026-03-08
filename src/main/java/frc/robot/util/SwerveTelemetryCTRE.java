@@ -3,6 +3,7 @@ package frc.robot.util;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -51,6 +52,11 @@ public class SwerveTelemetryCTRE {
     private final DoublePublisher driveTimestamp = driveStateTable.getDoubleTopic("Timestamp").publish();
     private final DoublePublisher driveOdometryFrequency = driveStateTable.getDoubleTopic("OdometryFrequency").publish();
 
+    private final DoublePublisher frontLeftTurnTargetPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/Steer/Target/FL").publish();
+    private final DoublePublisher frontLeftTurnActualPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/Steer/Actual/FL").publish();
+    private final DoublePublisher frontLeftDriveTargetPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/Drive/Target/FL").publish();
+    private final DoublePublisher frontLeftDriveActualPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/Drive/Actual/FL").publish();
+
     /* Robot pose for field positioning */
     private final NetworkTable table = inst.getTable("Pose");
     private final DoubleArrayPublisher fieldPub = table.getDoubleArrayTopic("robotPose").publish();
@@ -94,6 +100,11 @@ public class SwerveTelemetryCTRE {
         driveModulePositions.set(state.ModulePositions);
         driveTimestamp.set(state.Timestamp);
         driveOdometryFrequency.set(1.0 / state.OdometryPeriod);
+
+        frontLeftTurnTargetPublisher.set(state.ModuleTargets[0].angle.getDegrees());
+        frontLeftTurnActualPublisher.set(MathUtil.inputModulus(state.ModuleStates[0].angle.getDegrees(), -180, 180));
+        frontLeftDriveTargetPublisher.set(state.ModuleTargets[0].speedMetersPerSecond);
+        frontLeftDriveActualPublisher.set(state.ModuleStates[0].speedMetersPerSecond);
 
         /* Also write to log file */
         SignalLogger.writeStruct("DriveState/Pose", Pose2d.struct, state.Pose);

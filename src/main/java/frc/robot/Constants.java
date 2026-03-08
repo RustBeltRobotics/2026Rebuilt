@@ -285,13 +285,13 @@ public final class Constants {
     public static final double MOTOR_ROTATIONS_PER_HOOD_ROTATION = 700.0;  //700:1 overall gear ratio (gear boxes and gear teeth)
     public static final double THROUGH_BORE_ZERO_OFFSET = 0.0; //TODO: update this value based on telemetry - initial absolute encoder value to treat as zero degrees
     public static final double MIN_DEGREES = 0.0; //Max hood angle
-    public static final double MAX_DEGREES = 30.0; //Max hood angle
-    public static final double K_P = 1.8826;
+    public static final double MAX_DEGREES = 6.0; //Max hood angle
+    public static final double K_P = 5.8054;
     public static final double K_I = 0.0;
-    public static final double K_D = 0.076164;
-    public static final double K_S = 0.033505;  //static feedforward term
-    public static final double K_V = 0.95192;  
-    public static final double K_A = 0.03179;
+    public static final double K_D = 2567.9;
+    public static final double K_S = 0.50211;  //static feedforward term
+    public static final double K_V = 46.887;  
+    public static final double K_A = 10.02;
   }
 
   public static final class Shooter {

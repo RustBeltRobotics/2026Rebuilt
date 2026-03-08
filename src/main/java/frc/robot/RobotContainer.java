@@ -115,15 +115,20 @@ public class RobotContainer {
   private void registerPathPlannerNamedCommands() {
     //TODO: implement
 
-    //TODO: Create named commands to run shooter for set number of seconds (however long it takes to empty expected number of fuel from the hopper)
     Command runFullShootingSystem = Commands.parallel(
           shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TEST_RPM),
           Commands.sequence(Commands.waitSeconds(Constants.Spindexer.SHOOT_SEQUENCE_SPIN_START_DELAY_SECONDS), shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM)),
           Commands.sequence(Commands.waitSeconds(Constants.Spindexer.SHOOT_SEQUENCE_SPIN_START_DELAY_SECONDS), spindexer.spin())  //TODO: graph and tune this delay based on time for shooter to get up to speed (adjust if we leave the shooter running at low RPM idle between shots)
         ).withTimeout(9.0);  //TODO: We may want to lower the timeout here, evaluate after testing
 
-    NamedCommands.registerCommand("basic-shoot", runFullShootingSystem);
-    NamedCommands.registerCommand("shooter-low-idle", Commands.runOnce(() -> shooter.setShooterAngularVelocity(Units.RPM.of(1000)), shooter));
+    NamedCommands.registerCommand("extend-intake", intakeArm.extend().withTimeout(0.5));
+    Command intakeFuelSequence = Commands.parallel(intakeRoller.intakeFuel(), intakeArm.extendForIntakeSequence()).repeatedly();
+    Command stopIntakeFuelSequence = Commands.parallel(intakeRoller.stopIntakeWheelRotation(), intakeArm.stopExtendRetract());
+    NamedCommands.registerCommand("intake-fuel", intakeFuelSequence);
+    //TODO: add an .andThen(intakeArm.retract()) to the end of this?
+    NamedCommands.registerCommand("stop-intake", stopIntakeFuelSequence);
+    NamedCommands.registerCommand("trench-shoot", runFullShootingSystem);
+    NamedCommands.registerCommand("shooter-low-idle", shooter.idleAtLowRpm());
   }
 
   /**
@@ -161,6 +166,9 @@ public class RobotContainer {
 
         driverController.rightBumper().whileTrue(intakeFuelSequence);
         driverController.rightBumper().onFalse(Commands.parallel(intakeRoller.stopIntakeWheelRotation(), intakeArm.stopExtendRetract()));
+
+        driverController.x().whileTrue(intakeRoller.outtakeFuel());
+
         // driverController.leftTrigger().whileTrue(shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM));
         // driverController.rightTrigger().whileTrue(spindexer.spin());
 
@@ -168,16 +176,18 @@ public class RobotContainer {
         // driverController.b().whileTrue(intakeRoller.agitate());
 
         //TODO: swap out and test replacing the runFullShootingSystem command sequence below with this new one:
-        // Command newFullSequence = new SequentialCommandGroup(
-        //     shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TEST_RPM),
-        //     Commands.waitUntil(shooter.getAtRpmTrigger()),
-        //     Commands.parallel(
-        //       shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM)),
-        //       spindexer.spin()
-        // );
+        Command newFullSequence = new SequentialCommandGroup(
+            shooter.resetShooterAtTargetRpm(),
+            Commands.parallel(
+              shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TEST_RPM),
+              Commands.waitUntil(shooter.getAtRpmTrigger())
+                .andThen(shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM)).alongWith(spindexer.spin())
+            )
+        );
 
         //TODO: test integrating this into the runFullShootingSystem command to see if it helps with agitation
         Command runIntakeRollerAlternating = Commands.sequence(intakeRoller.intakeFuel().withTimeout(0.1), intakeRoller.outtakeFuel().withTimeout(0.1));
+        Command runIntakeArmAlternating = Commands.sequence(intakeArm.retract().withTimeout(0.15), intakeArm.extend().withTimeout(0.15));
 
         Command runFullShootingSystem = Commands.parallel(
           shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TEST_RPM),
@@ -191,6 +201,7 @@ public class RobotContainer {
           spindexer.runAtDutyCycle(-Constants.Spindexer.SPIN_DUTY_CYCLE)
         );
         driverController.rightTrigger().whileTrue(runFullShootingSystem);
+        // driverController.rightTrigger().whileTrue(newFullSequence);
         driverController.leftTrigger().whileTrue(runFullShootingSystemInReverse);
 
         // Command intakeFuelSequence = Commands.parallel(intakeRoller.intakeFuel(), intakeArm.extendForIntakeSequence());
@@ -204,6 +215,7 @@ public class RobotContainer {
           shooter.setDefaultCommandIsStop(newState);
         }, shooter);
         driverController.b().onTrue(toggleShooterLowIdleEnabledCommand);
+        // driverController.b().whileTrue(runIntakeArmAlternating);
 
         driverController.povLeft().whileTrue(intakeArm.extend());
         Command fullRetractCommand = Commands.parallel(intakeArm.retractForAgitate(), intakeRoller.intakeFuel());
@@ -216,6 +228,10 @@ public class RobotContainer {
 
         // driverController.start().onTrue(shooterHood.runUpToHardStop());
         // driverController.back().onTrue(shooterHood.runDownToHardStop());
+
+        //while holding both start and back buttons, run hood to set angle
+        //Note: this probably isn't actually 3 degrees, but should be within range of hood extension
+        driverController.start().and(driverController.back()).whileTrue(shooterHood.runToAngle(3.0));
 
         //For testing hood control with triggers - run hood at duty cycle based on trigger value (right trigger positive, left trigger negative)
         //don't run these at duty cycle, it applies too much power at the upper ranges and can damage the shaft

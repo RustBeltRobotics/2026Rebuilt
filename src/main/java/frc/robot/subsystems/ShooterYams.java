@@ -187,17 +187,28 @@ public class ShooterYams extends SubsystemBase {
         if (targetRpm != 0.0 && !atTargetRpm) {
             if ((Math.abs(targetRpm) - Math.abs(currentRpm)) <= 100.00) {
                 atTargetRpm = true;
-                targetRpm = 0.0;
             }
         }
 
-        AlertManager.addAlert("ShooterRPM", "ShooterRPM At Target? " + (atTargetRpm ? "Yes" : "No"), AlertType.kInfo);
+        AlertManager.addAlert("ShooterRPM", "ShooterRPM At Target? " + (atTargetRpm ? "Yes" : "No"), (atTargetRpm ? AlertType.kInfo : AlertType.kWarning));
+    
+        // if (targetRpm != 0.0 && atTargetRpm) {
+        //     targetRpm = 0.0;
+        //     atTargetRpm = false;
+        // }
     }
 
     public void setShooterAngularVelocity(AngularVelocity rpmTarget) {
         targetRpm = rpmTarget.in(Units.RPM);
-        atTargetRpm = false;
         shooterKraken.setMechanismVelocitySetpoint(rpmTarget);
+    }
+
+    //clear prior target reached state
+    public Command resetShooterAtTargetRpm() {
+        return runOnce(() -> {
+            targetRpm = 0.0;
+            atTargetRpm = false;
+        });
     }
 
     public void stopShooter() {
