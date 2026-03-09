@@ -5,15 +5,15 @@
     "data": {
       "commands": [
         {
-          "type": "named",
+          "type": "path",
           "data": {
-            "name": "shooter-low-idle"
+            "pathName": "CL To Depot"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "L Trench"
+            "pathName": "Depot to Shot"
           }
         },
         {
@@ -23,9 +23,9 @@
           }
         },
         {
-          "type": "path",
+          "type": "named",
           "data": {
-            "pathName": "L Trench Shot to Neutral"
+            "name": "stop-intake"
           }
         }
       ]

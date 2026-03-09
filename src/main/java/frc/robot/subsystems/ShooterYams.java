@@ -85,7 +85,7 @@ public class ShooterYams extends SubsystemBase {
             // Motor properties to prevent over currenting.
             .withStatorCurrentLimit(Units.Amps.of(80));  //TODO: verify this limit is not being hit during operation using telemetry, and adjust if necessary
 
-//TODO: use vendor config to potentially set min motor closed loop output to 0 to avoid driving flywheel backwords with PID
+    //TODO: use vendor config to potentially set min motor closed loop output to 0 to avoid driving flywheel backwords with PID
 
     private final SmartMotorController shooterKrakenSmartMotorController = new TalonFXWrapper(shooterKrakenRight, DCMotor.getKrakenX60(1), shooterKrakenConfig);
 
@@ -184,7 +184,7 @@ public class ShooterYams extends SubsystemBase {
         rightKrakenCurrentPublisher.set(shooterKrakenRight.getStatorCurrent().getValueAsDouble());
         leftKrakenVelocityPublisher.set(shooterKrakenLeft.getVelocity().getValueAsDouble() / 60);
         leftKrakenVoltagePublisher.set(shooterKrakenLeft.getMotorVoltage().getValueAsDouble());
-        leftKrakenVoltagePublisher.set(shooterKrakenLeft.getStatorCurrent().getValueAsDouble());
+        leftKrakenCurrentPublisher.set(shooterKrakenLeft.getStatorCurrent().getValueAsDouble());
 
         double currentRpm = shooterKraken.getSpeed().in(Units.RPM);
         shooterCurrentVelocityPublisher.set(currentRpm);
@@ -220,7 +220,7 @@ public class ShooterYams extends SubsystemBase {
     public void stopShooter() {
         targetRpm = 0.0;
         atTargetRpm = true;
-        shooterKraken.setMechanismVelocitySetpoint(Units.RPM.of(0));
+        shooterKraken.setVoltageSetpoint(Units.Volts.of(0));
     }
 
     public Command prepVariableDistanceShot(Supplier<Distance> shotDistanceSupplier) {

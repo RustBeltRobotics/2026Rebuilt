@@ -47,6 +47,12 @@
           }
         },
         {
+          "type": "named",
+          "data": {
+            "name": "stop-intake"
+          }
+        },
+        {
           "type": "path",
           "data": {
             "pathName": "R Trench Shot to Neutral"
