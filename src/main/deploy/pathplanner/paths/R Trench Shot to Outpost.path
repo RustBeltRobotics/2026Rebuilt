@@ -3,29 +3,29 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.7188612099644134,
-        "y": 0.5866785290628707
+        "x": 3.719,
+        "y": 0.587
       },
       "prevControl": null,
       "nextControl": {
-        "x": 4.718861209964413,
-        "y": 0.5866785290628709
+        "x": 2.5253243160769547,
+        "y": 0.6112601333522607
       },
       "isLocked": false,
       "linkedName": "r-trench-shot"
     },
     {
       "anchor": {
-        "x": 7.785836298932384,
-        "y": 0.6189561091340454
+        "x": 0.4547083330259656,
+        "y": 0.6375416665129807
       },
       "prevControl": {
-        "x": 6.785836298932384,
-        "y": 0.6189561091340454
+        "x": 0.9597424239350565,
+        "y": 0.6375416665129807
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "outpost"
     }
   ],
   "rotationTargets": [],

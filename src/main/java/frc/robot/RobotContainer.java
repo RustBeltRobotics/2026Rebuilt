@@ -99,7 +99,7 @@ public class RobotContainer {
     drivetrain.registerTelemetry(swerveTelemetryCTRE::telemeterize);
 
     if (Constants.Vision.VISION_ENABLED) {
-      visionSystem = new VisionSystem(drivetrain::consumeVisionPoseEstimate);
+      visionSystem = new VisionSystem(drivetrain::consumeVisionPoseEstimate, drivetrain.getCurrentPoseSupplier());
     } else {
       visionSystem = null;
     }
@@ -116,18 +116,21 @@ public class RobotContainer {
     //TODO: implement
 
     Command runFullShootingSystem = Commands.parallel(
-          shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TEST_RPM),
-          Commands.sequence(Commands.waitSeconds(Constants.Spindexer.SHOOT_SEQUENCE_SPIN_START_DELAY_SECONDS), shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM)),
-          Commands.sequence(Commands.waitSeconds(Constants.Spindexer.SHOOT_SEQUENCE_SPIN_START_DELAY_SECONDS), spindexer.spin())  //TODO: graph and tune this delay based on time for shooter to get up to speed (adjust if we leave the shooter running at low RPM idle between shots)
-        ).withTimeout(6.0);  //TODO: We may want to lower the timeout here, evaluate after testing
+          shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM),
+           spindexer.spin(),
+          Commands.sequence(Commands.waitSeconds(3.0), intakeArm.retract().withTimeout(0.75))  //TODO: graph and tune this delay based on time for shooter to get up to speed (adjust if we leave the shooter running at low RPM idle between shots)
+        ).withTimeout(5.0);  //TODO: We may want to lower the timeout here, evaluate after testing
 
+    NamedCommands.registerCommand("start-shooter", shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_AUTO_RPM));
     NamedCommands.registerCommand("extend-intake", intakeArm.extend().withTimeout(0.75));
     Command intakeFuelSequence = Commands.parallel(intakeRoller.intakeFuelForAuto(), intakeArm.extendForIntakeSequenceAuto());
     Command stopIntakeFuelSequence = Commands.parallel(intakeRoller.stopIntakeWheelRotation(), intakeArm.stopExtendRetract());
     NamedCommands.registerCommand("intake-fuel", intakeFuelSequence);
     //TODO: add an .andThen(intakeArm.retract()) to the end of this?
     NamedCommands.registerCommand("stop-intake", stopIntakeFuelSequence);
+    NamedCommands.registerCommand("outpost-wait", Commands.waitSeconds(1.5));
     NamedCommands.registerCommand("trench-shoot", runFullShootingSystem);
+    NamedCommands.registerCommand("outpost-shoot", runFullShootingSystem);
     NamedCommands.registerCommand("shooter-low-idle", shooter.idleAtLowRpm());
   }
 
@@ -199,7 +202,7 @@ public class RobotContainer {
           shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TEST_RPM),
           shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM.unaryMinus()),
           spindexer.runAtDutyCycle(-Constants.Spindexer.SPIN_DUTY_CYCLE)
-        );
+        ).finallyDo(() -> shooter.resetShooterAtTargetRpm());
         driverController.rightTrigger().whileTrue(runFullShootingSystem);
         // driverController.rightTrigger().whileTrue(newFullSequence);
         driverController.leftTrigger().whileTrue(runFullShootingSystemInReverse);

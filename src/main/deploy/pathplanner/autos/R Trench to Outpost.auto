@@ -55,7 +55,31 @@
         {
           "type": "path",
           "data": {
-            "pathName": "R Trench Shot to Neutral"
+            "pathName": "R Trench Shot to Outpost"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "outpost-wait"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "start-shooter"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Outpost to Shot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "outpost-shoot"
           }
         }
       ]
