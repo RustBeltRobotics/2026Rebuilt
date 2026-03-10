@@ -91,7 +91,7 @@ public class IntakeArm extends SubsystemBase {
 
     public Command extendForIntakeSequenceAuto() {
        return this.runOnce(() -> { 
-            runExtendRetractAtDutyCycle(-0.06);
+            runExtendRetractAtDutyCycle(-0.12);
         });
     }
 

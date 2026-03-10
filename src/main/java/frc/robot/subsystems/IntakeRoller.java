@@ -26,7 +26,7 @@ public class IntakeRoller extends SubsystemBase {
         var rotateIntakeShaftConfig = new SparkMaxConfig();
         rotateIntakeShaftConfig.idleMode(IdleMode.kBrake);
         rotateIntakeShaftConfig.inverted(true);
-        rotateIntakeShaftConfig.smartCurrentLimit(50).secondaryCurrentLimit(60);
+        rotateIntakeShaftConfig.smartCurrentLimit(75).secondaryCurrentLimit(80);
 
         rotateIntakeShaftMotor.configure(rotateIntakeShaftConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }

@@ -36,19 +36,33 @@ public class AlertManager {
     public static void addAlert(String key, String group, String text, AlertType type) {
         Alert alert = ALERTS_BY_KEY.get(key);
         if (alert == null) {
-            if (group == null) {
-                alert = new Alert(text, type);
-            } else {
-                alert = new Alert(group, text, type);
-            }
-            
-            ALERTS_BY_KEY.put(key, alert);
+            alert = createAndStoreAlert(key, group, text, type);
         } else {
-            alert.setText(text);
-            //TODO: cache the initial AlertType and if it's different, create a new Alert object as the type cannot be changed via setter
+            AlertType existingType = ALERT_TYPES_BY_KEY.get(key);
+            if (existingType != type) {
+                removeAlert(key);
+                alert = createAndStoreAlert(key, group, text, type);
+            } else {
+                alert.setText(text);
+            }
         }
         
         alert.set(true);
+    }
+
+    private static Alert createAndStoreAlert(String key, String group, String text, AlertType type) {
+        Alert alert;
+
+        if (group == null) {
+            alert = new Alert(text, type);
+        } else {
+            alert = new Alert(group, text, type);
+        }
+        
+        ALERTS_BY_KEY.put(key, alert);
+        ALERT_TYPES_BY_KEY.put(key, type);
+
+        return alert;
     }
 
     /**
@@ -61,6 +75,7 @@ public class AlertManager {
         if (alert != null) {
             alert.set(false);
             ALERTS_BY_KEY.remove(key);
+            ALERT_TYPES_BY_KEY.remove(key);
         }
     }
 }
