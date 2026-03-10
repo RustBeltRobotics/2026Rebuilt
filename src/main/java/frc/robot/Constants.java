@@ -298,6 +298,8 @@ public final class Constants {
     public static final Distance SHOOTER_WHEEL_DIAMETER = Units.Inches.of(4.0);
     public static final Mass FLYWHEEL_MASS = Units.Pounds.of(7.9); //This weight does not include the rotating mass of the Neo Vortex motors, which may ass 0.75 lbs.
     public static final AngularVelocity SHOOTER_TEST_RPM = Units.RPM.of(3400);  //was 3100
+    public static final AngularVelocity SHOOTER_AUTO_RPM = Units.RPM.of(3345);
+
     public static final AngularVelocity SHOOTER_PASS_RPM = Units.RPM.of(4250);  //was 3100
     //3000 RPM for distance from field edge (blue left)
     //4000 RPM for distance from table testing
@@ -412,11 +414,13 @@ public final class Constants {
       //   new Rotation3d(0, CAM_PITCH_ANGLE, 0).rotateBy(new Rotation3d(0, 0, -Units.degreesToRadians(45))));  //front right - photonvision2
       //x-, y-, z+, (0, -degrees, 0).rotateBy(0, 0, -135 degrees)
 
+      //20.5 high, 12" back, 10.5 to the side
+
       // 6" back, 10.5" to the right
-      public static final Transform3d BACK_RIGHT = new Transform3d(-Units.Inches.of(6.0).in(Units.Meters), -Units.Inches.of(10.5).in(Units.Meters), Units.Inches.of(18.5).in(Units.Meters), 
-        new Rotation3d(0, 0, 0).rotateBy(new Rotation3d(0, 0, -Units.Degrees.of(90.0).in(Units.Radians))));  //back right - photonvision1
+      public static final Transform3d BACK_RIGHT = new Transform3d(-Units.Inches.of(12.0).in(Units.Meters), -Units.Inches.of(10.5).in(Units.Meters), Units.Inches.of(20.5).in(Units.Meters), 
+        new Rotation3d(0, 0, 0).rotateBy(new Rotation3d(0, 0, Units.Degrees.of(-90.0).in(Units.Radians))));  //back right cam- photonvision1
       //x-, y+, z+, (0, -degrees, 0).rotateBy(0, 0, 135 degrees)
-      public static final Transform3d BACK_LEFT = new Transform3d(-Units.Inches.of(12.0).in(Units.Meters), Units.Inches.of(9.0).in(Units.Meters), Units.Inches.of(18.5).in(Units.Meters),
+      public static final Transform3d BACK_LEFT = new Transform3d(-Units.Inches.of(12.0).in(Units.Meters), Units.Inches.of(10.5).in(Units.Meters), Units.Inches.of(20.5).in(Units.Meters),
         new Rotation3d(0, 0, 0).rotateBy(new Rotation3d(0, 0, Units.Degrees.of(90.0).in(Units.Radians))));  //back left - photonvision1
     }
   }

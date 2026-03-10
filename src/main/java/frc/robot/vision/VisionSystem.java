@@ -3,6 +3,7 @@ package frc.robot.vision;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
@@ -20,7 +21,9 @@ import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.networktables.DoublePublisher;
@@ -49,6 +52,7 @@ public class VisionSystem {
     private final LinearFilter averageLatencyFilter = LinearFilter.movingAverage(40);
     private boolean receivedNewVisionData = false;
     private VisionEstimateConsumer visionEstimateConsumer;
+    private final Supplier<Pose2d> currentRobotPoseSupplier;
     private DoublePublisher averageLatencyMsPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Vision/Latency").publish();
     private final StructArrayPublisher<Pose3d> acceptedTagPublisher = NetworkTableInstance.getDefault()
         .getStructArrayTopic("/RBR/Vision/AprilTags/Accepted", Pose3d.struct).publish();
@@ -62,10 +66,15 @@ public class VisionSystem {
     //     .getStructTopic("/RBR/Vision/PoseEstimates/Camera/FC", Pose2d.struct).publish();
     // private final StructPublisher<Pose2d> frontRightCameraPosePublisher = NetworkTableInstance.getDefault()
     //     .getStructTopic("/RBR/Vision/PoseEstimates/Camera/FR", Pose2d.struct).publish();
-    private final StructPublisher<Pose2d> backLeftCameraPosePublisher = NetworkTableInstance.getDefault()
-        .getStructTopic("/RBR/Vision/PoseEstimates/Camera/BL", Pose2d.struct).publish();
-    private final StructPublisher<Pose2d> backRightCameraPosePublisher = NetworkTableInstance.getDefault()
-        .getStructTopic("/RBR/Vision/PoseEstimates/Camera/BR", Pose2d.struct).publish();
+    private final StructPublisher<Pose3d> backLeftCameraPoseEstimatePublisher = NetworkTableInstance.getDefault()
+        .getStructTopic("/RBR/Vision/PoseEstimates/Camera/BL", Pose3d.struct).publish();
+    private final StructPublisher<Pose3d> backRightCameraPoseEstimatePublisher = NetworkTableInstance.getDefault()
+        .getStructTopic("/RBR/Vision/PoseEstimates/Camera/BR", Pose3d.struct).publish();
+
+    private final StructPublisher<Pose2d> backLeftCameraLocationPublisher = NetworkTableInstance.getDefault()
+        .getStructTopic("/RBR/Vision/Locations/Camera/BL", Pose2d.struct).publish();
+    private final StructPublisher<Pose2d> backRightCameraLocationPublisher = NetworkTableInstance.getDefault()
+        .getStructTopic("/RBR/Vision/Locations/Camera/BR", Pose2d.struct).publish();
 
     //Simulation
     private List<PhotonCameraSim> simulatedCameras = new ArrayList<>();
@@ -79,8 +88,9 @@ public class VisionSystem {
      * https://github.com/TexasTorque/TorqueLib/blob/master/sensors/TorqueVision.java
      */
 
-    public VisionSystem(VisionEstimateConsumer visionEstimateConsumer) {
+    public VisionSystem(VisionEstimateConsumer visionEstimateConsumer, Supplier<Pose2d> currentRobotPoseSupplier) {
         this.visionEstimateConsumer = visionEstimateConsumer;
+        this.currentRobotPoseSupplier = currentRobotPoseSupplier;
         //TODO: if the venue is not using the default welded field layout and is instead using AndyMark, update this to AprilTagFields.k2025ReefscapeAndyMark
         fieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
         fieldLayout.setOrigin(OriginPosition.kBlueAllianceWallRightSide);
@@ -139,6 +149,24 @@ public class VisionSystem {
     }
 
     public void periodic() {
+        //Publish camera positions to verify/visualize they are where we expect them to be in relation to the robot center
+        Pose2d currentRobotPose = currentRobotPoseSupplier.get();
+        if (currentRobotPose != null) {
+            for (VisionCamera visionCamera : visionCameras) {
+                Transform3d robotCenterToCameraTransform = visionCamera.getRobotToCameraPose();
+                Translation2d translation2d = new Translation2d(robotCenterToCameraTransform.getX(), robotCenterToCameraTransform.getY());
+                Rotation2d rotation2d = robotCenterToCameraTransform.getRotation().toRotation2d();
+
+                Pose2d cameraFieldPose = currentRobotPose.transformBy(new Transform2d(translation2d, rotation2d));
+                backLeftCameraLocationPublisher.set(cameraFieldPose);
+                if (visionCamera.getCameraPosition() == CameraPosition.BACK_LEFT) {
+                    backLeftCameraLocationPublisher.set(cameraFieldPose);
+                } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_RIGHT) {
+                    backRightCameraLocationPublisher.set(cameraFieldPose);
+                }
+            }
+        }
+
         List<VisionPoseEstimationResult> newVisionPoseEstimates = getRobotPoseEstimationResults();
         receivedNewVisionData = !newVisionPoseEstimates.isEmpty();
         
@@ -277,9 +305,9 @@ public class VisionSystem {
                 //     frontRightCameraPosePublisher.set(estimatedPose2d, networkTablesPoseTimestampMicroSeconds);
                 // } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_LEFT) {
                 if (visionCamera.getCameraPosition() == CameraPosition.BACK_LEFT) {
-                    backLeftCameraPosePublisher.set(estimatedPose2d, networkTablesPoseTimestampMicroSeconds);
+                    backLeftCameraPoseEstimatePublisher.set(estimatedPose, networkTablesPoseTimestampMicroSeconds);
                 } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_RIGHT) {
-                    backRightCameraPosePublisher.set(estimatedPose2d, networkTablesPoseTimestampMicroSeconds);
+                    backRightCameraPoseEstimatePublisher.set(estimatedPose, networkTablesPoseTimestampMicroSeconds);
                 }
             } else {
                 rejectedPoses.add(poseEstimate);

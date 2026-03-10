@@ -71,7 +71,7 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     private Pose2d latestVisionPose;
     private Rotation2d targetTurnAngle = new Rotation2d();
 
-    Supplier<Pose2d> currentPoseSupplier = () -> getState().Pose;
+    private Supplier<Pose2d> currentPoseSupplier = () -> getState().Pose;
     //TODO: test these for auto-lowering the hood when approaching the trench 
     private Trigger nearingUpperTrenchLeftTrigger = nearFieldPositionAutoFlipped(new Translation2d(4.0, 6.772), 2.0, currentPoseSupplier);
     private Trigger nearingUpperTrenchRightTrigger = nearFieldPositionAutoFlipped(new Translation2d(5.223, 6.597), 2.0, currentPoseSupplier);
@@ -252,6 +252,10 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
                 }
             }
         );
+    }
+
+    public Supplier<Pose2d> getCurrentPoseSupplier() {
+        return currentPoseSupplier;
     }
 
 }
