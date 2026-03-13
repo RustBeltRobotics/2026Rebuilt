@@ -235,7 +235,9 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
             needToCorrectOdometryUsingVision = false;
             AlertManager.addAlert("Vision", "Ramp/Tip compensated using new pose: " + pose, AlertType.kInfo);
         }
-        this.addVisionMeasurement(pose, timestamp, estimationStdDevs);
+        if (Constants.Vision.TAKE_POSE_ESTIMATES_FROM_VISION) {
+            this.addVisionMeasurement(pose, timestamp, estimationStdDevs);
+        }
         this.latestVisionPose = pose;
     }
 

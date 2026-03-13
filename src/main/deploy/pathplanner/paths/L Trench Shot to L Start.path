@@ -8,32 +8,27 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 4.0769228646622935,
-        "y": 7.355476010810971
+        "x": 3.848894988031212,
+        "y": 7.40652555192354
       },
       "isLocked": false,
       "linkedName": "l-trench-shot"
     },
     {
       "anchor": {
-        "x": 7.744894736842104,
-        "y": 7.368622807017545
+        "x": 4.454,
+        "y": 7.45
       },
       "prevControl": {
-        "x": 6.744894736842104,
-        "y": 7.368622807017545
+        "x": 3.448151387317127,
+        "y": 7.421947368421054
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "l-trench-start"
     }
   ],
-  "rotationTargets": [
-    {
-      "waypointRelativePos": 0.09927360774818328,
-      "rotationDegrees": -90.0
-    }
-  ],
+  "rotationTargets": [],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [],

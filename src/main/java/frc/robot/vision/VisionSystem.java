@@ -133,7 +133,7 @@ public class VisionSystem {
                 cameraSim.enableDrawWireframe(true);
             }
         } else {
-            //Do not track cameras that are not actively connected at time of constructor intiialization
+            //Do not track cameras that are not actively connected at time of constructor initialization
             visionCameras.removeIf(c -> {
                 boolean isDisconnected = !c.isCameraConnected();
                 if (isDisconnected) {
@@ -158,7 +158,7 @@ public class VisionSystem {
                 Rotation2d rotation2d = robotCenterToCameraTransform.getRotation().toRotation2d();
 
                 Pose2d cameraFieldPose = currentRobotPose.transformBy(new Transform2d(translation2d, rotation2d));
-                backLeftCameraLocationPublisher.set(cameraFieldPose);
+
                 if (visionCamera.getCameraPosition() == CameraPosition.BACK_LEFT) {
                     backLeftCameraLocationPublisher.set(cameraFieldPose);
                 } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_RIGHT) {

@@ -16,12 +16,12 @@
     },
     {
       "anchor": {
-        "x": 0.6411266049203841,
-        "y": 5.924005003102509
+        "x": 0.5525438596491228,
+        "y": 5.976298245614036
       },
       "prevControl": {
-        "x": 1.5234474349547105,
-        "y": 6.173178941214055
+        "x": 2.5177105263157893,
+        "y": 6.024035087719299
       },
       "nextControl": null,
       "isLocked": false,
@@ -34,7 +34,7 @@
   "eventMarkers": [
     {
       "name": "extend-intake",
-      "waypointRelativePos": 0.0734982332155517,
+      "waypointRelativePos": 0.1,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
@@ -45,7 +45,7 @@
     },
     {
       "name": "intake-fuel",
-      "waypointRelativePos": 0.5385159010600731,
+      "waypointRelativePos": 0.45,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",

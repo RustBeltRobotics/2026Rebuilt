@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "L Trench To L Neutral"
+            "pathName": "R Trench To R Neutral"
           }
         },
         {
@@ -25,19 +25,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "L Neutral Grab Fuel"
+            "pathName": "R Neutral Grab Fuel"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "L Neutral Fuel to Trench"
+            "pathName": "R Neutral Fuel to Trench"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "L Neutral to Trench Shot"
+            "pathName": "R Neutral to Trench Shot"
           }
         },
         {
@@ -50,6 +50,18 @@
           "type": "named",
           "data": {
             "name": "stop-intake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "R Trench Shot to R Start"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "R Trench To R Neutral"
           }
         }
       ]

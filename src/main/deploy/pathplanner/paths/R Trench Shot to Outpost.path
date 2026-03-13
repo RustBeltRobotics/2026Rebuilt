@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.719,
-        "y": 0.587
+        "x": 3.077,
+        "y": 0.5866785290628707
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.5253243160769547,
-        "y": 0.6112601333522607
+        "x": 1.8833243160769548,
+        "y": 0.6109386624151314
       },
       "isLocked": false,
       "linkedName": "r-trench-shot"
@@ -48,7 +48,7 @@
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 75.0
+    "rotation": 65.3814411471687
   },
   "useDefaultConstraints": true
 }

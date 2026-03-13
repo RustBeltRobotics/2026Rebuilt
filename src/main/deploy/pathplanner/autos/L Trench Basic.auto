@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "R Trench To R Neutral"
+            "pathName": "L Trench To L Neutral"
           }
         },
         {
@@ -25,19 +25,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "R Neutral Grab Fuel"
+            "pathName": "L Neutral Grab Fuel"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "R Neutral Fuel to Trench"
+            "pathName": "L Neutral Fuel to Trench"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "R Neutral to Trench Shot"
+            "pathName": "L Neutral to Trench Shot"
           }
         },
         {
@@ -55,31 +55,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "R Trench Shot to Outpost"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "outpost-wait"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "start-shooter"
+            "pathName": "L Trench Shot to L Start"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Outpost to Shot"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "outpost-shoot"
+            "pathName": "L Trench To L Neutral"
           }
         }
       ]

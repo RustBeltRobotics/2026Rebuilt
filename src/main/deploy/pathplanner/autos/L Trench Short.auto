@@ -1,0 +1,73 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "L Trench To L Neutral"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "extend-intake"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "intake-fuel"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "L Neutral Grab Fuel Short"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "L Neutral Fuel Short to Trench"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "L Neutral to Trench Shot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "trench-shoot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "stop-intake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "L Trench Shot to L Start"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "L Trench To L Neutral"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": null,
+  "choreoAuto": false
+}

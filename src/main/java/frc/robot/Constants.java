@@ -133,7 +133,7 @@ public final class Constants {
   public static final class Kinematics {
 
     /* Initial / max speed multiplier for drivetrain - reduce to slow driving */
-    public static final double INITIAL_DRIVE_MAX_SPEED_FACTOR = 1.00;
+    public static final double INITIAL_DRIVE_MAX_SPEED_FACTOR = 0.85;
 
     /* Robot mass in Kg. */
     public static final double ROBOT_MASS = Units.Pounds.of(106.0).in(Units.Kilograms); //Note: this weight does NOT include the battery or bumpers
@@ -356,6 +356,7 @@ public final class Constants {
   public static final class Vision {
     //TODO: re-enable
     public static final boolean VISION_ENABLED = true;
+    public static final boolean TAKE_POSE_ESTIMATES_FROM_VISION = false;
     public static final int APRIL_TAG_PIPELINE_INDEX = 0;
     public static final String ARDUCAM_MODEL = "OV9281";
     public static final double POSE_AMBIGUITY_CUTOFF = 0.2;  //https://docs.photonvision.org/en/latest/docs/apriltag-pipelines/3D-tracking.html#ambiguity

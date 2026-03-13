@@ -14,10 +14,12 @@ import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.FollowPathCommand;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -75,6 +77,8 @@ public class RobotContainer {
   private final SendableChooser<Command> autoChooser;
   private final SendableChooser<Double> driveTrainSpeedChooser = new SendableChooser<>();
   private DoublePublisher maxSpeedFactorPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/MaxSpeed").publish();
+  private DoublePublisher batteryVoltagePublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Battery/Voltage").publish();
+  private BooleanPublisher brownoutPublisher = NetworkTableInstance.getDefault().getBooleanTopic("/RBR/Battery/Brownout").publish();
 
   public static double getMaxSpeed() {
     return MAX_SPEED_FACTOR * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND;
@@ -149,7 +153,7 @@ public class RobotContainer {
         RobotModeTriggers.disabled().whileTrue(drivetrain.applyRequest(() -> idle).ignoringDisable(true));
 
         //run seedFieldCentric on start of tele-op mode
-        RobotModeTriggers.teleop().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
+        // RobotModeTriggers.teleop().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
@@ -345,6 +349,8 @@ public class RobotContainer {
 
   public void updateTelemetry() {
     maxSpeedFactorPublisher.set(MAX_SPEED_FACTOR);
+    batteryVoltagePublisher.set(RobotController.getBatteryVoltage());
+    brownoutPublisher.set(RobotController.isBrownedOut());
   }
 
   public void updateSimPeriodic() {
