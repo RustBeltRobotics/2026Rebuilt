@@ -84,6 +84,7 @@ public class ShooterFeederYams extends SubsystemBase {
             .withIdleMode(MotorMode.BRAKE)
             // .withVoltageCompensation(Units.Volts.of(12))  //Note: we can't use this - apparently it's a Pro/paid feature
             // Motor properties to prevent over currenting.
+            .withSupplyCurrentLimit(Units.Amps.of(40))
             .withStatorCurrentLimit(Units.Amps.of(50));
 
     SmartMotorController krakenSmartMotorController = new TalonFXWrapper(feederKrakenLeft, DCMotor.getKrakenX60(1), feederKrakenConfig);

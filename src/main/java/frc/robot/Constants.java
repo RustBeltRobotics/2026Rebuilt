@@ -133,7 +133,7 @@ public final class Constants {
   public static final class Kinematics {
 
     /* Initial / max speed multiplier for drivetrain - reduce to slow driving */
-    public static final double INITIAL_DRIVE_MAX_SPEED_FACTOR = 0.85;
+    public static final double INITIAL_DRIVE_MAX_SPEED_FACTOR = 0.8;
 
     /* Robot mass in Kg. */
     public static final double ROBOT_MASS = Units.Pounds.of(106.0).in(Units.Kilograms); //Note: this weight does NOT include the battery or bumpers
@@ -299,6 +299,7 @@ public final class Constants {
     public static final Mass FLYWHEEL_MASS = Units.Pounds.of(7.9); //This weight does not include the rotating mass of the Neo Vortex motors, which may ass 0.75 lbs.
     public static final AngularVelocity SHOOTER_TEST_RPM = Units.RPM.of(3400);  //was 3100
     public static final AngularVelocity SHOOTER_AUTO_RPM = Units.RPM.of(3345);
+    public static final AngularVelocity SHOOTER_LAYUP_RPM = Units.RPM.of(2450);
 
     public static final AngularVelocity SHOOTER_PASS_RPM = Units.RPM.of(4250);  //was 3100
     //3000 RPM for distance from field edge (blue left)

@@ -211,8 +211,14 @@ public class RobotContainer {
         // driverController.rightTrigger().whileTrue(newFullSequence);
         driverController.leftTrigger().whileTrue(runFullShootingSystemInReverse);
 
-        // Command intakeFuelSequence = Commands.parallel(intakeRoller.intakeFuel(), intakeArm.extendForIntakeSequence());
+        Command runFullShootingSystemLayup = Commands.parallel(
+          shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_LAYUP_RPM),
+          Commands.sequence(Commands.waitSeconds(0.9), shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM)),
+          Commands.sequence(Commands.waitSeconds(0.9), spindexer.spin())  //TODO: graph and tune this delay based on time for shooter to get up to speed (adjust if we leave the shooter running at low RPM idle between shots)
+        );
 
+        // Command intakeFuelSequence = Commands.parallel(intakeRoller.intakeFuel(), intakeArm.extendForIntakeSequence());
+        driverController.b().whileTrue(runFullShootingSystemLayup);
 
         //When b is pressed, toggle between running shooter at low RPM idle vs. stopped when not shooting.
         Command toggleShooterLowIdleEnabledCommand = Commands.runOnce(() -> {
@@ -221,7 +227,7 @@ public class RobotContainer {
           shooter.setDefaultCommand(newState ? shooter.stop() : shooter.idleAtLowRpm());
           shooter.setDefaultCommandIsStop(newState);
         }, shooter);
-        driverController.b().onTrue(toggleShooterLowIdleEnabledCommand);
+        driverController.back().onTrue(toggleShooterLowIdleEnabledCommand);
         // driverController.b().whileTrue(runIntakeArmAlternating);
         Command fullRetractCommand = Commands.parallel(intakeArm.retractForAgitate(), intakeRoller.intakeFuel());
 

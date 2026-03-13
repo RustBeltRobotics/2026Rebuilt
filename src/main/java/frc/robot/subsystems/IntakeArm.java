@@ -83,7 +83,7 @@ public class IntakeArm extends SubsystemBase {
 
     public Command extendForIntakeSequence() {
        return this.startEnd(() -> { 
-            runExtendRetractAtDutyCycle(-0.06);
+            runExtendRetractAtDutyCycle(-0.04);
         }, () -> {
             stopExtendRetract();
         }).withName("Extending intake arm for fuel intake sequence");
