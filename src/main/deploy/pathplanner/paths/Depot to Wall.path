@@ -1,0 +1,54 @@
+{
+  "version": "2025.0",
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 0.4493559928519838,
+        "y": 4.821932021464827
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 0.4655813953488368,
+        "y": 5.454722719141323
+      },
+      "isLocked": false,
+      "linkedName": "c-shot-depot-start"
+    },
+    {
+      "anchor": {
+        "x": 0.4493559928519838,
+        "y": 7.450447227191413
+      },
+      "prevControl": {
+        "x": 0.4493559928519838,
+        "y": 6.720304114490159
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "depot-to-wall-start"
+    }
+  ],
+  "rotationTargets": [],
+  "constraintZones": [],
+  "pointTowardsZones": [],
+  "eventMarkers": [],
+  "globalConstraints": {
+    "maxVelocity": 5.29,
+    "maxAcceleration": 3.0,
+    "maxAngularVelocity": 700.0,
+    "maxAngularAcceleration": 720.0,
+    "nominalVoltage": 12.0,
+    "unlimited": false
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": 90.00000000059791
+  },
+  "reversed": false,
+  "folder": null,
+  "idealStartingState": {
+    "velocity": 0,
+    "rotation": 89.99999999927283
+  },
+  "useDefaultConstraints": true
+}

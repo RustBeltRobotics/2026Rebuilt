@@ -63,6 +63,24 @@
           "data": {
             "pathName": "L Trench To L Neutral"
           }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "extend-intake"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "intake-fuel"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "L Neutral Grab Fuel"
+          }
         }
       ]
     }

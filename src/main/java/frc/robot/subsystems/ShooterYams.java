@@ -83,7 +83,7 @@ public class ShooterYams extends SubsystemBase {
             .withIdleMode(MotorMode.COAST)
             // .withVoltageCompensation(Units.Volts.of(12)) //Note: we can't use this - apparently it's a Pro/paid feature
             // Motor properties to prevent over currenting.
-            .withSupplyCurrentLimit(Units.Amps.of(60))
+            .withSupplyCurrentLimit(Units.Amps.of(58))
             .withStatorCurrentLimit(Units.Amps.of(80));  //TODO: verify this limit is not being hit during operation using telemetry, and adjust if necessary
 
     //TODO: use vendor config to potentially set min motor closed loop output to 0 to avoid driving flywheel backwords with PID

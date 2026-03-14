@@ -122,8 +122,8 @@ public class RobotContainer {
     Command runFullShootingSystem = Commands.parallel(
           shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM),
            spindexer.spin(),
-          Commands.sequence(Commands.waitSeconds(3.0), intakeArm.retract().withTimeout(0.75))  //TODO: graph and tune this delay based on time for shooter to get up to speed (adjust if we leave the shooter running at low RPM idle between shots)
-        ).withTimeout(5.0);  //TODO: We may want to lower the timeout here, evaluate after testing
+          Commands.sequence(Commands.waitSeconds(2.5), intakeArm.retract().withTimeout(0.5))  //TODO: graph and tune this delay based on time for shooter to get up to speed (adjust if we leave the shooter running at low RPM idle between shots)
+        ).withTimeout(4.0);  //TODO: We may want to lower the timeout here, evaluate after testing
 
     NamedCommands.registerCommand("start-shooter", shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_AUTO_RPM));
     NamedCommands.registerCommand("extend-intake", intakeArm.extend().withTimeout(0.75));
@@ -134,6 +134,12 @@ public class RobotContainer {
     NamedCommands.registerCommand("stop-intake", stopIntakeFuelSequence);
     NamedCommands.registerCommand("outpost-wait", Commands.waitSeconds(1.5));
     NamedCommands.registerCommand("trench-shoot", runFullShootingSystem);
+    Command runFullShootingSystemLayup = Commands.parallel(
+      shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_LAYUP_RPM),
+      Commands.sequence(Commands.waitSeconds(0.9), shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM)),
+      Commands.sequence(Commands.waitSeconds(0.9), spindexer.spin())
+    ).withTimeout(3.0);
+    NamedCommands.registerCommand("layup-shoot", runFullShootingSystemLayup);
     NamedCommands.registerCommand("outpost-shoot", runFullShootingSystem);
     NamedCommands.registerCommand("shooter-low-idle", shooter.idleAtLowRpm());
   }

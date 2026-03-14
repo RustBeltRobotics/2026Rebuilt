@@ -63,6 +63,24 @@
           "data": {
             "pathName": "R Trench To R Neutral"
           }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "extend-intake"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "intake-fuel"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "R Neutral Grab Fuel"
+          }
         }
       ]
     }
