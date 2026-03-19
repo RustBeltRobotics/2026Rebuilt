@@ -278,7 +278,7 @@ public final class Constants {
     public static final double K_S = 0.38692;  //static feedforward term
     public static final double K_V = 0.23861;  //velocity feedforward gain (Volts per rotor RPS) 
     public static final double K_A = 0.0043052;
-    public static final AngularVelocity FEEDER_RPM = Units.RPM.of(5000); //TODO: tune this
+    public static final AngularVelocity FEEDER_RPM = Units.RPM.of(2400); //Note: max theoretical is ~3000 with the 2:1 gear reduction
   }
 
   public static final class ShooterHood {

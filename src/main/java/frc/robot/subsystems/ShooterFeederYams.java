@@ -70,17 +70,17 @@ public class ShooterFeederYams extends SubsystemBase {
             .withFollowers(Pair.of(feederKrakenRight, true))
             // Feedback Constants (PID Constants)
             .withClosedLoopController(Constants.ShooterFeeder.K_P, Constants.ShooterFeeder.K_I,
-                    Constants.ShooterFeeder.K_D, Units.RadiansPerSecond.of(524.0),
-                    Units.RadiansPerSecondPerSecond.of(1400.0))
+                    Constants.ShooterFeeder.K_D, Units.RadiansPerSecond.of(293.0),
+                    Units.RadiansPerSecondPerSecond.of(800.0))
             .withSimClosedLoopController(Constants.ShooterFeeder.K_P, Constants.ShooterFeeder.K_I,
-                    Constants.ShooterFeeder.K_D, Units.RadiansPerSecond.of(524.0),
-                    Units.RadiansPerSecondPerSecond.of(1400.0))
+                    Constants.ShooterFeeder.K_D, Units.RadiansPerSecond.of(293.0),
+                    Units.RadiansPerSecondPerSecond.of(800.0))
             // Feedforward Constants
             .withFeedforward(new SimpleMotorFeedforward(Constants.ShooterFeeder.K_S, Constants.ShooterFeeder.K_V, Constants.ShooterFeeder.K_A))
             .withSimFeedforward(new SimpleMotorFeedforward(Constants.ShooterFeeder.K_S, Constants.ShooterFeeder.K_V, Constants.ShooterFeeder.K_A))
             // Telemetry name and verbosity level
             .withTelemetry("FeederMotor", TelemetryVerbosity.HIGH)
-            // Gearing from the motor rotor to final shaft - 2:1 (direct drive)
+            // Gearing from the motor rotor to final shaft - 2:1 (reduction) - Note max theoretical RPM of the mechanism becomes ~3000 RPM (~314 Rad/S)
             .withGearing(new MechanismGearing(2.0))
             .withMotorInverted(false)
             .withIdleMode(MotorMode.BRAKE)
