@@ -1,11 +1,10 @@
 TODO:
-- Re-test new trigger based full shoot sequence
 - Test running hood to a setpoint angle using PID
     - Hold both start and back buttons
-- Tets new autos (lt-gather-shoot, R Trench to Outpost)
-- Test basic auto paths using PathPlanner and tune translation and rotation PIDs
 - Review Swerve tab state and new DrivePID line chart in AdvantageScope to try and confirm PID behavior on drivetrain
-    - Test new steer gains from sysid
+    - Re-run all 3 sysid tests
+    - Test new gains from sysid in PID graph
+- Test Align To Target drive with AprilTags on hub
 - Test hood running down to hard stop commands to ensure current based stall detection still works
     - Graph the hood current if it does not, and adjust threshold/debounce time accordingly
     - See https://www.chiefdelphi.com/t/how-often-are-you-losing-your-kraken-x44-x60-encoder-zeroes/514626/6 for hardStop detection

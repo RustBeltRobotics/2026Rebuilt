@@ -163,8 +163,8 @@ public class ShooterFeederYams extends SubsystemBase {
 
     public void stopFeeder() {
         targetRpm = 0.0;
-        atTargetRpm = true;
-        feederFlywheel.setMechanismVelocitySetpoint(Units.RPM.of(0));
+        atTargetRpm = false;
+        feederFlywheel.setVoltageSetpoint(Units.Volts.of(0));
     }
 
     public Command stop() {

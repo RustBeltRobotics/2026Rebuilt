@@ -136,7 +136,6 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     }
 
     private double modifyDriverControllerInput(double input) {
-       
         // scale the controller input - See https://www.desmos.com/calculator/bnqnldev69 for function graph
         return (Math.signum(input) * Math.pow(Math.abs(input), 3.7) + (input * 0.43)) / (1 + 0.42);
     }
@@ -145,8 +144,11 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
         return applyRequest(() -> {
             isAutoTargeting = true;
             //TODO: update this to use the modified controller inputs once we verify it works well for teleop driving
-            double controllerVelX = -controller.getLeftY();  //forward/back
-            double controllerVelY = -controller.getLeftX();  //left/right strafe
+            // double controllerVelX = -controller.getLeftY();  //forward/back
+            // double controllerVelY = -controller.getLeftX();  //left/right strafe
+
+            double xControllerValue = -modifyDriverControllerInput(controller.getLeftY());  //forward/back
+            double yControllerValue = -modifyDriverControllerInput(controller.getLeftX());  //left/right
 
             Pose2d drivePose = getState().Pose;
             Pose2d targetPose = targetPoseSupplier.get();
@@ -157,7 +159,7 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
             Rotation2d deltaAngle = currentAngle.minus(targetTurnAngle);
             double wrappedAngleDeg = MathUtil.inputModulus(deltaAngle.getDegrees(), -180.0, 180.0);
 
-            boolean notTryingToDrive = Math.hypot(controllerVelX, controllerVelY) < Constants.Controls.CONTROLLER_DEADBAND;
+            boolean notTryingToDrive = Math.hypot(xControllerValue, yControllerValue) < Constants.Controls.CONTROLLER_DEADBAND;
             boolean alreadyFacingGoal = Math.abs(wrappedAngleDeg) < Constants.Kinematics.EPSILON_ANGLE_TO_GOAL.in(Units.Degrees);
 
             if (alreadyFacingGoal && notTryingToDrive) {
@@ -167,8 +169,8 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
                 //TODO: switch to the following form once we have the PID fully tuned to avoid network table reads every loop
                 //double rotationalRate = Constants.Kinematics.ROTATE_TO_POSE_PID_CONTROLLER.calculate(currentAngle.getRadians(), targetTurnAngle.getRadians());
 
-                return alignToTargetDriveRequest.withVelocityX(controllerVelX * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND) // Drive forward with negative Y (forward)
-                    .withVelocityY(-controller.getLeftX() * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND) // Drive left with negative X (left)
+                return alignToTargetDriveRequest.withVelocityX(xControllerValue * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND) // Drive forward with negative Y (forward)
+                    .withVelocityY(yControllerValue * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND) // Drive left with negative X (left)
                     .withRotationalRate(rotationalRate * Constants.Kinematics.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND); // Use angular rate for rotation
             }
         });

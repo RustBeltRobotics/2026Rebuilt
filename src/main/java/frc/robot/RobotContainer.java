@@ -189,7 +189,7 @@ public class RobotContainer {
         // driverController.b().whileTrue(intakeRoller.agitate());
 
         //TODO: swap out and test replacing the runFullShootingSystem command sequence below with this new one:
-        Command newFullSequence = new SequentialCommandGroup(
+        Command newFullShootingSequence = new SequentialCommandGroup(
             shooter.resetShooterAtTargetRpm(),
             Commands.parallel(
               shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TEST_RPM),
@@ -202,7 +202,7 @@ public class RobotContainer {
         Command runIntakeRollerAlternating = Commands.sequence(intakeRoller.intakeFuel().withTimeout(0.1), intakeRoller.outtakeFuel().withTimeout(0.1));
         Command runIntakeArmAlternating = Commands.sequence(intakeArm.retract().withTimeout(0.15), intakeArm.extend().withTimeout(0.15));
 
-        Command runFullShootingSystem = Commands.parallel(
+        Command runFullShootingSystemWithStaticDelay = Commands.parallel(
           shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TEST_RPM),
           Commands.sequence(Commands.waitSeconds(Constants.Spindexer.SHOOT_SEQUENCE_SPIN_START_DELAY_SECONDS), shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM)),
           Commands.sequence(Commands.waitSeconds(Constants.Spindexer.SHOOT_SEQUENCE_SPIN_START_DELAY_SECONDS), spindexer.spin())  //TODO: graph and tune this delay based on time for shooter to get up to speed (adjust if we leave the shooter running at low RPM idle between shots)
@@ -214,7 +214,7 @@ public class RobotContainer {
           spindexer.runAtDutyCycle(-Constants.Spindexer.SPIN_DUTY_CYCLE)
         ).finallyDo(() -> shooter.resetShooterAtTargetRpm());
         // driverController.rightTrigger().whileTrue(runFullShootingSystem);
-        driverController.rightTrigger().whileTrue(newFullSequence);
+        driverController.rightTrigger().whileTrue(newFullShootingSequence);
         driverController.leftTrigger().whileTrue(runFullShootingSystemInReverse);
 
         Command runFullShootingSystemLayup = Commands.parallel(
@@ -274,12 +274,12 @@ public class RobotContainer {
         // driverController.leftTrigger().whileTrue(shooterHood.runDutyCycle(() -> -0.2));
         // driverController.leftTrigger().onFalse(shooterHood.stop());
 
-        //TODO: uncomment for sysid (need to comment out pass command on start button)
-        // driverController.back().and(driverController.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
-        // driverController.back().and(driverController.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
-        // driverController.start().and(driverController.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
-        // driverController.start().and(driverController.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
-        // driverController.start().and(driverController.a()).onTrue(drivetrain.stopSysIdLogging());
+        //Run SysId tests using the operator controller
+        operatorController.back().and(operatorController.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
+        operatorController.back().and(operatorController.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
+        operatorController.start().and(operatorController.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
+        operatorController.start().and(operatorController.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
+        operatorController.start().and(operatorController.a()).onTrue(drivetrain.stopSysIdLogging());
 
         //shoot sequence = in parallel(run spindexer, run feeder, run shooter at velocity based on distance to hub)
 
