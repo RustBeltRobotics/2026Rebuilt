@@ -15,6 +15,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.Units;
@@ -59,6 +60,8 @@ public class ShooterYams extends SubsystemBase {
 
     private final DoublePublisher shooterCurrentVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Velocity/Current").publish();
     private final DoublePublisher shooterTargetVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Velocity/Target").publish();
+
+    private final BooleanPublisher atRpmPublisher = NetworkTableInstance.getDefault().getBooleanTopic("/RBR/Shooter/atRPM").publish();
 
     private final InterpolatingDoubleTreeMap rpmTable = new InterpolatingDoubleTreeMap();
 
@@ -192,12 +195,12 @@ public class ShooterYams extends SubsystemBase {
         shooterTargetVelocityPublisher.set(targetRpm);
 
         if (targetRpm != 0.0 && !atTargetRpm) {
-            if ((Math.abs(targetRpm) - Math.abs(currentRpm)) <= 100.00) {
+            if ((Math.abs(targetRpm) - Math.abs(currentRpm)) <= 10.00) {
                 atTargetRpm = true;
             }
         }
 
-        AlertManager.addAlert("ShooterRPM", "ShooterRPM At Target? " + (atTargetRpm ? "Yes" : "No"), (atTargetRpm ? AlertType.kInfo : AlertType.kWarning));
+        atRpmPublisher.set(atTargetRpm);
     
         // if (targetRpm != 0.0 && atTargetRpm) {
         //     targetRpm = 0.0;
@@ -220,7 +223,7 @@ public class ShooterYams extends SubsystemBase {
 
     public void stopShooter() {
         targetRpm = 0.0;
-        atTargetRpm = true;
+        atTargetRpm = false;
         shooterKraken.setVoltageSetpoint(Units.Volts.of(0));
     }
 

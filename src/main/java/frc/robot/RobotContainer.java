@@ -194,7 +194,7 @@ public class RobotContainer {
             Commands.parallel(
               shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TEST_RPM),
               Commands.waitUntil(shooter.getAtRpmTrigger())
-                .andThen(shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM)).alongWith(spindexer.spin())
+                .andThen(Commands.parallel(shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM), spindexer.spin()))
             )
         );
 
@@ -213,8 +213,8 @@ public class RobotContainer {
           shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM.unaryMinus()),
           spindexer.runAtDutyCycle(-Constants.Spindexer.SPIN_DUTY_CYCLE)
         ).finallyDo(() -> shooter.resetShooterAtTargetRpm());
-        driverController.rightTrigger().whileTrue(runFullShootingSystem);
-        // driverController.rightTrigger().whileTrue(newFullSequence);
+        // driverController.rightTrigger().whileTrue(runFullShootingSystem);
+        driverController.rightTrigger().whileTrue(newFullSequence);
         driverController.leftTrigger().whileTrue(runFullShootingSystemInReverse);
 
         Command runFullShootingSystemLayup = Commands.parallel(
