@@ -86,8 +86,6 @@ public final class Constants {
     public static final int INTAKE_EXTEND_RETRACT_MOTOR = 12;  //NEO
     public static final int SHOOTER_KRAKEN_LEFT = 20;  //Kraken x60
     public static final int SHOOTER_KRAKEN_RIGHT = 21; //Kraken x60
-    public static final int SHOOTER_VORTEX_LEFT = 19; //SparkMax
-    public static final int SHOOTER_VORTEX_RIGHT = 23; //SparkMax
     public static final int SHOOTER_HOOD = 24;
     public static final int SPINDEXER_LEFT = 25;  //SparkMax with NEO motor
     public static final int SPINDEXER_RIGHT = 26; //SparkMax with NEO motor
@@ -298,8 +296,8 @@ public final class Constants {
     public static final Distance SHOOTER_WHEEL_DIAMETER = Units.Inches.of(4.0);
     public static final Mass FLYWHEEL_MASS = Units.Pounds.of(7.9); //This weight does not include the rotating mass of the Neo Vortex motors, which may ass 0.75 lbs.
     public static final AngularVelocity SHOOTER_TEST_RPM = Units.RPM.of(3400);  //was 3100
-    public static final AngularVelocity SHOOTER_AUTO_RPM = Units.RPM.of(3345);
-    public static final AngularVelocity SHOOTER_LAYUP_RPM = Units.RPM.of(2470);
+    public static final AngularVelocity SHOOTER_LAYUP_RPM = Units.RPM.of(2470);  //Assumes hood is all the way down
+    public static final AngularVelocity SHOOTER_TRENCH_RPM = Units.RPM.of(3345);  //Assumes hood is all the way down
 
     public static final AngularVelocity SHOOTER_PASS_RPM = Units.RPM.of(4250);  //was 3100
     //3000 RPM for distance from field edge (blue left)

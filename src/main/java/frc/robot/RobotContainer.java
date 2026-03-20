@@ -125,7 +125,7 @@ public class RobotContainer {
           Commands.sequence(Commands.waitSeconds(2.5), intakeArm.retract().withTimeout(0.5))  //TODO: graph and tune this delay based on time for shooter to get up to speed (adjust if we leave the shooter running at low RPM idle between shots)
         ).withTimeout(4.0);  //TODO: We may want to lower the timeout here, evaluate after testing
 
-    NamedCommands.registerCommand("start-shooter", shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_AUTO_RPM));
+    NamedCommands.registerCommand("start-shooter", shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TRENCH_RPM));
     NamedCommands.registerCommand("extend-intake", intakeArm.extend().withTimeout(0.75));
     Command intakeFuelSequence = Commands.parallel(intakeRoller.intakeFuelForAuto(), intakeArm.extendForIntakeSequenceAuto());
     Command stopIntakeFuelSequence = Commands.parallel(intakeRoller.stopIntakeWheelRotation(), intakeArm.stopExtendRetract());
@@ -161,15 +161,6 @@ public class RobotContainer {
         //run seedFieldCentric on start of tele-op mode
         // RobotModeTriggers.teleop().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
-        // Run SysId routines when holding back/start and X/Y.
-        // Note that each routine should be run exactly once in a single log.
-        // Note: to switch between translation, steer and rotation routines, you need to reassign the value of
-        //  CommandSwerveDrivetrain.m_sysIdRoutineToApply to m_sysIdRoutineTranslation, m_sysIdRoutineSteer or m_sysIdRoutineRotation respectively
-        // driverController.back().and(driverController.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
-        // driverController.back().and(driverController.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
-        // driverController.start().and(driverController.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
-        // driverController.start().and(driverController.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
-
         //TODO: Add command to run Spindexer on reverse
 
         // Reset the field-centric heading (set robot forward direction) on left bumper press.
@@ -200,7 +191,7 @@ public class RobotContainer {
 
         //TODO: test integrating this into the runFullShootingSystem command to see if it helps with agitation
         Command runIntakeRollerAlternating = Commands.sequence(intakeRoller.intakeFuel().withTimeout(0.1), intakeRoller.outtakeFuel().withTimeout(0.1));
-        Command runIntakeArmAlternating = Commands.sequence(intakeArm.retract().withTimeout(0.15), intakeArm.extend().withTimeout(0.15));
+        Command runIntakeArmAlternating = Commands.sequence(intakeArm.retract().withTimeout(0.3), intakeArm.extend().withTimeout(0.2));
 
         Command runFullShootingSystemWithStaticDelay = Commands.parallel(
           shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TEST_RPM),

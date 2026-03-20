@@ -24,14 +24,12 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.MutAngle;
 import edu.wpi.first.units.measure.MutAngularVelocity;
 import edu.wpi.first.units.measure.MutVoltage;
-import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
-import frc.robot.util.AlertManager;
 import yams.gearing.MechanismGearing;
 import yams.mechanisms.config.FlyWheelConfig;
 import yams.mechanisms.velocity.FlyWheel;
@@ -145,10 +143,10 @@ public class ShooterYams extends SubsystemBase {
     );
 
     public ShooterYams() {
-        //TODO: test and assign these values properly - those listed are placeholders
-        rpmTable.put(2.0, 1500.0); // At 2m, 1500 RPM
-        rpmTable.put(4.0, 2500.0); // At 4m, 2500 RPM
-        rpmTable.put(6.0, 3000.0); // At 6m, 3000 RPM
+        //meters to RPM, Note: distance is measured from center of robot (drivetrain.getState().Pose) to center of hub
+        //TODO: Add a few more measured values
+        rpmTable.put(1.70240, Constants.Shooter.SHOOTER_LAYUP_RPM.in(Units.RPM));  //corresponds to depot-wall-shot-end waypoint in PathPlanner
+        rpmTable.put(3.65657, Constants.Shooter.SHOOTER_TRENCH_RPM.in(Units.RPM)); //corresponds to l-trench-shot waypoint in PathPlanner
     }
 
     public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
@@ -201,11 +199,6 @@ public class ShooterYams extends SubsystemBase {
         }
 
         atRpmPublisher.set(atTargetRpm);
-    
-        // if (targetRpm != 0.0 && atTargetRpm) {
-        //     targetRpm = 0.0;
-        //     atTargetRpm = false;
-        // }
     }
 
     public void setShooterAngularVelocity(AngularVelocity rpmTarget) {

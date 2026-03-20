@@ -1,9 +1,12 @@
 TODO:
+- Delete pathplanner dir from deploy folder on rio using SFTP connection
 - Test running hood to a setpoint angle using PID
     - Hold both start and back buttons
+- Test runIntakeArmAlternating command for auto-agitation
 - Review Swerve tab state and new DrivePID line chart in AdvantageScope to try and confirm PID behavior on drivetrain
     - Re-run all 3 sysid tests
     - Test new gains from sysid in PID graph
+- Test prepVariableDistanceShot command to auto-set shooter RPM based on robot pose distance from hub
 - Test Align To Target drive with AprilTags on hub
 - Test hood running down to hard stop commands to ensure current based stall detection still works
     - Graph the hood current if it does not, and adjust threshold/debounce time accordingly

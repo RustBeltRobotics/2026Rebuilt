@@ -39,20 +39,25 @@ public class IntakeArm extends SubsystemBase {
 
     private final DoublePublisher extendRetractVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Intake/ExtendRetract/Velocity").publish();
     private final DoublePublisher extendRetractCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Intake/ExtendRetract/Current").publish();
+    private final DoublePublisher extendRetractPositionPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Intake/ExtendRetract/Position").publish();
+
+    //When initially extending from fully retracted position, current will spike to 45+ amps and takes approx 40ms (0.04 S) until velocity increases above 0
 
     public IntakeArm() {
         var extendRetractConfig = new SparkMaxConfig();
         extendRetractConfig.idleMode(IdleMode.kBrake);
+        //TODO: update this note on gear ratio is it likely is changing
         //Note: the gear ratio on this mechanism is 64:1 (4x4x4)
         extendRetractConfig.smartCurrentLimit(70).secondaryCurrentLimit(60);
         extendRetractMotor.configure(extendRetractConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-        extendRetractEncoder.setPosition(0.0);  //zero the encoder on startup
+        extendRetractEncoder.setPosition(0.0);  //zero the encoder on startup (the arm will be retracted within the robot perimeter)
     }
 
     @Override
     public void periodic() {
         extendRetractMotorOutputCurrentAmps = extendRetractMotor.getOutputCurrent();
         extendRetractCurrentPublisher.set(extendRetractMotorOutputCurrentAmps);
+        extendRetractPositionPublisher.set(extendRetractEncoder.getPosition());
         double rawVelocity = extendRetractEncoder.getVelocity();
         extendRetractVelocityPublisher.set(rawVelocity);
         double extendRetractMotorVelocityRps = Math.abs(rawVelocity / 60);
