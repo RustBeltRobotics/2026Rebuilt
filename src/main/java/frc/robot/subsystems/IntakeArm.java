@@ -86,6 +86,15 @@ public class IntakeArm extends SubsystemBase {
         .andThen(stopExtendRetract());
     }
 
+    public Command extendForAutoAgitate() {
+       return run(() -> {
+            isExtending = true;
+            runExtendRetractAtDutyCycle(-0.3);
+        })
+        .until(() -> shouldStopExtendRetract.getAsBoolean())
+        .andThen(stopExtendRetract());
+    }
+
     public Command extendForIntakeSequence() {
        return this.startEnd(() -> { 
             runExtendRetractAtDutyCycle(-0.04);
@@ -104,6 +113,15 @@ public class IntakeArm extends SubsystemBase {
         return run(() -> {
             isExtending = false;
             runExtendRetractAtDutyCycle(0.80);
+        })
+        .until(() -> shouldStopExtendRetract.getAsBoolean())
+        .andThen(stopExtendRetract());
+    }
+
+    public Command retractForAutoAgitate() {
+        return run(() -> {
+            isExtending = false;
+            runExtendRetractAtDutyCycle(0.40);
         })
         .until(() -> shouldStopExtendRetract.getAsBoolean())
         .andThen(stopExtendRetract());

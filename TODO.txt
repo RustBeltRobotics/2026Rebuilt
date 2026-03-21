@@ -1,13 +1,7 @@
 TODO:
-- Delete pathplanner dir from deploy folder on rio using SFTP connection
-- Test running hood to a setpoint angle using PID
-    - Hold both start and back buttons
-- Test runIntakeArmAlternating command for auto-agitation
-- Review Swerve tab state and new DrivePID line chart in AdvantageScope to try and confirm PID behavior on drivetrain
-    - Re-run all 3 sysid tests
-    - Test new gains from sysid in PID graph
 - Test prepVariableDistanceShot command to auto-set shooter RPM based on robot pose distance from hub
 - Test Align To Target drive with AprilTags on hub
+    - PID turn to hub is working, might need some tuning
 - Test hood running down to hard stop commands to ensure current based stall detection still works
     - Graph the hood current if it does not, and adjust threshold/debounce time accordingly
     - See https://www.chiefdelphi.com/t/how-often-are-you-losing-your-kraken-x44-x60-encoder-zeroes/514626/6 for hardStop detection
@@ -16,9 +10,6 @@ TODO:
 - Test shooter full sequence with runIntakeRollerAlternating integrated for ball agitation
     - this command needs to be run with the intake arm down/extended and NOT folded up into the robot
 - Create/measure distance (or set field locations) -> shooter RPM and hood angle (or top/bottom) mappings for shots
-- Run SysId tests on drivetrain (including m_sysIdRoutineRotation)
-    - Evaluate / test gains from SysId tool
-    - Use PID values for m_sysIdRoutineRotation test in Constants.getRotateToPoseController()
 - Document controller button mappings for driver + operator
 - Test / update CTRE Swerve constants kSlipCurrent
     - https://docs.advantagekit.org/getting-started/template-projects/talonfx-swerve-template/#slip-current-measurement

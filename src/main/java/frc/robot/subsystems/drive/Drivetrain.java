@@ -41,7 +41,6 @@ import frc.robot.vision.VisionEstimateConsumer;
 
 public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimateConsumer {
 
-    private final StructPublisher<Rotation2d> targetTurnAnglePublisher = NetworkTableInstance.getDefault().getStructTopic("/RBR/AutoTarget/Angle", Rotation2d.struct).publish();
     private final BooleanPublisher isAutoTargetingPublisher = NetworkTableInstance.getDefault().getBooleanTopic("/RBR/AutoTarget/Activated").publish();
     private final DoublePublisher driveForwardSpeedPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/ChassisSpeeds/vxMetersPerSecond").publish();
     private final DoublePublisher frontLeftDriveCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/Drive/Current/FL").publish();
@@ -52,6 +51,15 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     private final DoublePublisher frontRightSteerCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/Steer/Current/FR").publish();
     private final DoublePublisher backLeftSteerCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/Steer/Current/BL").publish();
     private final DoublePublisher backRightSteerCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/Steer/Current/BR").publish();
+
+    private final StructPublisher<Pose2d> targetHubPose = NetworkTableInstance.getDefault().getStructTopic("/RBR/Drivetrain/AutoAlign/Hub/Pose", Pose2d.struct).publish();
+    private final StructPublisher<Rotation2d> alignDriveTargetRotationPublisher = NetworkTableInstance.getDefault().getStructTopic("/RBR/Drivetrain/AutoAlign/Rotation/Target", Rotation2d.struct).publish();
+    private final StructPublisher<Rotation2d> alignDriveDeltaRotationPublisher = NetworkTableInstance.getDefault().getStructTopic("/RBR/Drivetrain/AutoAlign/Rotation/Delta", Rotation2d.struct).publish();
+    private final StructPublisher<Rotation2d> alignDriveTargetRotationNewPublisher = NetworkTableInstance.getDefault().getStructTopic("/RBR/Drivetrain/AutoAlign/Rotation/TargetNew", Rotation2d.struct).publish();
+    private final StructPublisher<Rotation2d> alignDriveDeltaRotationNewPublisher = NetworkTableInstance.getDefault().getStructTopic("/RBR/Drivetrain/AutoAlign/Rotation/DeltaNew", Rotation2d.struct).publish();
+    private final DoublePublisher alignDriveRadiansResultPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/AutoAlign/Result/Radians").publish();
+    private final BooleanPublisher alreadyAtGoalPublisher = NetworkTableInstance.getDefault().getBooleanTopic("/RBR/Drivetrain/AutoAlign/AlreadyAtGoal").publish();
+    private final BooleanPublisher notTryingToDrivePublisher = NetworkTableInstance.getDefault().getBooleanTopic("/RBR/Drivetrain/AutoAlign/NotTryingToDrive").publish();
 
     private final SwerveRequest.FieldCentric teleopRequest = new SwerveRequest.FieldCentric()
         .withDeadband(Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND * Constants.Controls.CONTROLLER_DEADBAND)
@@ -69,7 +77,6 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     private boolean needToCorrectOdometryUsingVision = false;
     private boolean isAutoTargeting = false;
     private Pose2d latestVisionPose;
-    private Rotation2d targetTurnAngle = new Rotation2d();
 
     private Supplier<Pose2d> currentPoseSupplier = () -> getState().Pose;
     //TODO: test these for auto-lowering the hood when approaching the trench 
@@ -119,7 +126,6 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     }
 
     public void updateTelemetry() {
-        targetTurnAnglePublisher.accept(targetTurnAngle);
         isAutoTargetingPublisher.accept(isAutoTargeting);
     }
 
@@ -152,22 +158,27 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
 
             Pose2d drivePose = getState().Pose;
             Pose2d targetPose = targetPoseSupplier.get();
+            targetHubPose.set(targetPose);
             Rotation2d currentAngle = drivePose.getRotation();
 
-            targetTurnAngle = PhotonUtils.getYawToPose(drivePose, targetPose);
-
-            Rotation2d deltaAngle = currentAngle.minus(targetTurnAngle);
+            Translation2d difference = targetPose.getTranslation().minus(drivePose.getTranslation());
+            Rotation2d angleToTarget = difference.getAngle();
+            Rotation2d deltaAngle = angleToTarget.minus(drivePose.getRotation());
+            alignDriveTargetRotationPublisher.set(angleToTarget);
+            alignDriveDeltaRotationNewPublisher.set(deltaAngle);
             double wrappedAngleDeg = MathUtil.inputModulus(deltaAngle.getDegrees(), -180.0, 180.0);
 
             boolean notTryingToDrive = Math.hypot(xControllerValue, yControllerValue) < Constants.Controls.CONTROLLER_DEADBAND;
+            notTryingToDrivePublisher.set(notTryingToDrive);
             boolean alreadyFacingGoal = Math.abs(wrappedAngleDeg) < Constants.Kinematics.EPSILON_ANGLE_TO_GOAL.in(Units.Degrees);
+            alreadyAtGoalPublisher.set(alreadyFacingGoal);
 
             if (alreadyFacingGoal && notTryingToDrive) {
                 return new SwerveRequest.SwerveDriveBrake();
             } else {
-                double rotationalRate = Constants.Kinematics.getRotateToPoseController().calculate(currentAngle.getRadians(), targetTurnAngle.getRadians());
-                //TODO: switch to the following form once we have the PID fully tuned to avoid network table reads every loop
-                //double rotationalRate = Constants.Kinematics.ROTATE_TO_POSE_PID_CONTROLLER.calculate(currentAngle.getRadians(), targetTurnAngle.getRadians());
+                double rotationalRate = Constants.Kinematics.ROTATE_TO_POSE_PID_CONTROLLER.calculate(currentAngle.getRadians(), angleToTarget.getRadians());
+                double calcRotationRadians = rotationalRate * Constants.Kinematics.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND;
+                alignDriveRadiansResultPublisher.set(calcRotationRadians);
 
                 return alignToTargetDriveRequest.withVelocityX(xControllerValue * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND) // Drive forward with negative Y (forward)
                     .withVelocityY(yControllerValue * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND) // Drive left with negative X (left)
@@ -179,7 +190,8 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     public void resetPoseForAutoStart(Pose2d pose) {
         Pose2d targetPose = pose;
         //if this is autonomous and we have valid vision data, override the provided pose with vision data
-        if (DriverStation.isAutonomous() && Constants.Vision.VISION_ENABLED && !initialPoseSetViaVision && this.latestVisionPose != null) {
+        if (DriverStation.isAutonomous() && Constants.Vision.VISION_ENABLED && Constants.Vision.TAKE_INITIAL_AUTO_POSE_FROM_VISION
+                && !initialPoseSetViaVision && this.latestVisionPose != null) {
             targetPose = this.latestVisionPose;
             initialPoseSetViaVision = true;
             AlertManager.addAlert("AutoVision", "Initial AutoPose [" + pose + "] overriden with vision to [" + this.latestVisionPose + "]", AlertType.kInfo);

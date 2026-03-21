@@ -191,7 +191,12 @@ public class RobotContainer {
 
         //TODO: test integrating this into the runFullShootingSystem command to see if it helps with agitation
         Command runIntakeRollerAlternating = Commands.sequence(intakeRoller.intakeFuel().withTimeout(0.1), intakeRoller.outtakeFuel().withTimeout(0.1));
-        Command runIntakeArmAlternating = Commands.sequence(intakeArm.retract().withTimeout(0.3), intakeArm.extend().withTimeout(0.2));
+        //TODO: Add a waitSeconds before the retractForAutoAgitate call in the sequencce if we need time to empty some balls out of the hopper first during shot
+        Command runIntakeArmAlternating = Commands.sequence(intakeArm.retractForAutoAgitate().withTimeout(0.2), 
+          Commands.waitSeconds(0.4), 
+          intakeArm.extendForAutoAgitate().withTimeout(0.25),
+          Commands.waitSeconds(0.6))
+        .repeatedly();
 
         Command runFullShootingSystemWithStaticDelay = Commands.parallel(
           shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TEST_RPM),
@@ -225,7 +230,7 @@ public class RobotContainer {
           shooter.setDefaultCommandIsStop(newState);
         }, shooter);
         driverController.back().onTrue(toggleShooterLowIdleEnabledCommand);
-        // driverController.b().whileTrue(runIntakeArmAlternating);
+        operatorController.b().whileTrue(runIntakeArmAlternating);
         Command fullRetractCommand = Commands.parallel(intakeArm.retractForAgitate(), intakeRoller.intakeFuel());
 
         // driverController.povLeft().whileTrue(intakeArm.extend());
@@ -237,6 +242,9 @@ public class RobotContainer {
         driverController.povUp().onFalse(shooterHood.stop());
         driverController.povDown().whileTrue(shooterHood.runDutyCycle(() -> -0.15));  //hood down
         driverController.povDown().onFalse(shooterHood.stop());
+
+        operatorController.povUp().whileTrue(shooterHood.runToAngle(1.5));
+        operatorController.povDown().whileTrue(shooterHood.runToAngle(0.0));
 
         // driverController.start().onTrue(shooterHood.runUpToHardStop());
         // driverController.back().onTrue(shooterHood.runDownToHardStop());
@@ -277,7 +285,7 @@ public class RobotContainer {
         Supplier<Pose2d> hubTargetPoseSupplier = () -> Constants.Game.getHubPose().toPose2d();
         
         // Auto-align drive to hub while holding right bumper.
-        driverController.start().and(driverController.rightBumper()).whileTrue(
+        driverController.y().whileTrue(
           Commands.parallel(
             shooter.prepVariableDistanceShot(() -> drivetrain.getShotDistance(hubTargetPoseSupplier.get().getTranslation())),
             drivetrain.alignToTargetDrive(driverController, hubTargetPoseSupplier)

@@ -50,7 +50,7 @@ public final class Constants {
   public static final class Controls {
     public static final int CONTROLLER_PORT_DRIVER = 0;
     public static final int CONTROLLER_PORT_OPERATOR = 1;
-    public static final double CONTROLLER_DEADBAND = 0.05;
+    public static final double CONTROLLER_DEADBAND = 0.03;
   }
 
   public static final class Game {
@@ -242,17 +242,15 @@ public final class Constants {
     //allowable error to consider robot at goal angle when rotating to pose
     public static final Angle EPSILON_ANGLE_TO_GOAL = Units.Degrees.of(1.0);
 
-    public static final PIDController ROTATE_TO_POSE_PID_CONTROLLER = getRotateToPoseController();
-
-    public static final PIDController getRotateToPoseController() {
-      //TODO: test/tune PID: try with the m_sysIdRoutineRotation SysId routine from CommandSwerveDrivetrain
-      double kP = SmartDashboard.getNumber("turnToAngle_P", 0.0);
-      double kI = SmartDashboard.getNumber("turnToAngle_I", 0.0);
-      double kD = SmartDashboard.getNumber("turnToAngle_D", 0.0);
-      PIDController controller = new PIDController(kP, kI, kD);
-      controller.enableContinuousInput(-Math.PI, Math.PI);
-
-      return controller;
+    public static final PIDController ROTATE_TO_POSE_PID_CONTROLLER;
+    
+    static {
+      //TODO: increase this kP until we reach setpoint quickly, but get oscillations
+      //    Then, increade kD until we get no overshoot or oscillation
+      //    If overshoot persists, reduce kP
+      ROTATE_TO_POSE_PID_CONTROLLER = new PIDController(0.14, 0, 0);
+      ROTATE_TO_POSE_PID_CONTROLLER.enableContinuousInput(-Math.PI, Math.PI);
+      SmartDashboard.putData("AutoAimRotationPID", ROTATE_TO_POSE_PID_CONTROLLER);
     }
 
     // public static final Matrix<N3, N1> WHEEL_ODOMETRY_POSE_STANDARD_DEVIATIONS = VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(5));
@@ -355,6 +353,7 @@ public final class Constants {
   public static final class Vision {
     //TODO: re-enable
     public static final boolean VISION_ENABLED = true;
+    public static final boolean TAKE_INITIAL_AUTO_POSE_FROM_VISION = true;
     public static final boolean TAKE_POSE_ESTIMATES_FROM_VISION = true;
     public static final int APRIL_TAG_PIPELINE_INDEX = 0;
     public static final String ARDUCAM_MODEL = "OV9281";
