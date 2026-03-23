@@ -1,19 +1,22 @@
 TODO:
-- Test prepVariableDistanceShot command to auto-set shooter RPM based on robot pose distance from hub
-- Test Align To Target drive with AprilTags on hub
-    - PID turn to hub is working, might need some tuning
-- Test hood running down to hard stop commands to ensure current based stall detection still works
-    - Graph the hood current if it does not, and adjust threshold/debounce time accordingly
-    - See https://www.chiefdelphi.com/t/how-often-are-you-losing-your-kraken-x44-x60-encoder-zeroes/514626/6 for hardStop detection
-- Test intake arm extending in/out to hard stop commands to ensure current based stall detection still works
-    - Graph the intake arm current if it does not, and adjust threshold/debounce time accordingly
+- Re-run SysId tests and update PID/FF gains for:
+    - Shooter
+    - Feeder
+- Verify with Dillan that MOI isn't changed with recent robot changes (if so, update PathPlanner constants)
 - Test shooter full sequence with runIntakeRollerAlternating integrated for ball agitation
     - this command needs to be run with the intake arm down/extended and NOT folded up into the robot
-- Create/measure distance (or set field locations) -> shooter RPM and hood angle (or top/bottom) mappings for shots
-- Document controller button mappings for driver + operator
-- Test / update CTRE Swerve constants kSlipCurrent
+- Test / update CTRE Swerve constants kSlipCurrent (this is how stator current is set)
     - https://docs.advantagekit.org/getting-started/template-projects/talonfx-swerve-template/#slip-current-measurement
     - https://v6.docs.ctr-electronics.com/en/stable/docs/hardware-reference/talonfx/improving-performance-with-current-limits.html#preventing-wheel-slip
+- Test prepVariableDistanceShot command to auto-set shooter RPM based on robot pose distance from hub
+- Test Align To Target drive with AprilTags on hub
+    - PID turn to hub is working, might need some tuningdStop detection
+- Update robot to camera pose translation constants for new camera locations
+- Test intake arm extending in/out to hard stop commands to ensure current based stall detection still works
+    - Graph the intake arm current if it does not, and adjust threshold/debounce time accordingly
+- Create/measure distance (or set field locations) -> shooter RPM mappings for shots
+- Document controller button mappings for driver + operator
+
 - Run robot at full speed forward in a straight linewith AdvantageScope open to get measured max velocity in M/S
     - TODO: we don't really have enough space in the lab to do this :(
         - it's definitely above 5.0 m/s though
@@ -27,15 +30,6 @@ Implemented, needs testing:
     - If ramp was encountered and tilt goes back to flat, set a separate flag to indicate vision odometry should be boosted (or just use resetPose)
         - After that is done, clear all flags
     - Done => needs to be tested to verify
-- Implement LED control
-    - Done (ish) => needs testing and likely tweaks to how we plan to actually use it    
+    - This may not be needed if normal vision measurement pose estimates are good enough
 
-- Get robot to camera translation values from CAD / physical measurement once placed on robot
-- Run Swerve SysId routines, import logs and update PID gains in constants
-
-- Re-run Shooter SysId routines, import logs and update PID gains in constants (with vortex motors out of the loop)
-- Re-run Feeder SysId routines, import logs and update PID gains in constants
-- Run Hood SysId routines, import logs and update PID gains in constants
-- Define and test algorithm to auto-aim robot towards center of hub based on current robot pose and known hub pose
-- Define and test algorithm to put shooter hood down automatically when approaching the trench (so we don't rip it off)
 - Implement and test robot simulation using CTRE swerve and photonvision support

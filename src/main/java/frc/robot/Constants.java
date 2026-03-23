@@ -67,10 +67,6 @@ public final class Constants {
 
         return pose;
     }
-
-    //Note: this should be set to false for testing the the RBR Lab
-    //TODO: check this is set properly before every competition!!
-    public static final boolean IS_COMPETITION = true;
   }
 
   /**
@@ -82,13 +78,13 @@ public final class Constants {
     public static final int PIGEON_GYRO = 10;
     public static final int FEEDER_KRAKEN_LEFT = 14;
     public static final int FEEDER_KRAKEN_RIGHT = 27;
-    public static final int INTAKE_ROTATE_MOTOR = 16;  //NEO Vortex
+    public static final int INTAKE_ROTATE_MOTOR_RIGHT = 16;  //NEO
+    public static final int INTAKE_ROTATE_MOTOR_LEFT = 24;  //NEO
     public static final int INTAKE_EXTEND_RETRACT_MOTOR = 12;  //NEO
     public static final int SHOOTER_KRAKEN_LEFT = 20;  //Kraken x60
     public static final int SHOOTER_KRAKEN_RIGHT = 21; //Kraken x60
-    public static final int SHOOTER_HOOD = 24;
-    public static final int SPINDEXER_LEFT = 25;  //SparkMax with NEO motor
-    public static final int SPINDEXER_RIGHT = 26; //SparkMax with NEO motor
+    public static final int ROLLING_FLOOR_LEFT = 25;  //SparkMax with NEO motor
+    public static final int ROLLING_FLOOR_RIGHT = 26; //SparkMax with NEO motor
     public static final int SWERVE_MODULE_FRONT_LEFT_DRIVE_MOTOR = 6; //Kraken x60
     public static final int SWERVE_MODULE_FRONT_LEFT_STEER_MOTOR = 13; //Kraken x44
     public static final int SWERVE_MODULE_FRONT_LEFT_STEER_ENCODER = 2; //CANcoder
@@ -277,19 +273,6 @@ public final class Constants {
     public static final AngularVelocity FEEDER_RPM = Units.RPM.of(2400); //Note: max theoretical is ~3000 with the 2:1 gear reduction
   }
 
-  public static final class ShooterHood {
-    public static final double MOTOR_ROTATIONS_PER_HOOD_ROTATION = 700.0;  //700:1 overall gear ratio (gear boxes and gear teeth)
-    public static final double THROUGH_BORE_ZERO_OFFSET = 0.0; //TODO: update this value based on telemetry - initial absolute encoder value to treat as zero degrees
-    public static final double MIN_DEGREES = 0.0; //Max hood angle
-    public static final double MAX_DEGREES = 6.0; //Max hood angle
-    public static final double K_P = 5.8054;
-    public static final double K_I = 0.0;
-    public static final double K_D = 2567.9;
-    public static final double K_S = 0.50211;  //static feedforward term
-    public static final double K_V = 46.887;  
-    public static final double K_A = 10.02;
-  }
-
   public static final class Shooter {
     public static final Distance SHOOTER_WHEEL_DIAMETER = Units.Inches.of(4.0);
     public static final Mass FLYWHEEL_MASS = Units.Pounds.of(7.9); //This weight does not include the rotating mass of the Neo Vortex motors, which may ass 0.75 lbs.
@@ -321,9 +304,8 @@ public final class Constants {
     }
   }
 
-  public static final class Spindexer {
-    public static final double SPIN_DUTY_CYCLE = -0.85; //Negative equates to the direction we want - inward to feed balls towards the feeder
-    public static final double SHOOT_SEQUENCE_SPIN_START_DELAY_SECONDS = 1.5; //TODO: graph and tune this delay based on time for shooter to get up to speed (adjust if we leave the shooter running at low RPM idle between shots)
+  public static final class RollingFloor {
+    public static final double ROLL_DUTY_CYCLE = -0.85; //Negative equates to the direction we want - inward to feed balls towards the feeder/elevator
   }
 
   public static final class Intake {

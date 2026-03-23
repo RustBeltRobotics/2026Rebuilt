@@ -107,11 +107,6 @@ public class Robot extends TimedRobot {
     if (autonomousCommand != null) {
       if (autonomousCommand instanceof PathPlannerAuto) {
         PathPlannerAuto ppAuto = (PathPlannerAuto) autonomousCommand;
-
-        //TODO: automatically lower the hood when approaching the trench so we don't rip it off
-       
-        //Something like this, but likely we need more criteria than just being near the trench to lower the hood, so this is just a placeholder for now
-        // nearingUpperTrenchLeftTrigger.onTrue(Commands.runOnce(() -> robotContainer.getShooterHood().runToAngle(0.0)));
       }
 
       CommandScheduler.getInstance().schedule(autonomousCommand);

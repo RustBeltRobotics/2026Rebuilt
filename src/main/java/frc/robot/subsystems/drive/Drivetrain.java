@@ -2,8 +2,6 @@ package frc.robot.subsystems.drive;
 
 import java.util.function.Supplier;
 
-import org.photonvision.PhotonUtils;
-
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.swerve.SwerveModule;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
@@ -23,6 +21,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.networktables.BooleanPublisher;
+import edu.wpi.first.networktables.DoubleEntry;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
@@ -54,12 +53,21 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
 
     private final StructPublisher<Pose2d> targetHubPose = NetworkTableInstance.getDefault().getStructTopic("/RBR/Drivetrain/AutoAlign/Hub/Pose", Pose2d.struct).publish();
     private final StructPublisher<Rotation2d> alignDriveTargetRotationPublisher = NetworkTableInstance.getDefault().getStructTopic("/RBR/Drivetrain/AutoAlign/Rotation/Target", Rotation2d.struct).publish();
-    private final StructPublisher<Rotation2d> alignDriveDeltaRotationPublisher = NetworkTableInstance.getDefault().getStructTopic("/RBR/Drivetrain/AutoAlign/Rotation/Delta", Rotation2d.struct).publish();
-    private final StructPublisher<Rotation2d> alignDriveTargetRotationNewPublisher = NetworkTableInstance.getDefault().getStructTopic("/RBR/Drivetrain/AutoAlign/Rotation/TargetNew", Rotation2d.struct).publish();
     private final StructPublisher<Rotation2d> alignDriveDeltaRotationNewPublisher = NetworkTableInstance.getDefault().getStructTopic("/RBR/Drivetrain/AutoAlign/Rotation/DeltaNew", Rotation2d.struct).publish();
     private final DoublePublisher alignDriveRadiansResultPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/AutoAlign/Result/Radians").publish();
     private final BooleanPublisher alreadyAtGoalPublisher = NetworkTableInstance.getDefault().getBooleanTopic("/RBR/Drivetrain/AutoAlign/AlreadyAtGoal").publish();
     private final BooleanPublisher notTryingToDrivePublisher = NetworkTableInstance.getDefault().getBooleanTopic("/RBR/Drivetrain/AutoAlign/NotTryingToDrive").publish();
+
+    private final DoubleEntry kPEntry = NetworkTableInstance.getDefault().getTable("Tuning")
+        .getDoubleTopic("HeadingController/kP")
+        .getEntry(0.14); // 0.14 is the default
+
+    private final DoubleEntry kDEntry = NetworkTableInstance.getDefault().getTable("Tuning")
+        .getDoubleTopic("HeadingController/kD")
+        .getEntry(0.0);
+
+    private int priorHeadingControllerKp = 0.14;
+    private int priorHeadingControllerKd = 0;
 
     private final SwerveRequest.FieldCentric teleopRequest = new SwerveRequest.FieldCentric()
         .withDeadband(Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND * Constants.Controls.CONTROLLER_DEADBAND)
@@ -69,6 +77,9 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     private final SwerveRequest.FieldCentric alignToTargetDriveRequest = new SwerveRequest.FieldCentric()
         .withDeadband(Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND * Constants.Controls.CONTROLLER_DEADBAND)
         .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
+
+    private final SwerveRequest.FieldCentricFacingAngle autoAlignRequest = new SwerveRequest.FieldCentricFacingAngle()
+        .withHeadingPID(0.14, 0, 0);
 
     private final SwerveRequest.ApplyRobotSpeeds pathApplyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
 
@@ -93,6 +104,15 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     @Override
     public void periodic() {
         super.periodic();
+
+        double kP = kPEntry.get();
+        double kD = kDEntry.get();
+
+        if (kP != priorHeadingControllerKp || kD != priorHeadingControllerKd) {
+            headingController.setPID(kP, 0.0, kD);
+            priorHeadingControllerKp = kP;
+            priorHeadingControllerKd = kD;
+        }
 
         SwerveDriveState swerveDriveState = getState();
         driveForwardSpeedPublisher.set(swerveDriveState.Speeds.vxMetersPerSecond);
@@ -144,6 +164,24 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     private double modifyDriverControllerInput(double input) {
         // scale the controller input - See https://www.desmos.com/calculator/bnqnldev69 for function graph
         return (Math.signum(input) * Math.pow(Math.abs(input), 3.7) + (input * 0.43)) / (1 + 0.42);
+    }
+
+    public Command teleOpDriveWithAutoAimToTarget(CommandXboxController controller, Supplier<Pose2d> targetPoseSupplier) {
+        return applyRequest(() -> {
+            isAutoTargeting = true;
+
+            double xControllerValue = -modifyDriverControllerInput(controller.getLeftY());  //forward/back
+            double yControllerValue = -modifyDriverControllerInput(controller.getLeftX());  //left/right
+
+            Pose2d drivePose = getState().Pose;
+            Pose2d targetPose = targetPoseSupplier.get();
+            Translation2d toTarget = targetPose.getTranslation().minus(drivePose.getTranslation());
+            Rotation2d headingToTarget = toTarget.getAngle();
+
+            return autoAlignRequest.withVelocityX(xControllerValue * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND)
+                .withVelocityY(yControllerValue * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND)
+                .withTargetDirection(headingToTarget);
+        });
     }
 
     public Command alignToTargetDrive(CommandXboxController controller, Supplier<Pose2d> targetPoseSupplier) {

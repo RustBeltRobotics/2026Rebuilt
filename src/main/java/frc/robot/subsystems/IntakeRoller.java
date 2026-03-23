@@ -16,29 +16,39 @@ import frc.robot.Constants;
 
 public class IntakeRoller extends SubsystemBase {
 
-    private final SparkMax rotateIntakeShaftMotor = new SparkMax(Constants.CanID.INTAKE_ROTATE_MOTOR, MotorType.kBrushless);
-    private final RelativeEncoder rotateIntakeShaftEncoder = rotateIntakeShaftMotor.getEncoder();
+    private final SparkMax rotateIntakeRightShaftMotor = new SparkMax(Constants.CanID.INTAKE_ROTATE_MOTOR_RIGHT, MotorType.kBrushless);
+    private final SparkMax rotateIntakeLeftShaftMotor = new SparkMax(Constants.CanID.INTAKE_ROTATE_MOTOR_LEFT, MotorType.kBrushless);
+    private final RelativeEncoder rotateIntakeRightShaftEncoder = rotateIntakeRightShaftMotor.getEncoder();
+    private final RelativeEncoder rotateIntakeLeftShaftEncoder = rotateIntakeLeftShaftMotor.getEncoder();
 
     private final DoublePublisher rotateIntakeShaftCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Intake/Rotation/Current").publish();
     private final DoublePublisher rotateIntakeShaftVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Intake/Rotation/Velocity").publish();
 
     public IntakeRoller() {
-        var rotateIntakeShaftConfig = new SparkMaxConfig();
-        rotateIntakeShaftConfig.idleMode(IdleMode.kBrake);
-        rotateIntakeShaftConfig.inverted(true);
-        rotateIntakeShaftConfig.smartCurrentLimit(75).secondaryCurrentLimit(80);
+        var rotateIntakeRightShaftConfig = new SparkMaxConfig();
+        rotateIntakeRightShaftConfig.idleMode(IdleMode.kBrake);
+        rotateIntakeRightShaftConfig.inverted(true);
+        rotateIntakeRightShaftConfig.smartCurrentLimit(75).secondaryCurrentLimit(80);
 
-        rotateIntakeShaftMotor.configure(rotateIntakeShaftConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        rotateIntakeRightShaftMotor.configure(rotateIntakeRightShaftConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+
+        var rotateIntakeLeftShaftConfig = new SparkMaxConfig();
+        rotateIntakeLeftShaftConfig.idleMode(IdleMode.kBrake);
+        rotateIntakeLeftShaftConfig.inverted(false);
+        rotateIntakeLeftShaftConfig.smartCurrentLimit(75).secondaryCurrentLimit(80);
+
+        rotateIntakeLeftShaftMotor.configure(rotateIntakeLeftShaftConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        rotateIntakeLeftShaftConfig.follow(rotateIntakeRightShaftMotor, true);
     }
 
     @Override
     public void periodic() {
-        rotateIntakeShaftCurrentPublisher.set(rotateIntakeShaftMotor.getOutputCurrent());
-        rotateIntakeShaftVelocityPublisher.set(rotateIntakeShaftEncoder.getVelocity());
+        rotateIntakeShaftCurrentPublisher.set(rotateIntakeRightShaftMotor.getOutputCurrent());
+        rotateIntakeShaftVelocityPublisher.set(rotateIntakeRightShaftEncoder.getVelocity());
     }
 
     public void runIntakeWheelsAtDutyCycle(double dutyCycle) {
-        rotateIntakeShaftMotor.set(dutyCycle);
+        rotateIntakeRightShaftMotor.set(dutyCycle);
     }
 
     public Command intakeFuel() {

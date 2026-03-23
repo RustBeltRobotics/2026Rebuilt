@@ -4,7 +4,6 @@
 
 package frc.robot;
 
-import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
@@ -17,13 +16,10 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.units.Units;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -31,18 +27,12 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
-import frc.robot.commands.DefaultLedCommand;
-import frc.robot.subsystems.Climber;
 import frc.robot.subsystems.IntakeArm;
 import frc.robot.subsystems.IntakeRoller;
-import frc.robot.subsystems.LED;
 import frc.robot.subsystems.ShooterFeederYams;
-import frc.robot.subsystems.ShooterHood;
 import frc.robot.subsystems.ShooterYams;
-import frc.robot.subsystems.Spindexer;
+import frc.robot.subsystems.RollingFloor;
 import frc.robot.subsystems.drive.Drivetrain;
-import frc.robot.sysid.ShooterSysId;
-import frc.robot.util.HubStateTracker;
 import frc.robot.util.SwerveTelemetryCTRE;
 import frc.robot.vision.VisionSystem;
 
@@ -66,12 +56,12 @@ public class RobotContainer {
   private final ShooterYams shooter = new ShooterYams();
   // private final ShooterSysId shooterSysId = new ShooterSysId();
   private final ShooterFeederYams shooterFeeder = new ShooterFeederYams();
-  private final ShooterHood shooterHood = new ShooterHood();
-  private final Spindexer spindexer = new Spindexer();
+  //Hood is no longer used in new design
+  // private final ShooterHood shooterHood = new ShooterHood();
+  private final RollingFloor rollingFloor = new RollingFloor();
   private final IntakeRoller intakeRoller = new IntakeRoller();
   private final IntakeArm intakeArm = new IntakeArm();
   // private final Climber climber = new Climber();
-  private final LED led = new LED();
   private final VisionSystem visionSystem;
 
   private final SendableChooser<Command> autoChooser;
@@ -121,7 +111,7 @@ public class RobotContainer {
 
     Command runFullShootingSystem = Commands.parallel(
           shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM),
-           spindexer.spin(),
+          rollingFloor.rollInwards(),
           Commands.sequence(Commands.waitSeconds(2.5), intakeArm.retract().withTimeout(0.5))  //TODO: graph and tune this delay based on time for shooter to get up to speed (adjust if we leave the shooter running at low RPM idle between shots)
         ).withTimeout(4.0);  //TODO: We may want to lower the timeout here, evaluate after testing
 
@@ -137,7 +127,7 @@ public class RobotContainer {
     Command runFullShootingSystemLayup = Commands.parallel(
       shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_LAYUP_RPM),
       Commands.sequence(Commands.waitSeconds(0.9), shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM)),
-      Commands.sequence(Commands.waitSeconds(0.9), spindexer.spin())
+      Commands.sequence(Commands.waitSeconds(0.9), rollingFloor.rollInwards())
     ).withTimeout(3.0);
     NamedCommands.registerCommand("layup-shoot", runFullShootingSystemLayup);
     NamedCommands.registerCommand("outpost-shoot", runFullShootingSystem);
@@ -158,120 +148,97 @@ public class RobotContainer {
         final var idle = new SwerveRequest.Idle();
         RobotModeTriggers.disabled().whileTrue(drivetrain.applyRequest(() -> idle).ignoringDisable(true));
 
+        Supplier<Pose2d> hubTargetPoseSupplier = () -> Constants.Game.getHubPose().toPose2d();
+
         //run seedFieldCentric on start of tele-op mode
         // RobotModeTriggers.teleop().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
-        //TODO: Add command to run Spindexer on reverse
-
-        // Reset the field-centric heading (set robot forward direction) on left bumper press.
-        driverController.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));  
-
         Command intakeFuelSequence = Commands.parallel(intakeRoller.intakeFuel(), intakeArm.extendForIntakeSequence());
 
-        driverController.rightBumper().whileTrue(intakeFuelSequence);
-        driverController.rightBumper().onFalse(Commands.parallel(intakeRoller.stopIntakeWheelRotation(), intakeArm.stopExtendRetract()));
-
-        driverController.x().whileTrue(intakeRoller.outtakeFuel());
-
-        // driverController.leftTrigger().whileTrue(shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM));
-        // driverController.rightTrigger().whileTrue(spindexer.spin());
-
-        //TODO: test this, then integrate it into the shoot sequence command to run in parallel with the shooter, feeder and spindexer commands. This is intended to help prevent jams by agitating the fuel in the hopper while shooting.
-        // driverController.b().whileTrue(intakeRoller.agitate());
-
-        //TODO: swap out and test replacing the runFullShootingSystem command sequence below with this new one:
-        Command newFullShootingSequence = new SequentialCommandGroup(
+        Command fullShootingSequence = new SequentialCommandGroup(
             shooter.resetShooterAtTargetRpm(),
             Commands.parallel(
               shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TEST_RPM),
               Commands.waitUntil(shooter.getAtRpmTrigger())
-                .andThen(Commands.parallel(shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM), spindexer.spin()))
+                .andThen(Commands.parallel(shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM), rollingFloor.rollInwards()))
             )
         );
 
         //TODO: test integrating this into the runFullShootingSystem command to see if it helps with agitation
         Command runIntakeRollerAlternating = Commands.sequence(intakeRoller.intakeFuel().withTimeout(0.1), intakeRoller.outtakeFuel().withTimeout(0.1));
+
         //TODO: Add a waitSeconds before the retractForAutoAgitate call in the sequencce if we need time to empty some balls out of the hopper first during shot
+        //TODO: integrate this into the full shooting sequence and test with teletop
         Command runIntakeArmAlternating = Commands.sequence(intakeArm.retractForAutoAgitate().withTimeout(0.2), 
           Commands.waitSeconds(0.4), 
           intakeArm.extendForAutoAgitate().withTimeout(0.25),
           Commands.waitSeconds(0.6))
         .repeatedly();
 
-        Command runFullShootingSystemWithStaticDelay = Commands.parallel(
-          shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TEST_RPM),
-          Commands.sequence(Commands.waitSeconds(Constants.Spindexer.SHOOT_SEQUENCE_SPIN_START_DELAY_SECONDS), shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM)),
-          Commands.sequence(Commands.waitSeconds(Constants.Spindexer.SHOOT_SEQUENCE_SPIN_START_DELAY_SECONDS), spindexer.spin())  //TODO: graph and tune this delay based on time for shooter to get up to speed (adjust if we leave the shooter running at low RPM idle between shots)
-        );
-
         Command runFullShootingSystemInReverse = Commands.parallel(
           shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TEST_RPM),
           shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM.unaryMinus()),
-          spindexer.runAtDutyCycle(-Constants.Spindexer.SPIN_DUTY_CYCLE)
+          rollingFloor.rollOutwards()
         ).finallyDo(() -> shooter.resetShooterAtTargetRpm());
-        // driverController.rightTrigger().whileTrue(runFullShootingSystem);
-        driverController.rightTrigger().whileTrue(newFullShootingSequence);
-        driverController.leftTrigger().whileTrue(runFullShootingSystemInReverse);
 
-        Command runFullShootingSystemLayup = Commands.parallel(
-          shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_LAYUP_RPM),
-          Commands.sequence(Commands.waitSeconds(0.9), shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM)),
-          Commands.sequence(Commands.waitSeconds(0.9), spindexer.spin())  //TODO: graph and tune this delay based on time for shooter to get up to speed (adjust if we leave the shooter running at low RPM idle between shots)
+        Command runFullShootingSystemLayup = new SequentialCommandGroup(
+            shooter.resetShooterAtTargetRpm(),
+            Commands.parallel(
+              shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_LAYUP_RPM),
+              Commands.waitUntil(shooter.getAtRpmTrigger())
+                .andThen(Commands.parallel(shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM), rollingFloor.rollInwards()))
+            )
         );
-
-        // Command intakeFuelSequence = Commands.parallel(intakeRoller.intakeFuel(), intakeArm.extendForIntakeSequence());
-        driverController.b().whileTrue(runFullShootingSystemLayup);
-
-        //When b is pressed, toggle between running shooter at low RPM idle vs. stopped when not shooting.
-        Command toggleShooterLowIdleEnabledCommand = Commands.runOnce(() -> {
-          boolean currentState = shooter.isDefaultCommandIsStop();
-          boolean newState = !currentState;
-          shooter.setDefaultCommand(newState ? shooter.stop() : shooter.idleAtLowRpm());
-          shooter.setDefaultCommandIsStop(newState);
-        }, shooter);
-        driverController.back().onTrue(toggleShooterLowIdleEnabledCommand);
-        operatorController.b().whileTrue(runIntakeArmAlternating);
-        Command fullRetractCommand = Commands.parallel(intakeArm.retractForAgitate(), intakeRoller.intakeFuel());
-
-        // driverController.povLeft().whileTrue(intakeArm.extend());
-        driverController.povLeft().whileTrue(fullRetractCommand);
-        // driverController.povRight().whileTrue(fullRetractCommand);  //press and relese to 'agitate'
-        driverController.povRight().whileTrue(intakeArm.extend());  //press and relese to 'agitate'
-        // driverController.povDown().onTrue(intake.stopExtendRetract());
-        driverController.povUp().whileTrue(shooterHood.runDutyCycle(() -> 0.15));  //hood up
-        driverController.povUp().onFalse(shooterHood.stop());
-        driverController.povDown().whileTrue(shooterHood.runDutyCycle(() -> -0.15));  //hood down
-        driverController.povDown().onFalse(shooterHood.stop());
-
-        operatorController.povUp().whileTrue(shooterHood.runToAngle(1.5));
-        operatorController.povDown().whileTrue(shooterHood.runToAngle(0.0));
-
-        // driverController.start().onTrue(shooterHood.runUpToHardStop());
-        // driverController.back().onTrue(shooterHood.runDownToHardStop());
-
-        //while holding both start and back buttons, run hood to set angle
-        //Note: this probably isn't actually 3 degrees, but should be within range of hood extension
-        // driverController.start().and(driverController.back()).whileTrue(shooterHood.runToAngle(3.0));
 
         Command passCommand = new SequentialCommandGroup(
             shooter.resetShooterAtTargetRpm(),
             Commands.parallel(
               shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_PASS_RPM),
               Commands.waitUntil(shooter.getAtRpmTrigger())
-                .andThen(shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM)).alongWith(spindexer.spin())
+                .andThen(shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM)).alongWith(rollingFloor.rollInwards())
             )
         );
 
-        driverController.start().whileTrue(passCommand);
+        Command toggleShooterLowIdleEnabledCommand = Commands.runOnce(() -> {
+          boolean currentState = shooter.isDefaultCommandIsStop();
+          boolean newState = !currentState;
+          shooter.setDefaultCommand(newState ? shooter.stop() : shooter.idleAtLowRpm());
+          shooter.setDefaultCommandIsStop(newState);
+        }, shooter);
 
-        //For testing hood control with triggers - run hood at duty cycle based on trigger value (right trigger positive, left trigger negative)
-        //don't run these at duty cycle, it applies too much power at the upper ranges and can damage the shaft
-        // DoubleSupplier rightTriggerValueSupplier = () -> driverController.getRightTriggerAxis();
-        // DoubleSupplier leftTriggerValueSupplier = () -> -driverController.getLeftTriggerAxis();
-        // driverController.rightTrigger().whileTrue(shooterHood.runDutyCycle(() -> 0.2));
-        // driverController.rightTrigger().onFalse(shooterHood.stop());
-        // driverController.leftTrigger().whileTrue(shooterHood.runDutyCycle(() -> -0.2));
-        // driverController.leftTrigger().onFalse(shooterHood.stop());
+        // Reset the field-centric heading (set robot forward direction) on left bumper press.
+        driverController.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));  
+        driverController.leftTrigger().whileTrue(runFullShootingSystemInReverse);
+
+        driverController.rightBumper().whileTrue(intakeFuelSequence);
+        driverController.rightBumper().onFalse(Commands.parallel(intakeRoller.stopIntakeWheelRotation(), intakeArm.stopExtendRetract()));
+        driverController.rightTrigger().whileTrue(fullShootingSequence);
+
+        driverController.x().whileTrue(intakeRoller.outtakeFuel());
+        driverController.b().whileTrue(runFullShootingSystemLayup); 
+        
+        driverController.back().onTrue(toggleShooterLowIdleEnabledCommand);
+        driverController.start().whileTrue(passCommand);
+        
+        Command fullRetractCommand = Commands.parallel(intakeArm.retractForAgitate(), intakeRoller.intakeFuel());
+
+        driverController.povLeft().whileTrue(fullRetractCommand);
+        driverController.povRight().whileTrue(intakeArm.extend());  //press and relese to manually 'agitate'
+
+        // Auto-align drive to hub while holding y
+        driverController.y().whileTrue(
+          Commands.parallel(
+            shooter.prepVariableDistanceShot(() -> drivetrain.getShotDistance(hubTargetPoseSupplier.get().getTranslation())),
+            drivetrain.teleOpDriveWithAutoAimToTarget(driverController, hubTargetPoseSupplier)
+            // drivetrain.alignToTargetDrive(driverController, hubTargetPoseSupplier)
+          )
+        );
+        
+        //Free driver buttons = povUp, povDown, a
+
+
+        //Note: operator controller is for testing new commands and running SysId tests
+        operatorController.b().whileTrue(runIntakeArmAlternating);
 
         //Run SysId tests using the operator controller
         operatorController.back().and(operatorController.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
@@ -279,31 +246,17 @@ public class RobotContainer {
         operatorController.start().and(operatorController.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
         operatorController.start().and(operatorController.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
         operatorController.start().and(operatorController.a()).onTrue(drivetrain.stopSysIdLogging());
-
-        //shoot sequence = in parallel(run spindexer, run feeder, run shooter at velocity based on distance to hub)
-
-        Supplier<Pose2d> hubTargetPoseSupplier = () -> Constants.Game.getHubPose().toPose2d();
-        
-        // Auto-align drive to hub while holding right bumper.
-        driverController.y().whileTrue(
-          Commands.parallel(
-            shooter.prepVariableDistanceShot(() -> drivetrain.getShotDistance(hubTargetPoseSupplier.get().getTranslation())),
-            drivetrain.alignToTargetDrive(driverController, hubTargetPoseSupplier)
-          )
-        );
   }
 
   private void setDefaultCommands() {
     drivetrain.setDefaultCommand(drivetrain.teleopDrive(driverController).withName("Teleop Drive"));
     shooterFeeder.setDefaultCommand(shooterFeeder.stop());
     shooter.setDefaultCommand(shooter.stop());
-    spindexer.setDefaultCommand(spindexer.stop());
+    rollingFloor.setDefaultCommand(rollingFloor.stop());
     intakeRoller.setDefaultCommand(intakeRoller.stopIntakeWheelRotation());
     intakeArm.setDefaultCommand(intakeArm.stopExtendRetract());
-    shooterHood.setDefaultCommand(shooterHood.stop());
+    // shooterHood.setDefaultCommand(shooterHood.stop());
     // climber.setDefaultCommand(climber.stopCommand());
-    //Default LED command removes all color output (sets to black)
-    led.setDefaultCommand(new DefaultLedCommand(led));
   }
 
   public void configureAutos() {
@@ -340,22 +293,6 @@ public class RobotContainer {
     if (visionSystem != null) {
       visionSystem.periodic();
     }
-    //control LEDs based on robot state
-    //TODO: use a color when there are no vision tags visible? i.e. !visionSystem.isReceivedNewVisionData
-    if (DriverStation.isAutonomous()) {
-      led.changeColor(Color.kOrange);
-    } else {
-      if (HubStateTracker.isAllianceHubActive()) {
-        led.changeColor(Color.kGreen);
-      } else {
-        led.changeColor(Color.kRed);
-      }
-    }
-
-    if (visionSystem != null) {
-      //blink LED if no valid vision data received
-      led.changeBlink(!visionSystem.isReceivedNewVisionData());
-    }
   }
 
   public void updateTelemetry() {
@@ -374,9 +311,5 @@ public class RobotContainer {
 
   public static void setMaxSpeedFactor(double newSpeedFactor) {
     MAX_SPEED_FACTOR = newSpeedFactor;
-  }
-
-  public ShooterHood getShooterHood() {
-    return shooterHood;
   }
 }
