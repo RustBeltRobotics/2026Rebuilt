@@ -55,13 +55,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "R Trench Shot to R Start"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "R Trench To R Neutral"
+            "pathName": "R Trench Shot To R Neutral Hub"
           }
         },
         {
@@ -79,7 +73,25 @@
         {
           "type": "path",
           "data": {
-            "pathName": "R Neutral Grab Fuel"
+            "pathName": "R Neutral Hub Grab Fuel"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "R Neutral Hub Fuel To Trench"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "R Neutral Hub Trench To Trench Shot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "trench-shoot"
           }
         }
       ]
