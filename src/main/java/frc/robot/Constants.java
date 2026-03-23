@@ -130,9 +130,9 @@ public final class Constants {
     public static final double INITIAL_DRIVE_MAX_SPEED_FACTOR = 0.8;
 
     /* Robot mass in Kg. */
-    public static final double ROBOT_MASS = Units.Pounds.of(106.0).in(Units.Kilograms); //Note: this weight does NOT include the battery or bumpers
+    public static final double ROBOT_MASS = Units.Pounds.of(115.0).in(Units.Kilograms); //Note: this weight does NOT include the battery or bumpers
 
-    public static final double LOADED_MASS = Units.Pounds.of(135.0).in(Units.Kilograms); //Note: this weight includes the battery and bumpers
+    public static final double LOADED_MASS = Units.Pounds.of(150.0).in(Units.Kilograms); //Note: this weight includes the battery and bumpers
 
     public static final double MOMENT_OF_INTERIA = 5.37; //Note: This value is for when the intake is extended / down (From CAD)
 
@@ -249,21 +249,12 @@ public final class Constants {
       SmartDashboard.putData("AutoAimRotationPID", ROTATE_TO_POSE_PID_CONTROLLER);
     }
 
-    // public static final Matrix<N3, N1> WHEEL_ODOMETRY_POSE_STANDARD_DEVIATIONS = VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(5));
     public static final Matrix<N3, N1> WHEEL_ODOMETRY_POSE_STANDARD_DEVIATIONS = VecBuilder.fill(0.1, 0.1, Units.Degrees.of(5.0).in(Units.Radians));
   }
 
   public static final class ShooterFeeder {
     public static final Distance FEEDER_WHEEL_DIAMETER = Units.Inches.of(2.25);
     public static final Mass FLYWHEEL_MASS = Units.Pounds.of(2.5);
-    //OLD VALUES
-    // public static final double K_P = 0.1812;
-    // public static final double K_I = 0.0;
-    // public static final double K_D = 0.0;
-    // public static final double K_S = 0.59465;  //static feedforward term
-    // public static final double K_V = 0.12833;  //velocity feedforward gain (Volts per rotor RPS) 
-    // public static final double K_A = 0.0032739;
-    //NEW VALUES
     public static final double K_P = 0.22726;
     public static final double K_I = 0.0;
     public static final double K_D = 0.0;
@@ -287,14 +278,6 @@ public final class Constants {
     //3000 RPM 
     
     public static final class CtrePidf {
-      //OLD VALUES
-      // public static final double K_P = 0.17349;
-      // public static final double K_I = 0.0;
-      // public static final double K_D = 0.0;
-      // public static final double K_S = 0.19687;
-      // public static final double K_V = 0.11469; //velocity feedforward gain (Volts per motor RPS)
-      // public static final double K_A = 0.011082;
-      //NEW VALUES
       public static final double K_P = 0.1018;
       public static final double K_I = 0.0;
       public static final double K_D = 0.0;

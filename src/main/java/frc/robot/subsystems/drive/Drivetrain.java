@@ -66,8 +66,8 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
         .getDoubleTopic("HeadingController/kD")
         .getEntry(0.0);
 
-    private int priorHeadingControllerKp = 0.14;
-    private int priorHeadingControllerKd = 0;
+    private double priorHeadingControllerKp = 0.14;
+    private double priorHeadingControllerKd = 0.0;
 
     private final SwerveRequest.FieldCentric teleopRequest = new SwerveRequest.FieldCentric()
         .withDeadband(Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND * Constants.Controls.CONTROLLER_DEADBAND)
@@ -109,7 +109,7 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
         double kD = kDEntry.get();
 
         if (kP != priorHeadingControllerKp || kD != priorHeadingControllerKd) {
-            headingController.setPID(kP, 0.0, kD);
+            autoAlignRequest.HeadingController.setPID(kP, 0.0, kD);
             priorHeadingControllerKp = kP;
             priorHeadingControllerKd = kD;
         }

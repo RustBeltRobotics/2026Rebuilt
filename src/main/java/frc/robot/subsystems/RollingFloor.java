@@ -16,9 +16,9 @@ import frc.robot.Constants;
 
 public class RollingFloor extends SubsystemBase {
 
-    private final SparkMax neoRight = new SparkMax(Constants.CanID.SPINDEXER_RIGHT, MotorType.kBrushless);  //turn clockwise (leader)
+    private final SparkMax neoRight = new SparkMax(Constants.CanID.ROLLING_FLOOR_RIGHT, MotorType.kBrushless);  //turn clockwise (leader)
     private final RelativeEncoder rightNeoEncoder = neoRight.getEncoder();
-    private final SparkMax neoLeft = new SparkMax(Constants.CanID.SPINDEXER_LEFT, MotorType.kBrushless);  //turn CCW (follower)
+    private final SparkMax neoLeft = new SparkMax(Constants.CanID.ROLLING_FLOOR_LEFT, MotorType.kBrushless);  //turn CCW (follower)
     private final RelativeEncoder leftNeoEncoder = neoLeft.getEncoder();
     
     private final DoublePublisher leftNeoVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/RollingFloor/Velocity/Left").publish();
@@ -39,7 +39,7 @@ public class RollingFloor extends SubsystemBase {
         leftRevConfig.idleMode(IdleMode.kBrake);
         leftRevConfig.voltageCompensation(12.0);
         leftRevConfig.smartCurrentLimit(Constants.CurrentLimit.SparkMax.Neo.SMART_DEFAULT).secondaryCurrentLimit(Constants.CurrentLimit.SparkMax.Neo.SECONDARY_MAX);
-        leftRevConfig.follow(Constants.CanID.SPINDEXER_RIGHT, true);
+        leftRevConfig.follow(Constants.CanID.ROLLING_FLOOR_RIGHT, true);
         neoLeft.configure(leftRevConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 

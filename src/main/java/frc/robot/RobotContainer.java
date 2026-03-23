@@ -6,6 +6,7 @@ package frc.robot;
 
 import java.util.function.Supplier;
 
+import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -27,6 +28,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import frc.robot.commands.RotateAzimuthCommand;
 import frc.robot.subsystems.IntakeArm;
 import frc.robot.subsystems.IntakeRoller;
 import frc.robot.subsystems.ShooterFeederYams;
@@ -239,6 +241,13 @@ public class RobotContainer {
 
         //Note: operator controller is for testing new commands and running SysId tests
         operatorController.b().whileTrue(runIntakeArmAlternating);
+
+        //Run this to determine value for kCoupleRatio for the CTRE swerve modules by observing how much the drive motor encoder moves when we rotate the azimuth (steer motor) a known number of rotations
+        operatorController.a().onTrue(new RotateAzimuthCommand(
+            (TalonFX) drivetrain.getModule(0).getSteerMotor(),
+            (TalonFX) drivetrain.getModule(0).getDriveMotor(),
+            3.0
+        ));
 
         //Run SysId tests using the operator controller
         operatorController.back().and(operatorController.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
