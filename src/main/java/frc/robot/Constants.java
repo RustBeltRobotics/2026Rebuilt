@@ -255,12 +255,12 @@ public final class Constants {
   public static final class ShooterFeeder {
     public static final Distance FEEDER_WHEEL_DIAMETER = Units.Inches.of(2.25);
     public static final Mass FLYWHEEL_MASS = Units.Pounds.of(2.5);
-    public static final double K_P = 0.22726;
+    public static final double K_P = 0.29542;
     public static final double K_I = 0.0;
     public static final double K_D = 0.0;
-    public static final double K_S = 0.38692;  //static feedforward term
-    public static final double K_V = 0.23861;  //velocity feedforward gain (Volts per rotor RPS) 
-    public static final double K_A = 0.0043052;
+    public static final double K_S = 0.18708;  //static feedforward term
+    public static final double K_V = 0.23054;  //velocity feedforward gain (Volts per rotor RPS) 
+    public static final double K_A = 0.0042621;
     public static final AngularVelocity FEEDER_RPM = Units.RPM.of(4000); //Note: max theoretical is ~3000 with the 2:1 gear reduction
   }
 
@@ -274,12 +274,12 @@ public final class Constants {
     public static final AngularVelocity SHOOTER_PASS_RPM = Units.RPM.of(4250);  //Note: we probably don't have the RPMs for a far pass now with the 1.6667:1 gear reduction
     
     public static final class CtrePidf {
-      public static final double K_P = 0.1018;
+      public static final double K_P = 0.17399;
       public static final double K_I = 0.0;
       public static final double K_D = 0.0;
-      public static final double K_S = 0.098519;
-      public static final double K_V = 0.11928; //velocity feedforward gain (Volts per motor RPS)
-      public static final double K_A = 0.029765;
+      public static final double K_S = 0.12645;
+      public static final double K_V = 0.11563; //velocity feedforward gain (Volts per motor RPS)
+      public static final double K_A = 0.009678;
     }
   }
 
