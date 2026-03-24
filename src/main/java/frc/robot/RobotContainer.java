@@ -238,6 +238,8 @@ public class RobotContainer {
         
         //Free driver buttons = povUp, povDown, a
 
+        driverController.a().whileTrue(rollingFloor.rollInwards());
+
 
         //Note: operator controller is for testing new commands and running SysId tests
         operatorController.b().whileTrue(runIntakeArmAlternating);

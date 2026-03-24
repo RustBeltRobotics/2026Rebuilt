@@ -39,10 +39,14 @@ public class ShooterFeederYams extends SubsystemBase {
     private boolean atTargetRpm = false;
     private final Trigger atRpmTrigger = new Trigger(() -> atTargetRpm);
 
-    private final DoublePublisher feederCurrentVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Feeder/Velocity/Current").publish();
-    private final DoublePublisher feederTargetVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Feeder/Velocity/Target").publish();
+    private final DoublePublisher feederCurrentMechanismVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Feeder/Mechanism/Velocity/Current").publish();
+    private final DoublePublisher feederTargetMechanismVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Feeder/Mechanism/Velocity/Target").publish();
+    private final DoublePublisher feederLeftMotorRotorVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Feeder/Velocity/Rotor/Left").publish();
+    private final DoublePublisher feederRightMotorRotorVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Feeder/Velocity/Rotor/Right").publish();
     private final DoublePublisher feederLeftCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Feeder/Current/Left").publish();
     private final DoublePublisher feederRightCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Feeder/Current/Right").publish();
+    private final DoublePublisher feederLeftVoltagePublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Feeder/Voltage/Left").publish();
+    private final DoublePublisher feederRightVoltagePublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Feeder/Voltage/Right").publish();
     
     private final VoltageOut sysIdControl = new VoltageOut(0);
     private boolean sysIdTestsStarted = false;
@@ -86,7 +90,7 @@ public class ShooterFeederYams extends SubsystemBase {
             .withIdleMode(MotorMode.BRAKE)
             // .withVoltageCompensation(Units.Volts.of(12))  //Note: we can't use this - apparently it's a Pro/paid feature
             // Motor properties to prevent over currenting.
-            .withSupplyCurrentLimit(Units.Amps.of(38))
+            .withSupplyCurrentLimit(Units.Amps.of(50))
             .withStatorCurrentLimit(Units.Amps.of(50));
 
     SmartMotorController krakenSmartMotorController = new TalonFXWrapper(feederKrakenLeft, DCMotor.getKrakenX60(1), feederKrakenConfig);
@@ -131,10 +135,14 @@ public class ShooterFeederYams extends SubsystemBase {
     @Override
     public void periodic() {
         double currentRpm = feederFlywheel.getSpeed().in(Units.RPM);
-        feederCurrentVelocityPublisher.set(currentRpm);
-        feederTargetVelocityPublisher.set(targetRpm);
+        feederCurrentMechanismVelocityPublisher.set(currentRpm);
+        feederTargetMechanismVelocityPublisher.set(targetRpm);  
+        feederLeftMotorRotorVelocityPublisher.set(feederKrakenLeft.getRotorVelocity().getValueAsDouble());
+        feederRightMotorRotorVelocityPublisher.set(feederKrakenRight.getRotorVelocity().getValueAsDouble());
         feederLeftCurrentPublisher.set(feederKrakenLeft.getStatorCurrent().getValueAsDouble());
         feederRightCurrentPublisher.set(feederKrakenRight.getStatorCurrent().getValueAsDouble());
+        feederLeftVoltagePublisher.set(feederKrakenLeft.getMotorVoltage().getValueAsDouble());
+        feederRightVoltagePublisher.set(feederKrakenRight.getMotorVoltage().getValueAsDouble());
 
         if (targetRpm != 0.0 && !atTargetRpm) {
             if ((Math.abs(targetRpm) - Math.abs(currentRpm)) <= 100.00) {

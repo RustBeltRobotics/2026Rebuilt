@@ -10,6 +10,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
+import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -40,6 +41,7 @@ public class IntakeArm extends SubsystemBase {
     private final DoublePublisher extendRetractVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Intake/ExtendRetract/Velocity").publish();
     private final DoublePublisher extendRetractCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Intake/ExtendRetract/Current").publish();
     private final DoublePublisher extendRetractPositionPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Intake/ExtendRetract/Position").publish();
+    private final BooleanPublisher atHardStopPublisher = NetworkTableInstance.getDefault().getBooleanTopic("/RBR/Intake/ExtendRetract/AtHardStop").publish();
 
     //When initially extending from fully retracted position, current will spike to 45+ amps and takes approx 40ms (0.04 S) until velocity increases above 0
 
@@ -62,6 +64,7 @@ public class IntakeArm extends SubsystemBase {
         extendRetractVelocityPublisher.set(rawVelocity);
         double extendRetractMotorVelocityRps = Math.abs(rawVelocity / 60);
         stallDetected = stallDetectionDebouncer.calculate(extendRetractMotorVelocityRps < 1 && extendRetractMotorOutputCurrentAmps >= 50.0);
+        atHardStopPublisher.set(stallDetected);
         
         AlertManager.addAlert("IntakeArm", "IntakeArm stallDetected? " + (stallDetected ? "Yes" : "No"), AlertType.kInfo);
     }
@@ -80,7 +83,7 @@ public class IntakeArm extends SubsystemBase {
     public Command extend() {
        return run(() -> {
             isExtending = true;
-            runExtendRetractAtDutyCycle(-0.4);
+            runExtendRetractAtDutyCycle(0.2);
         })
         .until(() -> shouldStopExtendRetract.getAsBoolean())
         .andThen(stopExtendRetract());
@@ -89,7 +92,7 @@ public class IntakeArm extends SubsystemBase {
     public Command extendForAutoAgitate() {
        return run(() -> {
             isExtending = true;
-            runExtendRetractAtDutyCycle(-0.3);
+            runExtendRetractAtDutyCycle(0.15);
         })
         .until(() -> shouldStopExtendRetract.getAsBoolean())
         .andThen(stopExtendRetract());
@@ -97,7 +100,7 @@ public class IntakeArm extends SubsystemBase {
 
     public Command extendForIntakeSequence() {
        return this.startEnd(() -> { 
-            runExtendRetractAtDutyCycle(-0.04);
+            runExtendRetractAtDutyCycle(0.03);
         }, () -> {
             stopExtendRetract();
         }).withName("Extending intake arm for fuel intake sequence");
@@ -105,14 +108,14 @@ public class IntakeArm extends SubsystemBase {
 
     public Command extendForIntakeSequenceAuto() {
        return this.runOnce(() -> { 
-            runExtendRetractAtDutyCycle(-0.12);
+            runExtendRetractAtDutyCycle(0.06);
         });
     }
 
     public Command retract() {
         return run(() -> {
             isExtending = false;
-            runExtendRetractAtDutyCycle(0.80);
+            runExtendRetractAtDutyCycle(-0.40);
         })
         .until(() -> shouldStopExtendRetract.getAsBoolean())
         .andThen(stopExtendRetract());
@@ -121,7 +124,7 @@ public class IntakeArm extends SubsystemBase {
     public Command retractForAutoAgitate() {
         return run(() -> {
             isExtending = false;
-            runExtendRetractAtDutyCycle(0.40);
+            runExtendRetractAtDutyCycle(-0.20);
         })
         .until(() -> shouldStopExtendRetract.getAsBoolean())
         .andThen(stopExtendRetract());
@@ -130,26 +133,8 @@ public class IntakeArm extends SubsystemBase {
     public Command retractForAgitate() {
         return run(() -> {
             isExtending = false;
-            runExtendRetractAtDutyCycle(0.80);
+            runExtendRetractAtDutyCycle(-0.40);
         })
         .andThen(stopExtendRetract());
     }
-
-    /* 
-    //TODO: Test this bound to a button first, then integrate it into the shoot sequence
-    public Command agitate() {
-        Command intakeFuelCommand = run(() -> runIntakeWheelsAtDutyCycle(-1.0));
-        Command liftAndDropIntakeArmCommand = run(() -> runExtendRetractAtDutyCycle(0.35)).withTimeout(0.10)
-                .andThen(run(() -> runExtendRetractAtDutyCycle(-0.20)).withTimeout(0.10))
-                .repeatedly();
-
-                //TODO: can't run these in parallel since both require this subsystem
-        // return new ParallelCommandGroup(intakeFuelCommand, liftAndDropIntakeArmCommand.finallyDo(() -> {
-        //     runIntakeWheelsAtDutyCycle(0.0);
-        //     stopExtendRetract();
-        // }).withName("Agitate Intake"));
-
-        return idle();
-    }
-        */
 }

@@ -261,21 +261,17 @@ public final class Constants {
     public static final double K_S = 0.38692;  //static feedforward term
     public static final double K_V = 0.23861;  //velocity feedforward gain (Volts per rotor RPS) 
     public static final double K_A = 0.0043052;
-    public static final AngularVelocity FEEDER_RPM = Units.RPM.of(2400); //Note: max theoretical is ~3000 with the 2:1 gear reduction
+    public static final AngularVelocity FEEDER_RPM = Units.RPM.of(4000); //Note: max theoretical is ~3000 with the 2:1 gear reduction
   }
 
   public static final class Shooter {
     public static final Distance SHOOTER_WHEEL_DIAMETER = Units.Inches.of(4.0);
     public static final Mass FLYWHEEL_MASS = Units.Pounds.of(7.9); //This weight does not include the rotating mass of the Neo Vortex motors, which may ass 0.75 lbs.
-    public static final AngularVelocity SHOOTER_TEST_RPM = Units.RPM.of(3400);  //was 3100
-    public static final AngularVelocity SHOOTER_LAYUP_RPM = Units.RPM.of(2470);  //Assumes hood is all the way down
-    public static final AngularVelocity SHOOTER_TRENCH_RPM = Units.RPM.of(3345);  //Assumes hood is all the way down
+    public static final AngularVelocity SHOOTER_TEST_RPM = Units.RPM.of(6000);  //was 3100
+    public static final AngularVelocity SHOOTER_LAYUP_RPM = Units.RPM.of(4300); 
+    public static final AngularVelocity SHOOTER_TRENCH_RPM = Units.RPM.of(5950);
 
-    public static final AngularVelocity SHOOTER_PASS_RPM = Units.RPM.of(4250);  //was 3100
-    //3000 RPM for distance from field edge (blue left)
-    //4000 RPM for distance from table testing
-
-    //3000 RPM 
+    public static final AngularVelocity SHOOTER_PASS_RPM = Units.RPM.of(4250);  //Note: we probably don't have the RPMs for a far pass now with the 1.6667:1 gear reduction
     
     public static final class CtrePidf {
       public static final double K_P = 0.1018;
@@ -288,7 +284,7 @@ public final class Constants {
   }
 
   public static final class RollingFloor {
-    public static final double ROLL_DUTY_CYCLE = -0.85; //Negative equates to the direction we want - inward to feed balls towards the feeder/elevator
+    public static final double ROLL_DUTY_CYCLE = 0.85;
   }
 
   public static final class Intake {

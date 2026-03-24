@@ -21,9 +21,6 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.units.measure.MutAngle;
-import edu.wpi.first.units.measure.MutAngularVelocity;
-import edu.wpi.first.units.measure.MutVoltage;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -49,15 +46,15 @@ public class ShooterYams extends SubsystemBase {
     private double targetRpm;
     private final Trigger atRpmTrigger = new Trigger(() -> atTargetRpm);
 
-    private final DoublePublisher rightKrakenVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Kraken/Right/Velocity").publish();
+    private final DoublePublisher rightKrakenVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Kraken/Right/Rotor/Velocity").publish();
     private final DoublePublisher rightKrakenVoltagePublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Kraken/Right/Voltage").publish();
     private final DoublePublisher rightKrakenCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Kraken/Right/Current").publish();
-    private final DoublePublisher leftKrakenVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Kraken/Left/Velocity").publish();
+    private final DoublePublisher leftKrakenVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Kraken/Left/Rotor/Velocity").publish();
     private final DoublePublisher leftKrakenVoltagePublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Kraken/Left/Voltage").publish();
     private final DoublePublisher leftKrakenCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Kraken/Left/Current").publish();
 
-    private final DoublePublisher shooterCurrentVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Velocity/Current").publish();
-    private final DoublePublisher shooterTargetVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Velocity/Target").publish();
+    private final DoublePublisher shooterCurrentMechanismVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Mechanism/Velocity/Current").publish();
+    private final DoublePublisher shooterTargetMechanismVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Mechanism/Velocity/Target").publish();
 
     private final BooleanPublisher atRpmPublisher = NetworkTableInstance.getDefault().getBooleanTopic("/RBR/Shooter/atRPM").publish();
 
@@ -78,13 +75,14 @@ public class ShooterYams extends SubsystemBase {
             .withSimFeedforward(new SimpleMotorFeedforward(Constants.Shooter.CtrePidf.K_S, Constants.Shooter.CtrePidf.K_V, Constants.Shooter.CtrePidf.K_A))
             // Telemetry name and verbosity level
             .withTelemetry("CtreShooterMotors", TelemetryVerbosity.HIGH)
-            // Gearing from the motor rotor to final shaft - 1:1 (direct drive)
-            .withGearing(new MechanismGearing(1))
+            // Gearing from the motor rotor to final shaft - 1.66667:1 = Max Free speed of 3600 RPM (~377 rad/s)
+            // .withGearing(new MechanismGearing(1.66667))
+            .withGearing(new MechanismGearing(1.0))
             .withMotorInverted(false)
             .withIdleMode(MotorMode.COAST)
             // .withVoltageCompensation(Units.Volts.of(12)) //Note: we can't use this - apparently it's a Pro/paid feature
             // Motor properties to prevent over currenting.
-            .withSupplyCurrentLimit(Units.Amps.of(58))
+            .withSupplyCurrentLimit(Units.Amps.of(80))
             .withStatorCurrentLimit(Units.Amps.of(80));  //TODO: verify this limit is not being hit during operation using telemetry, and adjust if necessary
 
     //TODO: use vendor config to potentially set min motor closed loop output to 0 to avoid driving flywheel backwords with PID
@@ -106,9 +104,6 @@ public class ShooterYams extends SubsystemBase {
 
     // SysId setup for characterization
     private final VoltageOut ctreSysIdControl = new VoltageOut(0);
-    private final MutAngle sysIdPosition = Units.Rotations.mutable(0);
-    private final MutAngularVelocity sysIdVelocity = Units.RotationsPerSecond.mutable(0);
-    private final MutVoltage sysIdAppliedVoltage = Volts.mutable(0);
 
     private boolean sysIdTestsStarted = false;
 
@@ -127,17 +122,7 @@ public class ShooterYams extends SubsystemBase {
                 // shooterVortexLeft.setVoltage(volts.unaryMinus().in(Volts));
                 // shooterVortexRight.setVoltage(volts.in(Volts));
             },
-            log -> {
-                // Record a frame for the motors.
-                log.motor("shooter-kraken-left")
-                    .voltage(sysIdAppliedVoltage.mut_replace(shooterKrakenLeft.getMotorVoltage().getValueAsDouble(), Volts))
-                    .angularPosition(sysIdPosition.mut_replace(shooterKrakenLeft.getRotorPosition().getValueAsDouble(), Units.Rotations))
-                    .angularVelocity(sysIdVelocity.mut_replace(shooterKrakenLeft.getRotorVelocity().getValueAsDouble(), Units.RotationsPerSecond));
-                log.motor("shooter-kraken-right")
-                    .voltage(sysIdAppliedVoltage.mut_replace(shooterKrakenRight.getMotorVoltage().getValueAsDouble(), Volts))
-                    .angularPosition(sysIdPosition.mut_replace(shooterKrakenRight.getRotorPosition().getValueAsDouble(), Units.Rotations))
-                    .angularVelocity(sysIdVelocity.mut_replace(shooterKrakenRight.getRotorVelocity().getValueAsDouble(), Units.RotationsPerSecond));
-            },
+           null,
             this
         )
     );
@@ -181,16 +166,16 @@ public class ShooterYams extends SubsystemBase {
 
     @Override
     public void periodic() {
-        rightKrakenVelocityPublisher.set(shooterKrakenRight.getVelocity().getValueAsDouble() / 60);  //Convert RPS to RPM
+        rightKrakenVelocityPublisher.set(shooterKrakenRight.getRotorVelocity().getValueAsDouble() / 60);  //Convert RPS to RPM
         rightKrakenVoltagePublisher.set(shooterKrakenRight.getMotorVoltage().getValueAsDouble());
         rightKrakenCurrentPublisher.set(shooterKrakenRight.getStatorCurrent().getValueAsDouble());
-        leftKrakenVelocityPublisher.set(shooterKrakenLeft.getVelocity().getValueAsDouble() / 60);
+        leftKrakenVelocityPublisher.set(shooterKrakenLeft.getRotorVelocity().getValueAsDouble() / 60);
         leftKrakenVoltagePublisher.set(shooterKrakenLeft.getMotorVoltage().getValueAsDouble());
         leftKrakenCurrentPublisher.set(shooterKrakenLeft.getStatorCurrent().getValueAsDouble());
 
         double currentRpm = shooterKraken.getSpeed().in(Units.RPM);
-        shooterCurrentVelocityPublisher.set(currentRpm);
-        shooterTargetVelocityPublisher.set(targetRpm);
+        shooterCurrentMechanismVelocityPublisher.set(currentRpm);
+        shooterTargetMechanismVelocityPublisher.set(targetRpm);
 
         if (targetRpm != 0.0 && !atTargetRpm) {
             if ((Math.abs(targetRpm) - Math.abs(currentRpm)) <= 10.00) {

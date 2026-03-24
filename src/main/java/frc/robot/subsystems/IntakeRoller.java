@@ -23,11 +23,13 @@ public class IntakeRoller extends SubsystemBase {
 
     private final DoublePublisher rotateIntakeShaftCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Intake/Rotation/Current").publish();
     private final DoublePublisher rotateIntakeShaftVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Intake/Rotation/Velocity").publish();
+    private final DoublePublisher rotateIntakeLeftVoltagePublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Intake/Rotation/Voltage/Left").publish();
+    private final DoublePublisher rotateIntakeRightVoltagePublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Intake/Rotation/Voltage/Right").publish();
 
     public IntakeRoller() {
         var rotateIntakeRightShaftConfig = new SparkMaxConfig();
         rotateIntakeRightShaftConfig.idleMode(IdleMode.kBrake);
-        rotateIntakeRightShaftConfig.inverted(true);
+        rotateIntakeRightShaftConfig.inverted(false);
         rotateIntakeRightShaftConfig.smartCurrentLimit(75).secondaryCurrentLimit(80);
 
         rotateIntakeRightShaftMotor.configure(rotateIntakeRightShaftConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
@@ -38,29 +40,32 @@ public class IntakeRoller extends SubsystemBase {
         rotateIntakeLeftShaftConfig.smartCurrentLimit(75).secondaryCurrentLimit(80);
 
         rotateIntakeLeftShaftMotor.configure(rotateIntakeLeftShaftConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-        rotateIntakeLeftShaftConfig.follow(rotateIntakeRightShaftMotor, true);
+        rotateIntakeLeftShaftConfig.follow(Constants.CanID.INTAKE_ROTATE_MOTOR_RIGHT, true);
     }
 
     @Override
     public void periodic() {
         rotateIntakeShaftCurrentPublisher.set(rotateIntakeRightShaftMotor.getOutputCurrent());
         rotateIntakeShaftVelocityPublisher.set(rotateIntakeRightShaftEncoder.getVelocity());
+        rotateIntakeLeftVoltagePublisher.set(rotateIntakeLeftShaftMotor.getAppliedOutput() * rotateIntakeLeftShaftMotor.getBusVoltage());
+        rotateIntakeRightVoltagePublisher.set(rotateIntakeRightShaftMotor.getAppliedOutput() * rotateIntakeRightShaftMotor.getBusVoltage());
     }
 
     public void runIntakeWheelsAtDutyCycle(double dutyCycle) {
         rotateIntakeRightShaftMotor.set(dutyCycle);
+        rotateIntakeLeftShaftMotor.set(-dutyCycle);
     }
 
     public Command intakeFuel() {
-        return startEnd(() -> runIntakeWheelsAtDutyCycle(-1.0), () -> runIntakeWheelsAtDutyCycle(0.0)).withName("Intake rotate fuel");
+        return startEnd(() -> runIntakeWheelsAtDutyCycle(1.0), () -> runIntakeWheelsAtDutyCycle(0.0)).withName("Intake rotate fuel");
     }
 
     public Command intakeFuelForAuto() {
-        return runOnce(() -> runIntakeWheelsAtDutyCycle(-1.0));
+        return runOnce(() -> runIntakeWheelsAtDutyCycle(1.0));
     }
 
     public Command outtakeFuel() {
-        return startEnd(() -> runIntakeWheelsAtDutyCycle(1.0), () -> runIntakeWheelsAtDutyCycle(0.0)).withName("Outtake rotate fuel");
+        return startEnd(() -> runIntakeWheelsAtDutyCycle(-1.0), () -> runIntakeWheelsAtDutyCycle(0.0)).withName("Outtake rotate fuel");
     }
 
     public Command stopIntakeWheelRotation() {
