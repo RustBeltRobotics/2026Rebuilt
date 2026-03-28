@@ -1,7 +1,13 @@
 TODO:
-- Verify with Dillan that MOI isn't changed with recent robot changes (if so, update PathPlanner constants)
-- Test shooter full sequence with runIntakeRollerAlternating integrated for ball agitation
-    - this command needs to be run with the intake arm down/extended and NOT folded up into the robot
+- Verify photonvision pose updates
+    - seem roughly correct, but readings off the hub are jittery
+- Measure and get more distance to RPM mappings for linear interpolator
+    - Test prepVariableDistanceShot command to auto-set shooter RPM based on robot pose distance from hub
+- Test Align To Target drive with AprilTags on hub
+    - PID turn to hub is working, might need some tuning
+- Consider upping INITIAL_DRIVE_MAX_SPEED_FACTOR from 0.8 to 0.9, test if battery will last through entire match
+- Update MOI values to match current design measurements
+    - Need MOI from CAD from Dillan
 - Test / update CTRE Swerve constants kSlipCurrent (this is how stator current is set)
     - https://docs.advantagekit.org/getting-started/template-projects/talonfx-swerve-template/#slip-current-measurement
     - https://v6.docs.ctr-electronics.com/en/stable/docs/hardware-reference/talonfx/improving-performance-with-current-limits.html#preventing-wheel-slip
@@ -10,10 +16,7 @@ TODO:
     - Observe the drive motor encoder — it will report some rotation even though the wheel didn't move
     - kCoupleRatio = driveMotorRotations / azimuthRotations
     => Just run the RotateAzimuthCommand using a() on operator controller and look at the console output in RioLog
-- Test prepVariableDistanceShot command to auto-set shooter RPM based on robot pose distance from hub
-- Test Align To Target drive with AprilTags on hub
-    - PID turn to hub is working, might need some tuning
-- Update robot to camera pose translation constants for new camera locations
+
 - Test intake arm extending in/out to hard stop commands to ensure current based stall detection still works
     - Graph the intake arm current if it does not, and adjust threshold/debounce time accordingly
 - Create/measure distance (or set field locations) -> shooter RPM mappings for shots

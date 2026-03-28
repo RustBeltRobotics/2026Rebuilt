@@ -47,7 +47,7 @@ import frc.robot.vision.VisionSystem;
 public class RobotContainer {
   // The robot's subsystems and commands are defined here...
 
-   // For limiting maximum speed (1.0 = 100% = full speed)
+   // For limiting maximum speed in teleop (1.0 = 100% = full speed)
   private static double MAX_SPEED_FACTOR = Constants.Kinematics.INITIAL_DRIVE_MAX_SPEED_FACTOR;
 
   private final CommandXboxController driverController = new CommandXboxController(Constants.Controls.CONTROLLER_PORT_DRIVER);
@@ -112,7 +112,7 @@ public class RobotContainer {
     //TODO: implement
 
     Command runFullShootingSystem = Commands.parallel(
-          shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM),
+          shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM_FAR_SHOT),
           rollingFloor.rollInwards(),
           Commands.sequence(Commands.waitSeconds(2.5), intakeArm.retract().withTimeout(0.5))  //TODO: graph and tune this delay based on time for shooter to get up to speed (adjust if we leave the shooter running at low RPM idle between shots)
         ).withTimeout(4.0);  //TODO: We may want to lower the timeout here, evaluate after testing
@@ -124,6 +124,7 @@ public class RobotContainer {
     NamedCommands.registerCommand("intake-fuel", intakeFuelSequence);
     //TODO: add an .andThen(intakeArm.retract()) to the end of this?
     NamedCommands.registerCommand("stop-intake", stopIntakeFuelSequence);
+    NamedCommands.registerCommand("stop-shooter", Commands.parallel(shooter.stopImmediately(), shooterFeeder.stop()).withTimeout(0.2));
     NamedCommands.registerCommand("outpost-wait", Commands.waitSeconds(1.5));
     NamedCommands.registerCommand("trench-shoot", runFullShootingSystem);
     Command runFullShootingSystemLayup = Commands.parallel(
@@ -150,10 +151,13 @@ public class RobotContainer {
         final var idle = new SwerveRequest.Idle();
         RobotModeTriggers.disabled().whileTrue(drivetrain.applyRequest(() -> idle).ignoringDisable(true));
 
+        //don't retain old state/vision info when starting autos when in the lab
+        RobotModeTriggers.teleop().onFalse(drivetrain.resetState());
+
         Supplier<Pose2d> hubTargetPoseSupplier = () -> Constants.Game.getHubPose().toPose2d();
 
         //run seedFieldCentric on start of tele-op mode
-        // RobotModeTriggers.teleop().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
+        RobotModeTriggers.teleop().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
         Command intakeFuelSequence = Commands.parallel(intakeRoller.intakeFuel(), intakeArm.extendForIntakeSequence());
 
@@ -162,7 +166,10 @@ public class RobotContainer {
             Commands.parallel(
               shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TEST_RPM),
               Commands.waitUntil(shooter.getAtRpmTrigger())
-                .andThen(Commands.parallel(shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM), rollingFloor.rollInwards()))
+                .andThen(Commands.parallel(
+                    shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM), 
+                    intakeRoller.intakeFuel(),
+                    rollingFloor.rollInwardsFast()))
             )
         );
 
@@ -178,9 +185,10 @@ public class RobotContainer {
         .repeatedly();
 
         Command runFullShootingSystemInReverse = Commands.parallel(
-          shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TEST_RPM),
+          // shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TEST_RPM),
           shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM.unaryMinus()),
-          rollingFloor.rollOutwards()
+          rollingFloor.rollOutwards(),
+          intakeRoller.outtakeFuel()
         ).finallyDo(() -> shooter.resetShooterAtTargetRpm());
 
         Command runFullShootingSystemLayup = new SequentialCommandGroup(
@@ -188,7 +196,26 @@ public class RobotContainer {
             Commands.parallel(
               shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_LAYUP_RPM),
               Commands.waitUntil(shooter.getAtRpmTrigger())
-                .andThen(Commands.parallel(shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM), rollingFloor.rollInwards()))
+                .andThen(Commands.parallel(
+                    shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM), 
+                    intakeRoller.intakeFuel(),
+                    rollingFloor.rollInwardsFast()
+                  )
+                )
+            )
+        );
+
+        Command runFullShootingAutoRpm = new SequentialCommandGroup(
+            shooter.resetShooterAtTargetRpm(),
+            Commands.parallel(
+              shooter.variableDistanceShot(() -> drivetrain.getShotDistance(hubTargetPoseSupplier.get().getTranslation())),
+              Commands.waitUntil(shooter.getAtRpmTrigger())
+                .andThen(
+                  Commands.parallel(
+                    shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM), 
+                    intakeRoller.intakeFuel(),
+                    rollingFloor.rollInwardsFast())
+                )
             )
         );
 
@@ -215,6 +242,7 @@ public class RobotContainer {
         driverController.rightBumper().whileTrue(intakeFuelSequence);
         driverController.rightBumper().onFalse(Commands.parallel(intakeRoller.stopIntakeWheelRotation(), intakeArm.stopExtendRetract()));
         driverController.rightTrigger().whileTrue(fullShootingSequence);
+        // driverController.rightTrigger().whileTrue(runFullShootingAutoRpm);
 
         driverController.x().whileTrue(intakeRoller.outtakeFuel());
         driverController.b().whileTrue(runFullShootingSystemLayup); 
@@ -230,19 +258,24 @@ public class RobotContainer {
         // Auto-align drive to hub while holding y
         driverController.y().whileTrue(
           Commands.parallel(
-            shooter.prepVariableDistanceShot(() -> drivetrain.getShotDistance(hubTargetPoseSupplier.get().getTranslation())),
+            shooter.variableDistanceShot(() -> drivetrain.getShotDistance(hubTargetPoseSupplier.get().getTranslation())),
             drivetrain.teleOpDriveWithAutoAimToTarget(driverController, hubTargetPoseSupplier)
             // drivetrain.alignToTargetDrive(driverController, hubTargetPoseSupplier)
           )
         );
+
+        driverController.a().whileTrue(drivetrain.brakeAndLockWheels());
+
+        //TODO: Add command or sequence within other command 
+
+        //TODO: Add auto-vibrate X seconds (5?) before hub active time for alliance
         
         //Free driver buttons = povUp, povDown, a
 
-        driverController.a().whileTrue(rollingFloor.rollInwards());
-
+        operatorController.rightTrigger().whileTrue(rollingFloor.rollInwards());
 
         //Note: operator controller is for testing new commands and running SysId tests
-        operatorController.b().whileTrue(runIntakeArmAlternating);
+        // operatorController.b().whileTrue(runIntakeArmAlternating);
 
         //Run this to determine value for kCoupleRatio for the CTRE swerve modules by observing how much the drive motor encoder moves when we rotate the azimuth (steer motor) a known number of rotations
         operatorController.a().onTrue(new RotateAzimuthCommand(
@@ -252,11 +285,11 @@ public class RobotContainer {
         ));
 
         //Run SysId tests using the operator controller
-        operatorController.back().and(operatorController.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
-        operatorController.back().and(operatorController.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
-        operatorController.start().and(operatorController.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
-        operatorController.start().and(operatorController.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
-        operatorController.start().and(operatorController.a()).onTrue(drivetrain.stopSysIdLogging());
+        operatorController.back().and(operatorController.y()).whileTrue(shooter.sysIdQuasistatic(Direction.kForward));
+        operatorController.back().and(operatorController.x()).whileTrue(shooter.sysIdQuasistatic(Direction.kReverse));
+        operatorController.start().and(operatorController.y()).whileTrue(shooter.sysIdDynamic(Direction.kForward));
+        operatorController.start().and(operatorController.x()).whileTrue(shooter.sysIdDynamic(Direction.kReverse));
+        operatorController.start().and(operatorController.a()).onTrue(shooter.stopSysIdLogging());
   }
 
   private void setDefaultCommands() {

@@ -83,7 +83,7 @@ public class IntakeArm extends SubsystemBase {
     public Command extend() {
        return run(() -> {
             isExtending = true;
-            runExtendRetractAtDutyCycle(0.2);
+            runExtendRetractAtDutyCycle(0.3);
         })
         .until(() -> shouldStopExtendRetract.getAsBoolean())
         .andThen(stopExtendRetract());
@@ -124,7 +124,7 @@ public class IntakeArm extends SubsystemBase {
     public Command retractForAutoAgitate() {
         return run(() -> {
             isExtending = false;
-            runExtendRetractAtDutyCycle(-0.20);
+            runExtendRetractAtDutyCycle(-0.25);
         })
         .until(() -> shouldStopExtendRetract.getAsBoolean())
         .andThen(stopExtendRetract());
@@ -133,7 +133,7 @@ public class IntakeArm extends SubsystemBase {
     public Command retractForAgitate() {
         return run(() -> {
             isExtending = false;
-            runExtendRetractAtDutyCycle(-0.40);
+            runExtendRetractAtDutyCycle(-0.50);
         })
         .andThen(stopExtendRetract());
     }

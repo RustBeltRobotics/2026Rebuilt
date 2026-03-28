@@ -27,7 +27,6 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.generated.TunerConstants;
 
 /**
@@ -130,9 +129,9 @@ public final class Constants {
     public static final double INITIAL_DRIVE_MAX_SPEED_FACTOR = 0.8;
 
     /* Robot mass in Kg. */
-    public static final double ROBOT_MASS = Units.Pounds.of(115.0).in(Units.Kilograms); //Note: this weight does NOT include the battery or bumpers
+    public static final double ROBOT_MASS = Units.Pounds.of(102.0).in(Units.Kilograms); //Note: this weight does NOT include the battery or bumpers
 
-    public static final double LOADED_MASS = Units.Pounds.of(150.0).in(Units.Kilograms); //Note: this weight includes the battery and bumpers
+    public static final double LOADED_MASS = Units.Pounds.of(134.0).in(Units.Kilograms); //Note: this weight includes the battery and bumpers
 
     public static final double MOMENT_OF_INTERIA = 5.37; //Note: This value is for when the intake is extended / down (From CAD)
 
@@ -181,11 +180,6 @@ public final class Constants {
     public static final double DRIVE_GEAR_RATIO = 1.0 / 6.03;
 
     public static final double STEER_GEAR_RATIO = 1.0 / 26.09;
-
-    //TODO: Figure out why true is needed for correct wheel direction, when in theory it should be false
-    public static final boolean DRIVE_MOTOR_INVERTED = true; //should be false for Mk4i, true for Mk4 (tested on Eclipse robot)
-
-    public static final boolean STEER_MOTOR_INVERTED = true; //should be true for Mk4i, false for Mk4 (tested on Eclipse robot)
 
     /** Conversion between motor rotations and drive meters */
     public static final double DRIVE_POSITION_CONVERSION = WHEEL_CIRCUMFERENCE * DRIVE_GEAR_RATIO;
@@ -238,15 +232,20 @@ public final class Constants {
     //allowable error to consider robot at goal angle when rotating to pose
     public static final Angle EPSILON_ANGLE_TO_GOAL = Units.Degrees.of(1.0);
 
+    public static final class RotateToPosePID {
+      public static final double K_P = 0.14;
+      public static final double K_I = 0.0;
+      public static final double K_D = 0.0;
+    }
+
     public static final PIDController ROTATE_TO_POSE_PID_CONTROLLER;
     
     static {
       //TODO: increase this kP until we reach setpoint quickly, but get oscillations
       //    Then, increade kD until we get no overshoot or oscillation
       //    If overshoot persists, reduce kP
-      ROTATE_TO_POSE_PID_CONTROLLER = new PIDController(0.14, 0, 0);
+      ROTATE_TO_POSE_PID_CONTROLLER = new PIDController(RotateToPosePID.K_P, RotateToPosePID.K_I, RotateToPosePID.K_D);
       ROTATE_TO_POSE_PID_CONTROLLER.enableContinuousInput(-Math.PI, Math.PI);
-      SmartDashboard.putData("AutoAimRotationPID", ROTATE_TO_POSE_PID_CONTROLLER);
     }
 
     public static final Matrix<N3, N1> WHEEL_ODOMETRY_POSE_STANDARD_DEVIATIONS = VecBuilder.fill(0.1, 0.1, Units.Degrees.of(5.0).in(Units.Radians));
@@ -261,25 +260,34 @@ public final class Constants {
     public static final double K_S = 0.18708;  //static feedforward term
     public static final double K_V = 0.23054;  //velocity feedforward gain (Volts per rotor RPS) 
     public static final double K_A = 0.0042621;
-    public static final AngularVelocity FEEDER_RPM = Units.RPM.of(4000); //Note: max theoretical is ~3000 with the 2:1 gear reduction
+    public static final AngularVelocity FEEDER_RPM = Units.RPM.of(2000); //Note: max theoretical is ~3000 with the 2:1 gear reduction
+    public static final AngularVelocity FEEDER_RPM_FAR_SHOT = Units.RPM.of(4000);
   }
 
   public static final class Shooter {
     public static final Distance SHOOTER_WHEEL_DIAMETER = Units.Inches.of(4.0);
     public static final Mass FLYWHEEL_MASS = Units.Pounds.of(7.9); //This weight does not include the rotating mass of the Neo Vortex motors, which may ass 0.75 lbs.
-    public static final AngularVelocity SHOOTER_TEST_RPM = Units.RPM.of(6000);  //was 3100
-    public static final AngularVelocity SHOOTER_LAYUP_RPM = Units.RPM.of(4300); 
-    public static final AngularVelocity SHOOTER_TRENCH_RPM = Units.RPM.of(5950);
+    public static final AngularVelocity SHOOTER_TEST_RPM = Units.RPM.of(3420);  //was 3400
+    public static final AngularVelocity SHOOTER_SHORT_DEFENSE_SHOT_RPM = Units.RPM.of(2950); //one robots length away from hub
+    public static final AngularVelocity SHOOTER_LONG_DEFENSE_SHOT_RPM = Units.RPM.of(3450); //two robots length away from hub
+    public static final AngularVelocity SHOOTER_LAYUP_RPM = Units.RPM.of(2550); 
+    public static final AngularVelocity SHOOTER_TRENCH_RPM = Units.RPM.of(3420);
 
-    public static final AngularVelocity SHOOTER_PASS_RPM = Units.RPM.of(4250);  //Note: we probably don't have the RPMs for a far pass now with the 1.6667:1 gear reduction
+    public static final AngularVelocity SHOOTER_PASS_RPM = Units.RPM.of(4250);
     
     public static final class CtrePidf {
-      public static final double K_P = 0.17399;
+      // public static final double K_P = 0.17399;
+      // public static final double K_I = 0.0;
+      // public static final double K_D = 0.0;
+      // public static final double K_S = 0.12645;
+      // public static final double K_V = 0.11563; //velocity feedforward gain (Volts per motor RPS)
+      // public static final double K_A = 0.009678;
+      public static final double K_P = 0.1018;
       public static final double K_I = 0.0;
       public static final double K_D = 0.0;
-      public static final double K_S = 0.12645;
-      public static final double K_V = 0.11563; //velocity feedforward gain (Volts per motor RPS)
-      public static final double K_A = 0.009678;
+      public static final double K_S = 0.098519;
+      public static final double K_V = 0.11928; //velocity feedforward gain (Volts per motor RPS)
+      public static final double K_A = 0.029765;
     }
   }
 
@@ -294,7 +302,7 @@ public final class Constants {
   public static final class PathPlanner {
     //TODO: update the driveGearing value here to match the CTRE Swerve gearing for MK5n modules once available
     public static final ModuleConfig MODULE_CONFIG = new ModuleConfig(Kinematics.WHEEL_RADIUS, Kinematics.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND,
-      Kinematics.WHEEL_COEFFECIENT_OF_FRICTION, DCMotor.getKrakenX60(1), 6.12, 60.0, 4);
+      Kinematics.WHEEL_COEFFECIENT_OF_FRICTION, DCMotor.getKrakenX60(1), 6.026785714285714, 40.0, 1);
     public static final RobotConfig ROBOT_CONFIG = new RobotConfig(Kinematics.LOADED_MASS, Kinematics.MOMENT_OF_INTERIA,
       MODULE_CONFIG, Kinematics.SWERVE_KINEMATICS.getModules());
       
@@ -312,10 +320,10 @@ public final class Constants {
   }
 
   public static final class Vision {
-    //TODO: re-enable
-    public static final boolean VISION_ENABLED = true;
-    public static final boolean TAKE_INITIAL_AUTO_POSE_FROM_VISION = true;
+    public static final boolean VISION_ENABLED = true;  //TODO: Re-enable this
+    public static final boolean TAKE_INITIAL_AUTO_POSE_FROM_VISION = false;
     public static final boolean TAKE_POSE_ESTIMATES_FROM_VISION = true;
+    public static final boolean BOOST_POSE_ESTIMATES_FROM_VISION_FOR_RAMP = false;
     public static final int APRIL_TAG_PIPELINE_INDEX = 0;
     public static final String ARDUCAM_MODEL = "OV9281";
     public static final double POSE_AMBIGUITY_CUTOFF = 0.2;  //https://docs.photonvision.org/en/latest/docs/apriltag-pipelines/3D-tracking.html#ambiguity
@@ -334,12 +342,12 @@ public final class Constants {
      * See also https://www.chiefdelphi.com/t/how-do-i-understand-standard-deviation-in-the-poseestimator-class/411492/10?u=mrokitka
      */
     public static final Matrix<N3, N1> DEFAULT_VISION_MEASUREMENT_STANDARD_DEVIATIONS = VecBuilder.fill(0.9, 0.9, 0.9);
-    public static final Matrix<N3, N1> SINGLE_TAG_MEASUREMENT_STANDARD_DEVIATIONS = VecBuilder.fill(0.8, 0.8, Units.Degrees.of(30.0).in(Units.Radians));
-    public static final Matrix<N3, N1> FRONT_CAMERA_STANDARD_DEVIATIONS = VecBuilder.fill(0.85, 0.85, Units.Degrees.of(20.0).in(Units.Radians));
+    public static final Matrix<N3, N1> SINGLE_TAG_MEASUREMENT_STANDARD_DEVIATIONS = VecBuilder.fill(0.8, 0.8, Units.Degrees.of(9999.0).in(Units.Radians));
+    public static final Matrix<N3, N1> FRONT_CAMERA_STANDARD_DEVIATIONS = VecBuilder.fill(0.85, 0.85, Units.Degrees.of(9999.0).in(Units.Radians));
     //TODO: we should be able to bump trust in the rear cameras after some testing
-    public static final Matrix<N3, N1> OTHER_CAMERA_STANDARD_DEVIATIONS = VecBuilder.fill(1.2, 1.2, Units.Degrees.of(30.0).in(Units.Radians));
+    public static final Matrix<N3, N1> OTHER_CAMERA_STANDARD_DEVIATIONS = VecBuilder.fill(1.2, 1.2, Units.Degrees.of(9999.0).in(Units.Radians));
     public static final double MULTI_TAG_XY_PER_TAG_STANDARD_DEVIATION = 0.3;
-    public static final double MULTI_TAG_THETA_STANDARD_DEVIATION = Units.Degrees.of(20.0).in(Units.Radians);
+    public static final double MULTI_TAG_THETA_STANDARD_DEVIATION = Units.Degrees.of(9999.0).in(Units.Radians);
 
     /**
      * Unique camera names, usable in PhotonCamera instances
@@ -377,10 +385,10 @@ public final class Constants {
       //20.5 high, 12" back, 10.5 to the side
 
       // 6" back, 10.5" to the right
-      public static final Transform3d BACK_RIGHT = new Transform3d(-Units.Inches.of(12.0).in(Units.Meters), -Units.Inches.of(10.5).in(Units.Meters), Units.Inches.of(20.5).in(Units.Meters), 
+      public static final Transform3d BACK_RIGHT = new Transform3d(-Units.Inches.of(11.5).in(Units.Meters), -Units.Inches.of(13.25).in(Units.Meters), Units.Inches.of(19.43375).in(Units.Meters), 
         new Rotation3d(0, 0, 0).rotateBy(new Rotation3d(0, 0, Units.Degrees.of(-90.0).in(Units.Radians))));  //back right cam- photonvision1
       //x-, y+, z+, (0, -degrees, 0).rotateBy(0, 0, 135 degrees)
-      public static final Transform3d BACK_LEFT = new Transform3d(-Units.Inches.of(12.0).in(Units.Meters), Units.Inches.of(10.5).in(Units.Meters), Units.Inches.of(20.5).in(Units.Meters),
+      public static final Transform3d BACK_LEFT = new Transform3d(-Units.Inches.of(11.5).in(Units.Meters), Units.Inches.of(13.5).in(Units.Meters), Units.Inches.of(19.43375).in(Units.Meters),
         new Rotation3d(0, 0, 0).rotateBy(new Rotation3d(0, 0, Units.Degrees.of(90.0).in(Units.Radians))));  //back left - photonvision1
     }
   }

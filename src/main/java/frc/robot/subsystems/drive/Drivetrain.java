@@ -31,6 +31,7 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
@@ -60,14 +61,14 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
 
     private final DoubleEntry kPEntry = NetworkTableInstance.getDefault().getTable("Tuning")
         .getDoubleTopic("HeadingController/kP")
-        .getEntry(0.14); // 0.14 is the default
+        .getEntry(Constants.Kinematics.RotateToPosePID.K_P); // 0.14 is the default
 
     private final DoubleEntry kDEntry = NetworkTableInstance.getDefault().getTable("Tuning")
         .getDoubleTopic("HeadingController/kD")
-        .getEntry(0.0);
+        .getEntry(Constants.Kinematics.RotateToPosePID.K_D);
 
-    private double priorHeadingControllerKp = 0.14;
-    private double priorHeadingControllerKd = 0.0;
+    private double priorHeadingControllerKp = Constants.Kinematics.RotateToPosePID.K_P;
+    private double priorHeadingControllerKd = Constants.Kinematics.RotateToPosePID.K_D;
 
     private final SwerveRequest.FieldCentric teleopRequest = new SwerveRequest.FieldCentric()
         .withDeadband(Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND * Constants.Controls.CONTROLLER_DEADBAND)
@@ -79,9 +80,11 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
         .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
 
     private final SwerveRequest.FieldCentricFacingAngle autoAlignRequest = new SwerveRequest.FieldCentricFacingAngle()
-        .withHeadingPID(0.14, 0, 0);
+        .withHeadingPID(Constants.Kinematics.RotateToPosePID.K_P, Constants.Kinematics.RotateToPosePID.K_I, Constants.Kinematics.RotateToPosePID.K_D);
 
     private final SwerveRequest.ApplyRobotSpeeds pathApplyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
+
+    private final SwerveRequest.SwerveDriveBrake applyBrakeRequest = new SwerveRequest.SwerveDriveBrake();
 
     private boolean initialPoseSetViaVision = false;
     private boolean rampOrTipDetected = false;
@@ -99,6 +102,9 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     public Drivetrain() {
         super(TunerConstants.DrivetrainConstants, TunerConstants.FrontLeft, TunerConstants.FrontRight, TunerConstants.BackLeft, TunerConstants.BackRight);
         configureAutoBuilder();
+        //This is required to get the entry to show in NT for the first time
+        kPEntry.setDefault(Constants.Kinematics.RotateToPosePID.K_P);
+        kDEntry.setDefault(Constants.Kinematics.RotateToPosePID.K_D);
     }
 
     @Override
@@ -109,9 +115,11 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
         double kD = kDEntry.get();
 
         if (kP != priorHeadingControllerKp || kD != priorHeadingControllerKd) {
-            autoAlignRequest.HeadingController.setPID(kP, 0.0, kD);
+            autoAlignRequest.HeadingController.setP(kP);
+            autoAlignRequest.HeadingController.setD(kD);
             priorHeadingControllerKp = kP;
             priorHeadingControllerKd = kD;
+            AlertManager.addAlert("DriveAutoAlign", "DriveAutoAlign PID changed! kP: " + kP + " kD: " + kD, AlertType.kInfo);
         }
 
         SwerveDriveState swerveDriveState = getState();
@@ -164,6 +172,10 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     private double modifyDriverControllerInput(double input) {
         // scale the controller input - See https://www.desmos.com/calculator/bnqnldev69 for function graph
         return (Math.signum(input) * Math.pow(Math.abs(input), 3.7) + (input * 0.43)) / (1 + 0.42);
+    }
+
+    public Command brakeAndLockWheels() {
+        return applyRequest(() -> applyBrakeRequest);
     }
 
     public Command teleOpDriveWithAutoAimToTarget(CommandXboxController controller, Supplier<Pose2d> targetPoseSupplier) {
@@ -280,7 +292,7 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
 
     @Override
     public void consumeVisionPoseEstimate(Pose2d pose, double timestamp, Matrix<N3, N1> estimationStdDevs) {
-        if (needToCorrectOdometryUsingVision) {
+        if (needToCorrectOdometryUsingVision && Constants.Vision.BOOST_POSE_ESTIMATES_FROM_VISION_FOR_RAMP) {
             //boost vision odometry via lowering standard deviations to compensate for error in wheel odometry after ramp/tip
             //TODO: test this and tune boost factor
             estimationStdDevs = estimationStdDevs.times(0.25); //boost by factor of 4
@@ -310,6 +322,16 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
 
     public Supplier<Pose2d> getCurrentPoseSupplier() {
         return currentPoseSupplier;
+    }
+
+    public Command resetState() {
+        return Commands.runOnce(() -> {
+            initialPoseSetViaVision = false;
+            rampOrTipDetected = false;
+            needToCorrectOdometryUsingVision = false;
+            isAutoTargeting = false;
+            latestVisionPose = null;
+        }, this);
     }
 
 }

@@ -56,7 +56,7 @@ public class RollingFloor extends SubsystemBase {
     //run duty cycle
     public void setDutyCycleSpeed(double speed) {
         neoRight.set(speed);
-        neoLeft.set(speed);
+        neoLeft.set(-speed);
     }
 
     public Command runAtDutyCycle(double speed) {
@@ -65,6 +65,15 @@ public class RollingFloor extends SubsystemBase {
 
     public Command rollInwards() {
         return runAtDutyCycle(Constants.RollingFloor.ROLL_DUTY_CYCLE);
+    }
+
+
+    public Command rollInwardsFast() {
+        return runAtDutyCycle(0.88);
+    }
+
+    public Command rollInwardsSlowly() {
+        return runAtDutyCycle(0.10);
     }
 
     public Command rollOutwards() {

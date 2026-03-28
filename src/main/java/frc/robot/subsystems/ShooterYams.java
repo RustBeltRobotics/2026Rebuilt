@@ -55,6 +55,7 @@ public class ShooterYams extends SubsystemBase {
 
     private final DoublePublisher shooterCurrentMechanismVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Mechanism/Velocity/Current").publish();
     private final DoublePublisher shooterTargetMechanismVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Mechanism/Velocity/Target").publish();
+    private final DoublePublisher autoRpmCalculationPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/AutoDistance/RPM").publish();
 
     private final BooleanPublisher atRpmPublisher = NetworkTableInstance.getDefault().getBooleanTopic("/RBR/Shooter/atRPM").publish();
 
@@ -130,8 +131,10 @@ public class ShooterYams extends SubsystemBase {
     public ShooterYams() {
         //meters to RPM, Note: distance is measured from center of robot (drivetrain.getState().Pose) to center of hub
         //TODO: Add a few more measured values
-        rpmTable.put(1.70240, Constants.Shooter.SHOOTER_LAYUP_RPM.in(Units.RPM));  //corresponds to depot-wall-shot-end waypoint in PathPlanner
-        rpmTable.put(3.65657, Constants.Shooter.SHOOTER_TRENCH_RPM.in(Units.RPM)); //corresponds to l-trench-shot waypoint in PathPlanner
+        rpmTable.put(1.3212, Constants.Shooter.SHOOTER_LAYUP_RPM.in(Units.RPM));  //corresponds to 3.297, 4.067
+        rpmTable.put(2.3872, Constants.Shooter.SHOOTER_SHORT_DEFENSE_SHOT_RPM.in(Units.RPM));  //2.231, 4.003 (one full robot length back from the hub - i.e. short defensive shot)
+        rpmTable.put(3.4371, Constants.Shooter.SHOOTER_LONG_DEFENSE_SHOT_RPM.in(Units.RPM));  //1.181, 4.003 (two full robot length back from the hub - i.e. long defensive shot)
+        rpmTable.put(3.5744, Constants.Shooter.SHOOTER_TRENCH_RPM.in(Units.RPM)); //corresponds to 3.385, 0.684
     }
 
     public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
@@ -205,8 +208,8 @@ public class ShooterYams extends SubsystemBase {
         shooterKraken.setVoltageSetpoint(Units.Volts.of(0));
     }
 
-    public Command prepVariableDistanceShot(Supplier<Distance> shotDistanceSupplier) {
-        return startEnd(() -> runAtAngularVelocity(getTargetShooterAngularVelocityForDistance(shotDistanceSupplier.get())), () -> idleAtLowRpm());
+    public Command variableDistanceShot(Supplier<Distance> shotDistanceSupplier) {
+        return startEnd(() -> setShooterAngularVelocity(getTargetShooterAngularVelocityForDistance(shotDistanceSupplier.get())), () -> stopShooter());
     }
 
     public Command runAtAngularVelocity(AngularVelocity rpmTarget) {
@@ -221,8 +224,19 @@ public class ShooterYams extends SubsystemBase {
         return this.run(() -> stopShooter()).withName("Stop Shooter");
     }
 
+    public Command stopImmediately() {
+        return this.run(() -> {
+            targetRpm = 0.0;
+            atTargetRpm = false;
+            shooterKraken.setMechanismVelocitySetpoint(Units.RPM.of(0.0));
+        });
+    }
+
     private AngularVelocity getTargetShooterAngularVelocityForDistance(Distance distance) {
-        return Units.RPM.of(rpmTable.get(distance.in(Units.Meters)));
+        double targetRpm = rpmTable.get(distance.in(Units.Meters));
+        autoRpmCalculationPublisher.set(targetRpm);
+
+        return Units.RPM.of(targetRpm);
     }
 
     //See https://blog.eeshwark.com/robotblog/shooting-on-the-fly
