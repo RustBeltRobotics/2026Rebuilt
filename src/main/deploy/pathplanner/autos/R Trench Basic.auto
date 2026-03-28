@@ -61,12 +61,6 @@
         {
           "type": "named",
           "data": {
-            "name": "extend-intake"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
             "name": "intake-fuel"
           }
         },
@@ -98,6 +92,12 @@
           "type": "named",
           "data": {
             "name": "stop-shooter"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "stop-intake"
           }
         }
       ]

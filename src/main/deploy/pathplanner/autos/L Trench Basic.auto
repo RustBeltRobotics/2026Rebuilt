@@ -13,12 +13,6 @@
         {
           "type": "named",
           "data": {
-            "name": "extend-intake"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
             "name": "intake-fuel"
           }
         },
@@ -49,25 +43,19 @@
         {
           "type": "named",
           "data": {
+            "name": "stop-shooter"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
             "name": "stop-intake"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "L Trench Shot to L Start"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "L Trench To L Neutral"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "extend-intake"
+            "pathName": "L Trench Shot to L Neutral Hub"
           }
         },
         {
@@ -79,7 +67,37 @@
         {
           "type": "path",
           "data": {
-            "pathName": "L Neutral Grab Fuel"
+            "pathName": "L Neutral Hub Grab Fuel"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "L Neutral Hub Fuel To Trench"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "L Neutral Hub Trench To Trench Shot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "trench-shoot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "stop-shooter"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "stop-intake"
           }
         }
       ]

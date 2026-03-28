@@ -8,30 +8,47 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 4.156972123368918,
-        "y": 7.40652555192354
+        "x": 4.385,
+        "y": 7.355476010810971
       },
       "isLocked": false,
       "linkedName": "l-trench-shot"
     },
     {
       "anchor": {
-        "x": 4.454,
-        "y": 7.45
+        "x": 6.018,
+        "y": 7.4386200860787985
       },
       "prevControl": {
-        "x": 3.448151387317127,
-        "y": 7.421947368421054
+        "x": 5.018,
+        "y": 7.4386200860787985
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "l-trench-start"
+      "linkedName": "l-neutral-hub-start"
     }
   ],
-  "rotationTargets": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.23085649461145855,
+      "rotationDegrees": -90.0
+    }
+  ],
   "constraintZones": [],
   "pointTowardsZones": [],
-  "eventMarkers": [],
+  "eventMarkers": [
+    {
+      "name": "extend-intake",
+      "waypointRelativePos": 0.7477064220183502,
+      "endWaypointRelativePos": null,
+      "command": {
+        "type": "named",
+        "data": {
+          "name": "extend-intake"
+        }
+      }
+    }
+  ],
   "globalConstraints": {
     "maxVelocity": 5.29,
     "maxAcceleration": 3.0,
@@ -41,7 +58,7 @@
     "unlimited": false
   },
   "goalEndState": {
-    "velocity": 0,
+    "velocity": 1.0,
     "rotation": -90.0
   },
   "reversed": false,

@@ -8,19 +8,19 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 4.385326215895612,
-        "y": 0.6835112692763938
+        "x": 4.35244818300754,
+        "y": 0.4851210852830059
       },
       "isLocked": false,
       "linkedName": "r-trench-shot"
     },
     {
       "anchor": {
-        "x": 6.018412280701754,
+        "x": 6.018,
         "y": 0.550210526315791
       },
       "prevControl": {
-        "x": 5.018412280701754,
+        "x": 5.018,
         "y": 0.5502105263157911
       },
       "nextControl": null,
@@ -36,7 +36,19 @@
   ],
   "constraintZones": [],
   "pointTowardsZones": [],
-  "eventMarkers": [],
+  "eventMarkers": [
+    {
+      "name": "extend-intake",
+      "waypointRelativePos": 0.7477064220183504,
+      "endWaypointRelativePos": null,
+      "command": {
+        "type": "named",
+        "data": {
+          "name": "extend-intake"
+        }
+      }
+    }
+  ],
   "globalConstraints": {
     "maxVelocity": 5.29,
     "maxAcceleration": 3.0,
@@ -46,7 +58,7 @@
     "unlimited": false
   },
   "goalEndState": {
-    "velocity": 0,
+    "velocity": 1.0,
     "rotation": 90.0
   },
   "reversed": false,
