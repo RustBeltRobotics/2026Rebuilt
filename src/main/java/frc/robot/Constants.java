@@ -324,6 +324,7 @@ public final class Constants {
     public static final boolean TAKE_INITIAL_AUTO_POSE_FROM_VISION = false;
     public static final boolean TAKE_POSE_ESTIMATES_FROM_VISION = true;
     public static final boolean BOOST_POSE_ESTIMATES_FROM_VISION_FOR_RAMP = false;
+    public static final boolean USE_STATIC_STD_DEV = false;  //If true OTHER_CAMERA_STANDARD_DEVIATIONS will be used, if false dynamic algo will be used
     public static final int APRIL_TAG_PIPELINE_INDEX = 0;
     public static final String ARDUCAM_MODEL = "OV9281";
     public static final double POSE_AMBIGUITY_CUTOFF = 0.2;  //https://docs.photonvision.org/en/latest/docs/apriltag-pipelines/3D-tracking.html#ambiguity
@@ -341,13 +342,12 @@ public final class Constants {
      * 
      * See also https://www.chiefdelphi.com/t/how-do-i-understand-standard-deviation-in-the-poseestimator-class/411492/10?u=mrokitka
      */
-    public static final Matrix<N3, N1> DEFAULT_VISION_MEASUREMENT_STANDARD_DEVIATIONS = VecBuilder.fill(0.9, 0.9, 0.9);
-    public static final Matrix<N3, N1> SINGLE_TAG_MEASUREMENT_STANDARD_DEVIATIONS = VecBuilder.fill(0.8, 0.8, Units.Degrees.of(9999.0).in(Units.Radians));
-    public static final Matrix<N3, N1> FRONT_CAMERA_STANDARD_DEVIATIONS = VecBuilder.fill(0.85, 0.85, Units.Degrees.of(9999.0).in(Units.Radians));
+    public static final Matrix<N3, N1> DEFAULT_VISION_MEASUREMENT_STANDARD_DEVIATIONS = VecBuilder.fill(0.9, 0.9, 9999.0);
+    public static final Matrix<N3, N1> SINGLE_TAG_MEASUREMENT_STANDARD_DEVIATIONS = VecBuilder.fill(4, 4, 9999.0);
+    public static final Matrix<N3, N1> MULTI_TAG_MEASUREMENT_STANDARD_DEVIATIONS = VecBuilder.fill(0.5, 0.5, 9999.0);
+    public static final Matrix<N3, N1> FRONT_CAMERA_STANDARD_DEVIATIONS = VecBuilder.fill(0.85, 0.85, 9999.0);
     //TODO: we should be able to bump trust in the rear cameras after some testing
-    public static final Matrix<N3, N1> OTHER_CAMERA_STANDARD_DEVIATIONS = VecBuilder.fill(1.2, 1.2, Units.Degrees.of(9999.0).in(Units.Radians));
-    public static final double MULTI_TAG_XY_PER_TAG_STANDARD_DEVIATION = 0.3;
-    public static final double MULTI_TAG_THETA_STANDARD_DEVIATION = Units.Degrees.of(9999.0).in(Units.Radians);
+    public static final Matrix<N3, N1> OTHER_CAMERA_STANDARD_DEVIATIONS = VecBuilder.fill(1.2, 1.2, 9999.0);
 
     /**
      * Unique camera names, usable in PhotonCamera instances

@@ -17,6 +17,7 @@ import org.photonvision.targeting.PhotonTrackedTarget;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFieldLayout.OriginPosition;
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -297,7 +298,7 @@ public class VisionSystem {
                 }
 
                 acceptedPoses.add(poseEstimate);
-                estimationResults.add(new VisionPoseEstimationResult(visionCamera, poseEstimate, getVisionMeasurementStandardDeviation(poseEstimate, visionCamera.getCameraPosition())));
+                estimationResults.add(new VisionPoseEstimationResult(visionCamera, poseEstimate, getVisionMeasurementStandardDeviation(poseEstimate, visionCamera)));
 
                 // if (visionCamera.getCameraPosition() == CameraPosition.FRONT_CENTER) {
                 //     frontCenterCameraPosePublisher.set(estimatedPose2d, networkTablesPoseTimestampMicroSeconds);
@@ -315,12 +316,53 @@ public class VisionSystem {
         }
     }
 
-    public Matrix<N3, N1> getVisionMeasurementStandardDeviation(EstimatedRobotPose estimation, CameraPosition cameraPosition) {
-        if (cameraPosition == CameraPosition.FRONT_CENTER) {
-            return Constants.Vision.FRONT_CAMERA_STANDARD_DEVIATIONS;
+    public Matrix<N3, N1> getVisionMeasurementStandardDeviation(EstimatedRobotPose estimation, VisionCamera visionCamera) {
+        CameraPosition cameraPosition = visionCamera.getCameraPosition();
+
+        if (Constants.Vision.USE_STATIC_STD_DEV) {
+            if (cameraPosition == CameraPosition.FRONT_CENTER) {
+                return Constants.Vision.FRONT_CAMERA_STANDARD_DEVIATIONS;
+            } else {
+                return Constants.Vision.OTHER_CAMERA_STANDARD_DEVIATIONS;
+            }
         } else {
-            return Constants.Vision.OTHER_CAMERA_STANDARD_DEVIATIONS;
+            //Logic based on https://github.com/PhotonVision/photonvision/blob/main/photonlib-java-examples/poseest/src/main/java/frc/robot/Vision.java
+            var estStdDevs = Constants.Vision.SINGLE_TAG_MEASUREMENT_STANDARD_DEVIATIONS;
+            
+            int numTags = 0;
+            double avgDist = 0;
+
+            for (PhotonTrackedTarget target : estimation.targetsUsed) {
+                var tagPose = visionCamera.getPoseEstimator().getFieldTags().getTagPose(target.getFiducialId());
+                if (tagPose.isEmpty()) {
+                    continue;
+                } 
+                numTags++;
+                avgDist += tagPose.get().toPose2d().getTranslation().getDistance(estimation.estimatedPose.toPose2d().getTranslation());
+            }
+
+            if (numTags == 0) {
+                return Constants.Vision.SINGLE_TAG_MEASUREMENT_STANDARD_DEVIATIONS;
+            }
+
+            avgDist /= numTags;
+
+            // Decrease std devs for multitag
+            if (numTags > 1) {
+                estStdDevs = Constants.Vision.MULTI_TAG_MEASUREMENT_STANDARD_DEVIATIONS;
+            } 
+
+            // Reject single tag measurements beyond 4 meters
+            if (numTags == 1 && avgDist > 4) {
+                estStdDevs = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
+            } else {
+                // Scale by distance squared
+                estStdDevs = estStdDevs.times(1 + (avgDist * avgDist / 30));
+            }
+
+            return estStdDevs;
         }
+        
 
         //Old logic below:
 /*
