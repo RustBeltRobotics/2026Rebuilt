@@ -3,32 +3,37 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.233763157894736,
-        "y": 0.7252456140350887
+        "x": 3.226435628344747,
+        "y": 2.830552995570508
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.040087473971691,
-        "y": 0.7495057473873494
+        "x": 3.2196590909090905,
+        "y": 1.8911818181818183
       },
       "isLocked": false,
-      "linkedName": "r-trench-shot"
+      "linkedName": "r-bump-shot"
     },
     {
       "anchor": {
-        "x": 0.4547083330259656,
-        "y": 0.6375416665129807
+        "x": 3.2285606113344176,
+        "y": 0.5078721975372877
       },
       "prevControl": {
-        "x": 0.9597424239350565,
-        "y": 0.6375416665129807
+        "x": 3.207946974970781,
+        "y": 1.528247197537288
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "outpost"
+      "linkedName": "r-bump-trench-start"
     }
   ],
-  "rotationTargets": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.43067846607669635,
+      "rotationDegrees": 90.0
+    }
+  ],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [],
@@ -48,7 +53,7 @@
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 65.22485943116813
+    "rotation": 38.4527526549835
   },
   "useDefaultConstraints": true
 }

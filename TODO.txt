@@ -1,6 +1,5 @@
 TODO:
-- Verify photonvision pose updates
-    - seem roughly correct, but readings off the hub are jittery
+- ** Change Constants.Game.FLIP_FIELD_CENTRIC_OPERATOR_PERSPECTIVE to false for competition [or at the Warehouse in Rochester] (flip to true at the lab)
 - Measure and get more distance to RPM mappings for linear interpolator
     - Test prepVariableDistanceShot command to auto-set shooter RPM based on robot pose distance from hub
 - Test Align To Target drive with AprilTags on hub

@@ -3,25 +3,25 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 6.018412280701754,
-        "y": 0.550210526315791
+        "x": 6.11388596491228,
+        "y": 0.5581666666666671
       },
       "prevControl": null,
       "nextControl": {
-        "x": 5.150426551283363,
-        "y": 0.5502105263157909
+        "x": 5.245900235493889,
+        "y": 0.558166666666667
       },
       "isLocked": false,
       "linkedName": "r-neutral-hub-start"
     },
     {
       "anchor": {
-        "x": 3.385,
-        "y": 0.6835112692763936
+        "x": 3.233763157894736,
+        "y": 0.7252456140350887
       },
       "prevControl": {
-        "x": 4.456778541011412,
-        "y": 0.6835112692763937
+        "x": 4.013464912280702,
+        "y": 0.37517543859649327
       },
       "nextControl": null,
       "isLocked": false,
@@ -53,7 +53,7 @@
   "folder": null,
   "idealStartingState": {
     "velocity": 0.5,
-    "rotation": 90.0
+    "rotation": 97.0012675574953
   },
   "useDefaultConstraints": true
 }

@@ -2,6 +2,7 @@ package frc.robot.subsystems.drive;
 
 import java.util.function.Supplier;
 
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.swerve.SwerveModule;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
@@ -59,6 +60,12 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     private final BooleanPublisher alreadyAtGoalPublisher = NetworkTableInstance.getDefault().getBooleanTopic("/RBR/Drivetrain/AutoAlign/AlreadyAtGoal").publish();
     private final BooleanPublisher notTryingToDrivePublisher = NetworkTableInstance.getDefault().getBooleanTopic("/RBR/Drivetrain/AutoAlign/NotTryingToDrive").publish();
 
+    private final StructPublisher<Pose2d> testShortDefensePosePublisher = NetworkTableInstance.getDefault().getStructTopic("/RBR/Test/Pose/Defense/Short", Pose2d.struct).publish();
+    private final StructPublisher<Pose2d> testLongDefensePosePublisher = NetworkTableInstance.getDefault().getStructTopic("/RBR/Test/Pose/Defense/Long", Pose2d.struct).publish();
+
+    private static final Pose2d testShortDefensePose = new Pose2d(2.231, 4.003, new Rotation2d());
+    private static final Pose2d testLongDefensePose = new Pose2d(1.181, 4.003, new Rotation2d());
+
     private final DoubleEntry kPEntry = NetworkTableInstance.getDefault().getTable("Tuning")
         .getDoubleTopic("HeadingController/kP")
         .getEntry(Constants.Kinematics.RotateToPosePID.K_P); // 0.14 is the default
@@ -107,6 +114,28 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
         kDEntry.setDefault(Constants.Kinematics.RotateToPosePID.K_D);
     }
 
+    public void applyAutoCurrentLimits() {
+        for (int i = 0; i < 4; i++) {
+            var talonFXConfigurator = this.getModule(i).getDriveMotor().getConfigurator();
+            var talonFXConfigs = new TalonFXConfiguration();
+            talonFXConfigurator.refresh(talonFXConfigs);  //read current config from motor controller into talonFXConfigs
+            var currentLimitConfig = talonFXConfigs.CurrentLimits;
+            currentLimitConfig.SupplyCurrentLimit = Constants.Kinematics.DRIVE_MOTOR_SUPPLY_CURRENT_LIMIT_AUTO; //set new supply current limit for auto
+            talonFXConfigurator.apply(talonFXConfigs);  //apply the updated configuration to the motor controller
+        }
+    }
+
+    public void applyTeleopCurrentLimits() {
+        for (int i = 0; i < 4; i++) {
+            var talonFXConfigurator = this.getModule(i).getDriveMotor().getConfigurator();
+            var talonFXConfigs = new TalonFXConfiguration();
+            talonFXConfigurator.refresh(talonFXConfigs);  //read current config from motor controller into talonFXConfigs
+            var currentLimitConfig = talonFXConfigs.CurrentLimits;
+            currentLimitConfig.SupplyCurrentLimit = Constants.Kinematics.DRIVE_MOTOR_SUPPLY_CURRENT_LIMIT_TELEOP; //set new supply current limit for teleop
+            talonFXConfigurator.apply(talonFXConfigs);  //apply the updated configuration to the motor controller
+        }
+    }
+
     @Override
     public void periodic() {
         super.periodic();
@@ -121,6 +150,9 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
             priorHeadingControllerKd = kD;
             AlertManager.addAlert("DriveAutoAlign", "DriveAutoAlign PID changed! kP: " + kP + " kD: " + kD, AlertType.kInfo);
         }
+
+        testShortDefensePosePublisher.set(testShortDefensePose);
+        testLongDefensePosePublisher.set(testLongDefensePose);
 
         SwerveDriveState swerveDriveState = getState();
         driveForwardSpeedPublisher.set(swerveDriveState.Speeds.vxMetersPerSecond);
@@ -279,11 +311,8 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     public Distance getShotDistance(Translation2d targetPose) {
         Pose2d robotPose = getState().Pose;
         double centerToTargetMeters = robotPose.getTranslation().getDistance(targetPose);
-        // Constants.Kinematics.SHOOTER_TRANSLATION_FROM_ROBOT_CENTER.
-        double centerToShooterMeters = 123; //TODO: fix this reference
-        double shooterToTargetMeters = Math.sqrt(Math.pow(centerToTargetMeters, 2.0) - Math.pow(centerToShooterMeters, 2.0));
 
-        return Units.Meters.of(shooterToTargetMeters);
+        return Units.Meters.of(centerToTargetMeters);
     }
 
     public Distance getShotDistance() {
@@ -322,6 +351,19 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
 
     public Supplier<Pose2d> getCurrentPoseSupplier() {
         return currentPoseSupplier;
+    }
+
+    public Command resetPoseUsingVision() {
+        if (latestVisionPose != null) {
+            Pose2d newPose = new Pose2d(latestVisionPose.getTranslation(), currentPoseSupplier.get().getRotation());
+
+            return runOnce(() -> resetPose(newPose));
+        } else {
+            return runOnce(() -> {
+                ;
+            });
+        }
+        
     }
 
     public Command resetState() {

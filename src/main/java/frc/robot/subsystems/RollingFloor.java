@@ -1,5 +1,11 @@
 package frc.robot.subsystems;
 
+import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.MotorAlignmentValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
@@ -16,10 +22,8 @@ import frc.robot.Constants;
 
 public class RollingFloor extends SubsystemBase {
 
-    private final SparkMax neoRight = new SparkMax(Constants.CanID.ROLLING_FLOOR_RIGHT, MotorType.kBrushless);  //turn clockwise (leader)
-    private final RelativeEncoder rightNeoEncoder = neoRight.getEncoder();
-    private final SparkMax neoLeft = new SparkMax(Constants.CanID.ROLLING_FLOOR_LEFT, MotorType.kBrushless);  //turn CCW (follower)
-    private final RelativeEncoder leftNeoEncoder = neoLeft.getEncoder();
+    private final TalonFX rightMotor = new TalonFX(Constants.CanID.ROLLING_FLOOR_RIGHT, CANBus.roboRIO());  //turn clockwise (leader)
+    private final TalonFX leftMotor = new TalonFX(Constants.CanID.ROLLING_FLOOR_LEFT, CANBus.roboRIO());  //turn CCW (follower)
     
     private final DoublePublisher leftNeoVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/RollingFloor/Velocity/Left").publish();
     private final DoublePublisher rightNeoVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/RollingFloor/Velocity/Right").publish();
@@ -28,35 +32,37 @@ public class RollingFloor extends SubsystemBase {
     private final DoublePublisher leftNeoCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/RollingFloor/Current/Left").publish();
     private final DoublePublisher rightNeoCurrentPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/RollingFloor/Current/Right").publish();
 
-    public RollingFloor() {
-        var rightRevConfig = new SparkMaxConfig();
-        rightRevConfig.idleMode(IdleMode.kBrake);
-        rightRevConfig.voltageCompensation(12.0);
-        rightRevConfig.smartCurrentLimit(Constants.CurrentLimit.SparkMax.Neo.SMART_DEFAULT).secondaryCurrentLimit(Constants.CurrentLimit.SparkMax.Neo.SECONDARY_MAX);
-        neoRight.configure(rightRevConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    private final Follower ctreFollowerControl = new Follower(Constants.CanID.ROLLING_FLOOR_RIGHT, MotorAlignmentValue.Opposed);
 
-        var leftRevConfig = new SparkMaxConfig();
-        leftRevConfig.idleMode(IdleMode.kBrake);
-        leftRevConfig.voltageCompensation(12.0);
-        leftRevConfig.smartCurrentLimit(Constants.CurrentLimit.SparkMax.Neo.SMART_DEFAULT).secondaryCurrentLimit(Constants.CurrentLimit.SparkMax.Neo.SECONDARY_MAX);
-        leftRevConfig.follow(Constants.CanID.ROLLING_FLOOR_RIGHT, true);
-        neoLeft.configure(leftRevConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    public RollingFloor() {
+        var rightMotorConfig = new TalonFXConfiguration();
+        rightMotorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        rightMotorConfig.CurrentLimits.SupplyCurrentLimit = 40.0;
+        rightMotorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+        rightMotor.getConfigurator().apply(rightMotorConfig);
+
+        var leftMotorConfig = new TalonFXConfiguration();
+        leftMotorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        leftMotorConfig.CurrentLimits.SupplyCurrentLimit = 40.0;
+        leftMotorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+        leftMotor.getConfigurator().apply(leftMotorConfig);
     }
 
     @Override
     public void periodic() {
-        leftNeoVelocityPublisher.set(leftNeoEncoder.getVelocity());
-        leftNeoVoltagePublisher.set(neoLeft.getAppliedOutput() * neoLeft.getBusVoltage());
-        leftNeoCurrentPublisher.set(neoLeft.getOutputCurrent());
-        rightNeoVelocityPublisher.set(rightNeoEncoder.getVelocity());
-        rightNeoVoltagePublisher.set(neoRight.getAppliedOutput() * neoRight.getBusVoltage());
-        rightNeoCurrentPublisher.set(neoRight.getOutputCurrent());
+        leftNeoVelocityPublisher.set(leftMotor.getVelocity().getValueAsDouble());
+        leftNeoVoltagePublisher.set(leftMotor.getMotorVoltage().getValueAsDouble());
+        leftNeoCurrentPublisher.set(leftMotor.getStatorCurrent().getValueAsDouble());
+        rightNeoVelocityPublisher.set(rightMotor.getVelocity().getValueAsDouble());
+        rightNeoVoltagePublisher.set(rightMotor.getMotorVoltage().getValueAsDouble());
+        rightNeoCurrentPublisher.set(rightMotor.getStatorCurrent().getValueAsDouble());
     }
 
     //run duty cycle
     public void setDutyCycleSpeed(double speed) {
-        neoRight.set(speed);
-        neoLeft.set(-speed);
+        rightMotor.set(speed);
+        leftMotor.setControl(ctreFollowerControl);
+        // leftMotor.set(-speed);
     }
 
     public Command runAtDutyCycle(double speed) {

@@ -112,12 +112,21 @@ public class RobotContainer {
     //TODO: implement
 
     Command runFullShootingSystem = Commands.parallel(
-          shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM_FAR_SHOT),
+          shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM),
           rollingFloor.rollInwards(),
           Commands.sequence(Commands.waitSeconds(2.5), intakeArm.retract().withTimeout(0.5))  //TODO: graph and tune this delay based on time for shooter to get up to speed (adjust if we leave the shooter running at low RPM idle between shots)
         ).withTimeout(4.0);  //TODO: We may want to lower the timeout here, evaluate after testing
 
+    Command runFullShootingSystemBump = Commands.parallel(
+          shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM),
+          rollingFloor.rollInwards(),
+          Commands.sequence(Commands.waitSeconds(2.0), intakeArm.retract().withTimeout(0.5))  //TODO: graph and tune this delay based on time for shooter to get up to speed (adjust if we leave the shooter running at low RPM idle between shots)
+        ).withTimeout(3.0);
+
     NamedCommands.registerCommand("start-shooter", shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TRENCH_RPM));
+    //TODO: test start-shooter-bump, may need to bump RPM a bit and save as a diff constant
+    NamedCommands.registerCommand("start-shooter-bump", shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_LAYUP_RPM));
+    NamedCommands.registerCommand("bump-shoot", runFullShootingSystemBump);
     NamedCommands.registerCommand("extend-intake", intakeArm.extend().withTimeout(0.75));
     Command intakeFuelSequence = Commands.parallel(intakeRoller.intakeFuelForAuto(), intakeArm.extendForIntakeSequenceAuto());
     Command stopIntakeFuelSequence = Commands.parallel(intakeRoller.stopIntakeWheelRotation(), intakeArm.stopExtendRetract());
@@ -154,13 +163,19 @@ public class RobotContainer {
         //don't retain old state/vision info when starting autos when in the lab
         RobotModeTriggers.teleop().onFalse(drivetrain.resetState());
 
+        //Apply different current limits in teleop vs auto - we can allow higher limits in auto since we're not concerned about brownouts as much and we want max performance
+        RobotModeTriggers.teleop().onTrue(Commands.runOnce(() -> drivetrain.applyTeleopCurrentLimits()));
+        RobotModeTriggers.autonomous().onTrue(Commands.runOnce(() -> drivetrain.applyAutoCurrentLimits()));
+
         Supplier<Pose2d> hubTargetPoseSupplier = () -> Constants.Game.getHubPose().toPose2d();
 
+        //Note: we no longer do this as it zeros out the robot heading - we want to retain heading, since PathPlanner sets it at the start of auto
         //run seedFieldCentric on start of tele-op mode
-        RobotModeTriggers.teleop().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
+        // RobotModeTriggers.teleop().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
         Command intakeFuelSequence = Commands.parallel(intakeRoller.intakeFuel(), intakeArm.extendForIntakeSequence());
 
+        //TODO: we can't run the intake roller in the shoot sequence commands and also allow left dpad fullRetractCommand to run since they both want to control the intake roller
         Command fullShootingSequence = new SequentialCommandGroup(
             shooter.resetShooterAtTargetRpm(),
             Commands.parallel(
@@ -252,7 +267,7 @@ public class RobotContainer {
         
         Command fullRetractCommand = Commands.parallel(intakeArm.retractForAgitate(), intakeRoller.intakeFuel());
 
-        driverController.povLeft().whileTrue(fullRetractCommand);
+        driverController.povLeft().whileTrue(intakeArm.retractForAgitate());
         driverController.povRight().whileTrue(intakeArm.extend());  //press and relese to manually 'agitate'
 
         // Auto-align drive to hub while holding y
@@ -266,23 +281,31 @@ public class RobotContainer {
 
         driverController.a().whileTrue(drivetrain.brakeAndLockWheels());
 
+        driverController.povUp().onTrue(drivetrain.resetPoseUsingVision());
+
         //TODO: Add command or sequence within other command 
 
         //TODO: Add auto-vibrate X seconds (5?) before hub active time for alliance
         
         //Free driver buttons = povUp, povDown, a
 
-        operatorController.rightTrigger().whileTrue(rollingFloor.rollInwards());
+        operatorController.rightTrigger().whileTrue(runFullShootingAutoRpm);
 
         //Note: operator controller is for testing new commands and running SysId tests
         // operatorController.b().whileTrue(runIntakeArmAlternating);
 
+        operatorController.rightBumper().whileTrue(rollingFloor.rollInwards());
+
         //Run this to determine value for kCoupleRatio for the CTRE swerve modules by observing how much the drive motor encoder moves when we rotate the azimuth (steer motor) a known number of rotations
-        operatorController.a().onTrue(new RotateAzimuthCommand(
-            (TalonFX) drivetrain.getModule(0).getSteerMotor(),
-            (TalonFX) drivetrain.getModule(0).getDriveMotor(),
-            3.0
-        ));
+        // operatorController.a().onTrue(new RotateAzimuthCommand(
+        //     (TalonFX) drivetrain.getModule(0).getSteerMotor(),
+        //     (TalonFX) drivetrain.getModule(0).getDriveMotor(),
+        //     3.0
+        // ));
+
+        operatorController.a().whileTrue(
+          drivetrain.teleOpDriveWithAutoAimToTarget(operatorController, hubTargetPoseSupplier)
+        );
 
         //Run SysId tests using the operator controller
         operatorController.back().and(operatorController.y()).whileTrue(shooter.sysIdQuasistatic(Direction.kForward));

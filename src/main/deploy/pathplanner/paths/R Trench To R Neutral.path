@@ -21,20 +21,25 @@
       },
       "prevControl": {
         "x": 6.997017543859648,
-        "y": 0.7411578947368435
+        "y": 0.7411578947368433
       },
       "nextControl": null,
       "isLocked": false,
       "linkedName": "r-neutral-start"
     }
   ],
-  "rotationTargets": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.6449234259784441,
+      "rotationDegrees": 90.0
+    }
+  ],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [
     {
       "name": "extend-intake",
-      "waypointRelativePos": 0.6753246753246801,
+      "waypointRelativePos": 0.15006553079946905,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
@@ -60,7 +65,7 @@
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 90.0
+    "rotation": -0.5624074223176493
   },
   "useDefaultConstraints": true
 }

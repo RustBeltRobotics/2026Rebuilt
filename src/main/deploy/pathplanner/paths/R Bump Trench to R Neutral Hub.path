@@ -3,35 +3,47 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.233763157894736,
-        "y": 0.7252456140350887
+        "x": 3.2285606113344176,
+        "y": 0.5078721975372877
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.040087473971691,
-        "y": 0.7495057473873494
+        "x": 4.228560611334418,
+        "y": 0.5078721975372877
       },
       "isLocked": false,
-      "linkedName": "r-trench-shot"
+      "linkedName": "r-bump-trench-start"
     },
     {
       "anchor": {
-        "x": 0.4547083330259656,
-        "y": 0.6375416665129807
+        "x": 6.11388596491228,
+        "y": 0.5581666666666671
       },
       "prevControl": {
-        "x": 0.9597424239350565,
-        "y": 0.6375416665129807
+        "x": 5.11388596491228,
+        "y": 0.5581666666666667
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "outpost"
+      "linkedName": "r-neutral-hub-start"
     }
   ],
   "rotationTargets": [],
   "constraintZones": [],
   "pointTowardsZones": [],
-  "eventMarkers": [],
+  "eventMarkers": [
+    {
+      "name": "extend-intake",
+      "waypointRelativePos": 0.04841402337228754,
+      "endWaypointRelativePos": null,
+      "command": {
+        "type": "named",
+        "data": {
+          "name": "extend-intake"
+        }
+      }
+    }
+  ],
   "globalConstraints": {
     "maxVelocity": 5.29,
     "maxAcceleration": 3.0,
@@ -42,13 +54,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 90.0
+    "rotation": 97.0012675574953
   },
   "reversed": false,
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 65.22485943116813
+    "rotation": 90.0
   },
   "useDefaultConstraints": true
 }

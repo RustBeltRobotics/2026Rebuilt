@@ -31,25 +31,7 @@ public class GeometryTest {
         assertEquals(-90.0, targetYawDegrees, 0.01, "Target yaw should be -90 degrees (90 degrees towards right/east) when target is directly east of robot facing north");
         System.out.println("Target Yaw Degrees: " + targetYawDegrees);
     }
-/* 
-    @Test
-    public void testPoseTransform() {
-        Pose2d robotPose = new Pose2d(Units.Meters.of(4.618), Units.Meters.of(4.039), Rotation2d.kCCW_90deg);
-        System.out.println("Robot pose: " + robotPose);
-        System.out.println("Shooter translation2d: " + Constants.Kinematics.SHOOTER_TRANSLATION_FROM_ROBOT_CENTER);
-        Transform2d newTransform = new Transform2d(Constants.Kinematics.SHOOTER_TRANSLATION_FROM_ROBOT_CENTER, new Rotation2d());
-        
-        Pose2d newPose = robotPose.plus(newTransform);
-        Translation2d newRobotRelativeTranslation = robotPose.getTranslation().plus(newTransform.getTranslation());
-
-        Translation2d shooterFieldTranslation2d = robotPose.getTranslation().plus(newTransform.rotateBy(newPose.getRotation()));
-
-        double distance = shooterFieldTranslation2d.getDistance(targetField);
-
-        System.out.println("New Pose via translation sum: " + new Pose2d(newRobotRelativeTranslation, robotPose.getRotation()));
-        System.out.println("New Pose via transform: " + robotPose.transformBy(newTransform));
-    }
-*/
+    
     @Test public void testBoostVisionStdDeviations() {
         Matrix<N3, N1> originalStdDevs = Constants.Vision.DEFAULT_VISION_MEASUREMENT_STANDARD_DEVIATIONS;
         Matrix<N3, N1> boostedStdDevs = originalStdDevs.times(0.25); //boost by factor of 4

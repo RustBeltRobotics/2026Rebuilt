@@ -53,6 +53,9 @@ public final class Constants {
   }
 
   public static final class Game {
+    //TODO: this should only be true for running in the lab for 2026, always use false for comp!!!
+    public static final boolean FLIP_FIELD_CENTRIC_OPERATOR_PERSPECTIVE = true;
+
     //These are buffers to accomodate for margin of error in Vision / PoseEstimator output
     public static final double FIELD_POSE_XY_ERROR_MARGIN_METERS = Units.Inches.of(1.0).in(Units.Meters);
     public static final double FIELD_POSE_THETA_ERROR_MARGIN_RADIANS = Units.Degrees.of(2.0).in(Units.Radians);
@@ -82,8 +85,8 @@ public final class Constants {
     public static final int INTAKE_EXTEND_RETRACT_MOTOR = 12;  //NEO
     public static final int SHOOTER_KRAKEN_LEFT = 20;  //Kraken x60
     public static final int SHOOTER_KRAKEN_RIGHT = 21; //Kraken x60
-    public static final int ROLLING_FLOOR_LEFT = 25;  //SparkMax with NEO motor
-    public static final int ROLLING_FLOOR_RIGHT = 26; //SparkMax with NEO motor
+    public static final int ROLLING_FLOOR_LEFT = 25;  //Kraken x60
+    public static final int ROLLING_FLOOR_RIGHT = 26; //Kraken x60
     public static final int SWERVE_MODULE_FRONT_LEFT_DRIVE_MOTOR = 6; //Kraken x60
     public static final int SWERVE_MODULE_FRONT_LEFT_STEER_MOTOR = 13; //Kraken x44
     public static final int SWERVE_MODULE_FRONT_LEFT_STEER_ENCODER = 2; //CANcoder
@@ -126,7 +129,7 @@ public final class Constants {
   public static final class Kinematics {
 
     /* Initial / max speed multiplier for drivetrain - reduce to slow driving */
-    public static final double INITIAL_DRIVE_MAX_SPEED_FACTOR = 0.8;
+    public static final double INITIAL_DRIVE_MAX_SPEED_FACTOR = 0.9;
 
     /* Robot mass in Kg. */
     public static final double ROBOT_MASS = Units.Pounds.of(102.0).in(Units.Kilograms); //Note: this weight does NOT include the battery or bumpers
@@ -181,6 +184,9 @@ public final class Constants {
 
     public static final double STEER_GEAR_RATIO = 1.0 / 26.09;
 
+    public static final double DRIVE_MOTOR_SUPPLY_CURRENT_LIMIT_AUTO = 60; //Amps - TODO: test with this set to 80 and see how performance and battery draw are affected
+    public static final double DRIVE_MOTOR_SUPPLY_CURRENT_LIMIT_TELEOP = 38; //Amps
+
     /** Conversion between motor rotations and drive meters */
     public static final double DRIVE_POSITION_CONVERSION = WHEEL_CIRCUMFERENCE * DRIVE_GEAR_RATIO;
         
@@ -225,10 +231,6 @@ public final class Constants {
     public static final double TIP_THRESHOLD_DEGREES = 5.0;
     public static final double ROLL_PITCH_ERROR = 1.0;
 
-    //8 inches back from center - left shooter is 3.5 inches to the left of center, right shooter is 3.5 inches to the right of center
-    //Note: we model the left/right translation as 0 to simplify the geometry and control of aiming, and instead rely on the robot's rotation to aim with either shooter
-    public static final Translation2d SHOOTER_TRANSLATION_FROM_ROBOT_CENTER = new Translation2d(Units.Inches.of(-8.0).in(Units.Meters), 0.0);
-
     //allowable error to consider robot at goal angle when rotating to pose
     public static final Angle EPSILON_ANGLE_TO_GOAL = Units.Degrees.of(1.0);
 
@@ -267,8 +269,8 @@ public final class Constants {
   public static final class Shooter {
     public static final Distance SHOOTER_WHEEL_DIAMETER = Units.Inches.of(4.0);
     public static final Mass FLYWHEEL_MASS = Units.Pounds.of(7.9); //This weight does not include the rotating mass of the Neo Vortex motors, which may ass 0.75 lbs.
-    public static final AngularVelocity SHOOTER_TEST_RPM = Units.RPM.of(3420);  //was 3400
-    public static final AngularVelocity SHOOTER_SHORT_DEFENSE_SHOT_RPM = Units.RPM.of(2950); //one robots length away from hub
+    public static final AngularVelocity SHOOTER_TEST_RPM = Units.RPM.of(3450);  //was 3400
+    public static final AngularVelocity SHOOTER_SHORT_DEFENSE_SHOT_RPM = Units.RPM.of(3050); //one robots length away from hub
     public static final AngularVelocity SHOOTER_LONG_DEFENSE_SHOT_RPM = Units.RPM.of(3450); //two robots length away from hub
     public static final AngularVelocity SHOOTER_LAYUP_RPM = Units.RPM.of(2550); 
     public static final AngularVelocity SHOOTER_TRENCH_RPM = Units.RPM.of(3420);
@@ -302,7 +304,7 @@ public final class Constants {
   public static final class PathPlanner {
     //TODO: update the driveGearing value here to match the CTRE Swerve gearing for MK5n modules once available
     public static final ModuleConfig MODULE_CONFIG = new ModuleConfig(Kinematics.WHEEL_RADIUS, Kinematics.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND,
-      Kinematics.WHEEL_COEFFECIENT_OF_FRICTION, DCMotor.getKrakenX60(1), 6.026785714285714, 40.0, 1);
+      Kinematics.WHEEL_COEFFECIENT_OF_FRICTION, DCMotor.getKrakenX60(1), 6.026785714285714, Kinematics.DRIVE_MOTOR_SUPPLY_CURRENT_LIMIT_AUTO, 1);
     public static final RobotConfig ROBOT_CONFIG = new RobotConfig(Kinematics.LOADED_MASS, Kinematics.MOMENT_OF_INTERIA,
       MODULE_CONFIG, Kinematics.SWERVE_KINEMATICS.getModules());
       
@@ -321,7 +323,7 @@ public final class Constants {
 
   public static final class Vision {
     public static final boolean VISION_ENABLED = true;  //TODO: Re-enable this
-    public static final boolean TAKE_INITIAL_AUTO_POSE_FROM_VISION = false;
+    public static final boolean TAKE_INITIAL_AUTO_POSE_FROM_VISION = false;  //we don't have cameras in good positions to see AprilTags at start of auto
     public static final boolean TAKE_POSE_ESTIMATES_FROM_VISION = true;
     public static final boolean BOOST_POSE_ESTIMATES_FROM_VISION_FOR_RAMP = false;
     public static final boolean USE_STATIC_STD_DEV = false;  //If true OTHER_CAMERA_STANDARD_DEVIATIONS will be used, if false dynamic algo will be used
