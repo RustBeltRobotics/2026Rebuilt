@@ -55,6 +55,9 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
 
     private final StructPublisher<Pose2d> targetHubPose = NetworkTableInstance.getDefault().getStructTopic("/RBR/Drivetrain/AutoAlign/Hub/Pose", Pose2d.struct).publish();
     private final StructPublisher<Rotation2d> alignDriveTargetRotationPublisher = NetworkTableInstance.getDefault().getStructTopic("/RBR/Drivetrain/AutoAlign/Rotation/Target", Rotation2d.struct).publish();
+    private final DoublePublisher alignDriveTargetRotationDegreesPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/AutoAlign/Rotation/Target/degrees").publish();
+    private final DoublePublisher alignDriveCurrentRotationDegreesPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/AutoAlign/Rotation/Current/degrees").publish();
+
     private final StructPublisher<Rotation2d> alignDriveDeltaRotationNewPublisher = NetworkTableInstance.getDefault().getStructTopic("/RBR/Drivetrain/AutoAlign/Rotation/DeltaNew", Rotation2d.struct).publish();
     private final DoublePublisher alignDriveRadiansResultPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/AutoAlign/Result/Radians").publish();
     private final BooleanPublisher alreadyAtGoalPublisher = NetworkTableInstance.getDefault().getBooleanTopic("/RBR/Drivetrain/AutoAlign/AlreadyAtGoal").publish();
@@ -68,7 +71,7 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
 
     private final DoubleEntry kPEntry = NetworkTableInstance.getDefault().getTable("Tuning")
         .getDoubleTopic("HeadingController/kP")
-        .getEntry(Constants.Kinematics.RotateToPosePID.K_P); // 0.14 is the default
+        .getEntry(Constants.Kinematics.RotateToPosePID.K_P); // 5.0 is the default
 
     private final DoubleEntry kDEntry = NetworkTableInstance.getDefault().getTable("Tuning")
         .getDoubleTopic("HeadingController/kD")
@@ -218,16 +221,21 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
             double yControllerValue = -modifyDriverControllerInput(controller.getLeftX());  //left/right
 
             Pose2d drivePose = getState().Pose;
+            alignDriveCurrentRotationDegreesPublisher.set(drivePose.getRotation().getDegrees());
             Pose2d targetPose = targetPoseSupplier.get();
+            targetHubPose.set(targetPose);
             Translation2d toTarget = targetPose.getTranslation().minus(drivePose.getTranslation());
             Rotation2d headingToTarget = toTarget.getAngle();
+            headingToTarget = headingToTarget.plus(Rotation2d.fromDegrees(180)); //raw headingToTarget results in back of robot facing the hub, so flip it
+            alignDriveTargetRotationPublisher.set(headingToTarget);
+            alignDriveTargetRotationDegreesPublisher.set(headingToTarget.getDegrees());
 
             return autoAlignRequest.withVelocityX(xControllerValue * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND)
                 .withVelocityY(yControllerValue * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND)
                 .withTargetDirection(headingToTarget);
         });
     }
-
+/* 
     public Command alignToTargetDrive(CommandXboxController controller, Supplier<Pose2d> targetPoseSupplier) {
         return applyRequest(() -> {
             isAutoTargeting = true;
@@ -268,7 +276,7 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
             }
         });
     }
-
+*/
     public void resetPoseForAutoStart(Pose2d pose) {
         Pose2d targetPose = pose;
         //if this is autonomous and we have valid vision data, override the provided pose with vision data

@@ -235,7 +235,7 @@ public final class Constants {
     public static final Angle EPSILON_ANGLE_TO_GOAL = Units.Degrees.of(1.0);
 
     public static final class RotateToPosePID {
-      public static final double K_P = 0.14;
+      public static final double K_P = 5.0;
       public static final double K_I = 0.0;
       public static final double K_D = 0.0;
     }

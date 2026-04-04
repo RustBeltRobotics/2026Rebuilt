@@ -220,10 +220,11 @@ public class RobotContainer {
             )
         );
 
-        Command runFullShootingAutoRpm = new SequentialCommandGroup(
+        Command runFullShootingAutoRpmAndAim = new SequentialCommandGroup(
             shooter.resetShooterAtTargetRpm(),
             Commands.parallel(
               shooter.variableDistanceShot(() -> drivetrain.getShotDistance(hubTargetPoseSupplier.get().getTranslation())),
+              drivetrain.teleOpDriveWithAutoAimToTarget(driverController, hubTargetPoseSupplier),
               Commands.waitUntil(shooter.getAtRpmTrigger())
                 .andThen(
                   Commands.parallel(
@@ -256,8 +257,8 @@ public class RobotContainer {
 
         driverController.rightBumper().whileTrue(intakeFuelSequence);
         driverController.rightBumper().onFalse(Commands.parallel(intakeRoller.stopIntakeWheelRotation(), intakeArm.stopExtendRetract()));
-        driverController.rightTrigger().whileTrue(fullShootingSequence);
-        // driverController.rightTrigger().whileTrue(runFullShootingAutoRpm);
+        // driverController.rightTrigger().whileTrue(fullShootingSequence);
+        driverController.rightTrigger().whileTrue(runFullShootingAutoRpmAndAim);
 
         driverController.x().whileTrue(intakeRoller.outtakeFuel());
         driverController.b().whileTrue(runFullShootingSystemLayup); 
@@ -289,7 +290,7 @@ public class RobotContainer {
         
         //Free driver buttons = povUp, povDown, a
 
-        operatorController.rightTrigger().whileTrue(runFullShootingAutoRpm);
+        operatorController.rightTrigger().whileTrue(runFullShootingAutoRpmAndAim);
 
         //Note: operator controller is for testing new commands and running SysId tests
         // operatorController.b().whileTrue(runIntakeArmAlternating);
