@@ -2,6 +2,8 @@ package frc.robot.subsystems.drive;
 
 import java.util.function.Supplier;
 
+import org.photonvision.EstimatedRobotPose;
+
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.swerve.SwerveModule;
@@ -39,6 +41,7 @@ import frc.robot.Constants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.util.AlertManager;
 import frc.robot.vision.VisionEstimateConsumer;
+import frc.robot.vision.VisionPoseEstimationResult;
 
 public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimateConsumer {
 
@@ -57,11 +60,6 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     private final StructPublisher<Rotation2d> alignDriveTargetRotationPublisher = NetworkTableInstance.getDefault().getStructTopic("/RBR/Drivetrain/AutoAlign/Rotation/Target", Rotation2d.struct).publish();
     private final DoublePublisher alignDriveTargetRotationDegreesPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/AutoAlign/Rotation/Target/degrees").publish();
     private final DoublePublisher alignDriveCurrentRotationDegreesPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/AutoAlign/Rotation/Current/degrees").publish();
-
-    private final StructPublisher<Rotation2d> alignDriveDeltaRotationNewPublisher = NetworkTableInstance.getDefault().getStructTopic("/RBR/Drivetrain/AutoAlign/Rotation/DeltaNew", Rotation2d.struct).publish();
-    private final DoublePublisher alignDriveRadiansResultPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/AutoAlign/Result/Radians").publish();
-    private final BooleanPublisher alreadyAtGoalPublisher = NetworkTableInstance.getDefault().getBooleanTopic("/RBR/Drivetrain/AutoAlign/AlreadyAtGoal").publish();
-    private final BooleanPublisher notTryingToDrivePublisher = NetworkTableInstance.getDefault().getBooleanTopic("/RBR/Drivetrain/AutoAlign/NotTryingToDrive").publish();
 
     private final StructPublisher<Pose2d> testShortDefensePosePublisher = NetworkTableInstance.getDefault().getStructTopic("/RBR/Test/Pose/Defense/Short", Pose2d.struct).publish();
     private final StructPublisher<Pose2d> testLongDefensePosePublisher = NetworkTableInstance.getDefault().getStructTopic("/RBR/Test/Pose/Defense/Long", Pose2d.struct).publish();
@@ -328,7 +326,12 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     }
 
     @Override
-    public void consumeVisionPoseEstimate(Pose2d pose, double timestamp, Matrix<N3, N1> estimationStdDevs) {
+    public void consumeVisionPoseEstimate(VisionPoseEstimationResult visionPoseEstimationResult) {
+        EstimatedRobotPose estimatedRobotPose = visionPoseEstimationResult.getEstimatedRobotPose();
+        Pose2d pose = estimatedRobotPose.estimatedPose.toPose2d();
+        double timestamp = estimatedRobotPose.timestampSeconds;
+        Matrix<N3, N1> estimationStdDevs = visionPoseEstimationResult.getVisionMeasurementStdDevs();
+
         if (needToCorrectOdometryUsingVision && Constants.Vision.BOOST_POSE_ESTIMATES_FROM_VISION_FOR_RAMP) {
             //boost vision odometry via lowering standard deviations to compensate for error in wheel odometry after ramp/tip
             //TODO: test this and tune boost factor

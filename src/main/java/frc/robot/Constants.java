@@ -128,7 +128,7 @@ public final class Constants {
    */
   public static final class Kinematics {
 
-    /* Initial / max speed multiplier for drivetrain - reduce to slow driving */
+    /* Initial / max speed multiplier for drivetrain - reduce to slow teleop driving speed */
     public static final double INITIAL_DRIVE_MAX_SPEED_FACTOR = 0.9;
 
     /* Robot mass in Kg. */
@@ -185,6 +185,8 @@ public final class Constants {
     public static final double STEER_GEAR_RATIO = 1.0 / 26.09;
 
     public static final double DRIVE_MOTOR_SUPPLY_CURRENT_LIMIT_AUTO = 60; //Amps - TODO: test with this set to 80 and see how performance and battery draw are affected
+    // public static final double DRIVE_MOTOR_SUPPLY_CURRENT_LIMIT_AUTO = 38; Amps - TODO: test with this set to 80 and see how performance and battery draw are affected
+
     public static final double DRIVE_MOTOR_SUPPLY_CURRENT_LIMIT_TELEOP = 38; //Amps
 
     /** Conversion between motor rotations and drive meters */
@@ -273,9 +275,10 @@ public final class Constants {
     public static final AngularVelocity SHOOTER_SHORT_DEFENSE_SHOT_RPM = Units.RPM.of(3050); //one robots length away from hub
     public static final AngularVelocity SHOOTER_LONG_DEFENSE_SHOT_RPM = Units.RPM.of(3450); //two robots length away from hub
     public static final AngularVelocity SHOOTER_LAYUP_RPM = Units.RPM.of(2550); 
+    public static final AngularVelocity SHOOTER_BUMP_AUTO_RPM = Units.RPM.of(2700); 
     public static final AngularVelocity SHOOTER_TRENCH_RPM = Units.RPM.of(3420);
 
-    public static final AngularVelocity SHOOTER_PASS_RPM = Units.RPM.of(4250);
+    public static final AngularVelocity SHOOTER_PASS_RPM = Units.RPM.of(5000);
     
     public static final class CtrePidf {
       // public static final double K_P = 0.17399;
@@ -326,7 +329,7 @@ public final class Constants {
     public static final boolean TAKE_INITIAL_AUTO_POSE_FROM_VISION = false;  //we don't have cameras in good positions to see AprilTags at start of auto
     public static final boolean TAKE_POSE_ESTIMATES_FROM_VISION = true;
     public static final boolean BOOST_POSE_ESTIMATES_FROM_VISION_FOR_RAMP = false;
-    public static final boolean USE_STATIC_STD_DEV = false;  //If true OTHER_CAMERA_STANDARD_DEVIATIONS will be used, if false dynamic algo will be used
+    public static final boolean USE_STATIC_STD_DEV = true;  //If true OTHER_CAMERA_STANDARD_DEVIATIONS will be used, if false dynamic algo will be used
     public static final int APRIL_TAG_PIPELINE_INDEX = 0;
     public static final String ARDUCAM_MODEL = "OV9281";
     public static final double POSE_AMBIGUITY_CUTOFF = 0.2;  //https://docs.photonvision.org/en/latest/docs/apriltag-pipelines/3D-tracking.html#ambiguity
@@ -349,7 +352,8 @@ public final class Constants {
     public static final Matrix<N3, N1> MULTI_TAG_MEASUREMENT_STANDARD_DEVIATIONS = VecBuilder.fill(0.5, 0.5, 9999.0);
     public static final Matrix<N3, N1> FRONT_CAMERA_STANDARD_DEVIATIONS = VecBuilder.fill(0.85, 0.85, 9999.0);
     //TODO: we should be able to bump trust in the rear cameras after some testing
-    public static final Matrix<N3, N1> OTHER_CAMERA_STANDARD_DEVIATIONS = VecBuilder.fill(1.2, 1.2, 9999.0);
+    // public static final Matrix<N3, N1> OTHER_CAMERA_STANDARD_DEVIATIONS = VecBuilder.fill(1.2, 1.2, 9999.0);
+    public static final Matrix<N3, N1> OTHER_CAMERA_STANDARD_DEVIATIONS = VecBuilder.fill(0.8, 0.8, 9999.0);
 
     /**
      * Unique camera names, usable in PhotonCamera instances
@@ -358,6 +362,7 @@ public final class Constants {
       //TODO: update these constants for this year, these values are from last years game
       //Note: these names are set in hardware via https://docs.arducam.com/UVC-Camera/Serial-Number-Tool-Guide/
       public static final String FRONT_CENTER = "Arducam_OV9281_USB_Camera-4";
+      public static final String BACK_CENTER = "Arducam_OV9281_USB_Camera-3";
       public static final String BACK_RIGHT = "Arducam_OV9281_USB_Camera-2";
       public static final String BACK_LEFT = "Arducam_OV9281_USB_Camera-1";
     }
@@ -391,6 +396,8 @@ public final class Constants {
         new Rotation3d(0, 0, 0).rotateBy(new Rotation3d(0, 0, Units.Degrees.of(-90.0).in(Units.Radians))));  //back right cam- photonvision1
       //x-, y+, z+, (0, -degrees, 0).rotateBy(0, 0, 135 degrees)
       public static final Transform3d BACK_LEFT = new Transform3d(-Units.Inches.of(11.5).in(Units.Meters), Units.Inches.of(13.5).in(Units.Meters), Units.Inches.of(19.43375).in(Units.Meters),
+        new Rotation3d(0, 0, 0).rotateBy(new Rotation3d(0, 0, Units.Degrees.of(90.0).in(Units.Radians))));  //back left - photonvision1
+      public static final Transform3d BACK_CENTER = new Transform3d(-Units.Inches.of(13.0).in(Units.Meters), Units.Inches.of(0.0).in(Units.Meters), Units.Inches.of(20.25).in(Units.Meters),
         new Rotation3d(0, 0, 0).rotateBy(new Rotation3d(0, 0, Units.Degrees.of(90.0).in(Units.Radians))));  //back left - photonvision1
     }
   }

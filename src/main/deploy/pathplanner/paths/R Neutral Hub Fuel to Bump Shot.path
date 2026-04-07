@@ -48,12 +48,12 @@
     },
     {
       "anchor": {
-        "x": 3.226435628344747,
-        "y": 2.830552995570508
+        "x": 3.273543859649123,
+        "y": 2.706324561403509
       },
       "prevControl": {
-        "x": 3.8277613636363634,
-        "y": 2.334375
+        "x": 3.8748695949407397,
+        "y": 2.210146565833001
       },
       "nextControl": null,
       "isLocked": false,
@@ -68,10 +68,22 @@
   ],
   "constraintZones": [],
   "pointTowardsZones": [],
-  "eventMarkers": [],
+  "eventMarkers": [
+    {
+      "name": "start-shooter-bump",
+      "waypointRelativePos": 0.5013106159895179,
+      "endWaypointRelativePos": null,
+      "command": {
+        "type": "named",
+        "data": {
+          "name": "start-shooter-bump"
+        }
+      }
+    }
+  ],
   "globalConstraints": {
     "maxVelocity": 5.29,
-    "maxAcceleration": 3.0,
+    "maxAcceleration": 4.0,
     "maxAngularVelocity": 700.0,
     "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,
@@ -79,7 +91,7 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 38.4527526549835
+    "rotation": 45.00000000000008
   },
   "reversed": false,
   "folder": null,

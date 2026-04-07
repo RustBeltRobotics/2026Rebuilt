@@ -9,7 +9,7 @@
       "prevControl": null,
       "nextControl": {
         "x": 4.347226415683335,
-        "y": 0.3453045201972932
+        "y": 0.34530452019729324
       },
       "isLocked": false,
       "linkedName": "r-trench-shot"
@@ -51,7 +51,7 @@
   ],
   "globalConstraints": {
     "maxVelocity": 5.29,
-    "maxAcceleration": 3.0,
+    "maxAcceleration": 4.0,
     "maxAngularVelocity": 700.0,
     "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,
@@ -65,7 +65,7 @@
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 65.22485943116813
+    "rotation": 67.0
   },
   "useDefaultConstraints": true
 }

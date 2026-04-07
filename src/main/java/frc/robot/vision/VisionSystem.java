@@ -71,11 +71,15 @@ public class VisionSystem {
         .getStructTopic("/RBR/Vision/PoseEstimates/Camera/BL", Pose3d.struct).publish();
     private final StructPublisher<Pose3d> backRightCameraPoseEstimatePublisher = NetworkTableInstance.getDefault()
         .getStructTopic("/RBR/Vision/PoseEstimates/Camera/BR", Pose3d.struct).publish();
+    private final StructPublisher<Pose3d> backCenterCameraPoseEstimatePublisher = NetworkTableInstance.getDefault()
+        .getStructTopic("/RBR/Vision/PoseEstimates/Camera/BC", Pose3d.struct).publish();
 
     private final StructPublisher<Pose2d> backLeftCameraLocationPublisher = NetworkTableInstance.getDefault()
         .getStructTopic("/RBR/Vision/Locations/Camera/BL", Pose2d.struct).publish();
     private final StructPublisher<Pose2d> backRightCameraLocationPublisher = NetworkTableInstance.getDefault()
         .getStructTopic("/RBR/Vision/Locations/Camera/BR", Pose2d.struct).publish();
+    private final StructPublisher<Pose2d> backCenterCameraLocationPublisher = NetworkTableInstance.getDefault()
+        .getStructTopic("/RBR/Vision/Locations/Camera/BC", Pose2d.struct).publish();
 
     //Simulation
     private List<PhotonCameraSim> simulatedCameras = new ArrayList<>();
@@ -104,10 +108,13 @@ public class VisionSystem {
             Constants.Vision.CameraPose.BACK_RIGHT, fieldLayout);
         VisionCamera backLeftCamera = new VisionCamera(Constants.Vision.CameraName.BACK_LEFT, CameraPosition.BACK_LEFT,
             Constants.Vision.CameraPose.BACK_LEFT, fieldLayout);
+        VisionCamera backCenterCamera = new VisionCamera(Constants.Vision.CameraName.BACK_CENTER, CameraPosition.BACK_CENTER,
+            Constants.Vision.CameraPose.BACK_CENTER, fieldLayout);
         // visionCameras.add(frontCenterCamera);           
         // visionCameras.add(frontRightCamera);           
         visionCameras.add(backRightCamera);           
         visionCameras.add(backLeftCamera);
+        visionCameras.add(backCenterCamera);
 
         if (Robot.isSimulation()) {
             // Create the vision system simulation which handles cameras and targets on the field.
@@ -164,6 +171,8 @@ public class VisionSystem {
                     backLeftCameraLocationPublisher.set(cameraFieldPose);
                 } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_RIGHT) {
                     backRightCameraLocationPublisher.set(cameraFieldPose);
+                } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_CENTER) {
+                    backCenterCameraLocationPublisher.set(cameraFieldPose);
                 }
             }
         }
@@ -173,9 +182,7 @@ public class VisionSystem {
         
         for (int i = 0; i < newVisionPoseEstimates.size(); i++) {
             VisionPoseEstimationResult poseEstimationResult = newVisionPoseEstimates.get(i);
-            Pose2d visionPoseEstimate = poseEstimationResult.getEstimatedRobotPose().estimatedPose.toPose2d();
-            visionEstimateConsumer.consumeVisionPoseEstimate(visionPoseEstimate, 
-                poseEstimationResult.getEstimatedRobotPose().timestampSeconds, poseEstimationResult.getVisionMeasurementStdDevs());
+            visionEstimateConsumer.consumeVisionPoseEstimate(poseEstimationResult);
         }
         
         if (Robot.isSimulation()) {
@@ -237,8 +244,6 @@ public class VisionSystem {
         List<Pose3d> usedAprilTagsForCamera = new ArrayList<>();
         List<Pose3d> rejectedAprilTagsForCamera = new ArrayList<>();
 
-        //TODO: verify this is non-empty when running the AprilTag pipeline and not object detection pipeline
-        //  This whole block may be unnecessary due to poseEstimator.update(pipelineResult) below already taking multitag logic into account
         if (pipelineResult.hasTargets()) {
             int numAprilTagsSeen = pipelineResult.getTargets().size();
 
@@ -285,7 +290,6 @@ public class VisionSystem {
             averageLatencyMsPublisher.accept(runningAverageLatencyMs);
 
             Pose3d estimatedPose = poseEstimate.estimatedPose;
-            Pose2d estimatedPose2d = estimatedPose.toPose2d();
 
             if (!usedAprilTagsForCamera.isEmpty()) {
                 // Do not use pose if robot pose is off the field 
@@ -298,17 +302,15 @@ public class VisionSystem {
                 }
 
                 acceptedPoses.add(poseEstimate);
-                estimationResults.add(new VisionPoseEstimationResult(visionCamera, poseEstimate, getVisionMeasurementStandardDeviation(poseEstimate, visionCamera)));
+                Matrix<N3, N1> poseEstimateStandardDeviations = getVisionMeasurementStandardDeviation(poseEstimate, visionCamera);
+                estimationResults.add(new VisionPoseEstimationResult(visionCamera, poseEstimate, poseEstimateStandardDeviations));
 
-                // if (visionCamera.getCameraPosition() == CameraPosition.FRONT_CENTER) {
-                //     frontCenterCameraPosePublisher.set(estimatedPose2d, networkTablesPoseTimestampMicroSeconds);
-                // } else if (visionCamera.getCameraPosition() == CameraPosition.FRONT_RIGHT) {
-                //     frontRightCameraPosePublisher.set(estimatedPose2d, networkTablesPoseTimestampMicroSeconds);
-                // } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_LEFT) {
                 if (visionCamera.getCameraPosition() == CameraPosition.BACK_LEFT) {
                     backLeftCameraPoseEstimatePublisher.set(estimatedPose, networkTablesPoseTimestampMicroSeconds);
                 } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_RIGHT) {
                     backRightCameraPoseEstimatePublisher.set(estimatedPose, networkTablesPoseTimestampMicroSeconds);
+                } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_CENTER) {
+                    backCenterCameraPoseEstimatePublisher.set(estimatedPose, networkTablesPoseTimestampMicroSeconds);
                 }
             } else {
                 rejectedPoses.add(poseEstimate);
@@ -326,6 +328,8 @@ public class VisionSystem {
                 return Constants.Vision.OTHER_CAMERA_STANDARD_DEVIATIONS;
             }
         } else {
+            //TODO: these std devs are def a little too aggressive
+
             //Logic based on https://github.com/PhotonVision/photonvision/blob/main/photonlib-java-examples/poseest/src/main/java/frc/robot/Vision.java
             var estStdDevs = Constants.Vision.SINGLE_TAG_MEASUREMENT_STANDARD_DEVIATIONS;
             
@@ -423,6 +427,12 @@ public class VisionSystem {
                 visionCamera.getCameraInstance().takeOutputSnapshot();
             }
         }
+    }
+
+    public void resetTelemetry() {
+        backLeftCameraPoseEstimatePublisher.set(Pose3d.kZero);
+        backRightCameraPoseEstimatePublisher.set(Pose3d.kZero);
+        backCenterCameraPoseEstimatePublisher.set(Pose3d.kZero);
     }
 
     public void simulationPeriodic(Pose2d robotSimPose) {

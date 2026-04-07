@@ -1,10 +1,11 @@
 TODO:
 - ** Change Constants.Game.FLIP_FIELD_CENTRIC_OPERATOR_PERSPECTIVE to false for competition [or at the Warehouse in Rochester] (flip to true at the lab)
+- update photonvision1 to latest using downloaded offline update
+- add photonvision 2 opi and back camera back onto robot
+- install opi cases
 - Measure and get more distance to RPM mappings for linear interpolator
     - Test prepVariableDistanceShot command to auto-set shooter RPM based on robot pose distance from hub
-- Test Align To Target drive with AprilTags on hub
-    - PID turn to hub is working, might need some tuning
-- Consider upping INITIAL_DRIVE_MAX_SPEED_FACTOR from 0.8 to 0.9, test if battery will last through entire match
+
 - Update MOI values to match current design measurements
     - Need MOI from CAD from Dillan
 - Test / update CTRE Swerve constants kSlipCurrent (this is how stator current is set)
@@ -16,9 +17,6 @@ TODO:
     - kCoupleRatio = driveMotorRotations / azimuthRotations
     => Just run the RotateAzimuthCommand using a() on operator controller and look at the console output in RioLog
 
-- Test intake arm extending in/out to hard stop commands to ensure current based stall detection still works
-    - Graph the intake arm current if it does not, and adjust threshold/debounce time accordingly
-- Create/measure distance (or set field locations) -> shooter RPM mappings for shots
 - Document controller button mappings for driver + operator
 
 - Run robot at full speed forward in a straight line with AdvantageScope open to get measured max velocity in M/S

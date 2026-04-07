@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.226435628344747,
-        "y": 2.830552995570508
+        "x": 3.273543859649123,
+        "y": 2.706324561403509
       },
       "prevControl": null,
       "nextControl": {
-        "x": 3.2196590909090905,
-        "y": 1.8911818181818183
+        "x": 3.2667673222134668,
+        "y": 1.766953384014819
       },
       "isLocked": false,
       "linkedName": "r-bump-shot"
@@ -39,7 +39,7 @@
   "eventMarkers": [],
   "globalConstraints": {
     "maxVelocity": 5.29,
-    "maxAcceleration": 3.0,
+    "maxAcceleration": 4.0,
     "maxAngularVelocity": 700.0,
     "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,
@@ -53,7 +53,7 @@
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 38.4527526549835
+    "rotation": 45.00000000000008
   },
   "useDefaultConstraints": true
 }

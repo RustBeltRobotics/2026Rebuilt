@@ -115,7 +115,7 @@ public class RobotContainer {
           shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM),
           rollingFloor.rollInwards(),
           Commands.sequence(Commands.waitSeconds(2.5), intakeArm.retract().withTimeout(0.5))  //TODO: graph and tune this delay based on time for shooter to get up to speed (adjust if we leave the shooter running at low RPM idle between shots)
-        ).withTimeout(4.0);  //TODO: We may want to lower the timeout here, evaluate after testing
+        ).withTimeout(3.0);  //TODO: We may want to lower the timeout here, evaluate after testing
 
     Command runFullShootingSystemBump = Commands.parallel(
           shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM),
@@ -125,9 +125,9 @@ public class RobotContainer {
 
     NamedCommands.registerCommand("start-shooter", shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TRENCH_RPM));
     //TODO: test start-shooter-bump, may need to bump RPM a bit and save as a diff constant
-    NamedCommands.registerCommand("start-shooter-bump", shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_LAYUP_RPM));
+    NamedCommands.registerCommand("start-shooter-bump", shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_BUMP_AUTO_RPM));
     NamedCommands.registerCommand("bump-shoot", runFullShootingSystemBump);
-    NamedCommands.registerCommand("extend-intake", intakeArm.extend().withTimeout(0.75));
+    NamedCommands.registerCommand("extend-intake", intakeArm.extendForAutonomous().withTimeout(0.75));
     Command intakeFuelSequence = Commands.parallel(intakeRoller.intakeFuelForAuto(), intakeArm.extendForIntakeSequenceAuto());
     Command stopIntakeFuelSequence = Commands.parallel(intakeRoller.stopIntakeWheelRotation(), intakeArm.stopExtendRetract());
     NamedCommands.registerCommand("intake-fuel", intakeFuelSequence);
@@ -158,14 +158,19 @@ public class RobotContainer {
   private void configureBindings() {
         // Idle while the robot is disabled. This ensures the configured neutral mode is applied to the drive motors while disabled.
         final var idle = new SwerveRequest.Idle();
-        RobotModeTriggers.disabled().whileTrue(drivetrain.applyRequest(() -> idle).ignoringDisable(true));
+        RobotModeTriggers.disabled().whileTrue(drivetrain.resetState().ignoringDisable(true).andThen(drivetrain.applyRequest(() -> idle).ignoringDisable(true)));
 
         //don't retain old state/vision info when starting autos when in the lab
         RobotModeTriggers.teleop().onFalse(drivetrain.resetState());
 
         //Apply different current limits in teleop vs auto - we can allow higher limits in auto since we're not concerned about brownouts as much and we want max performance
         RobotModeTriggers.teleop().onTrue(Commands.runOnce(() -> drivetrain.applyTeleopCurrentLimits()));
-        RobotModeTriggers.autonomous().onTrue(Commands.runOnce(() -> drivetrain.applyAutoCurrentLimits()));
+        
+        RobotModeTriggers.autonomous().onTrue(Commands.runOnce(() -> {
+          System.out.println("Running Auto init resets...");
+          drivetrain.applyAutoCurrentLimits();
+          visionSystem.resetTelemetry();
+        }));
 
         Supplier<Pose2d> hubTargetPoseSupplier = () -> Constants.Game.getHubPose().toPose2d();
 

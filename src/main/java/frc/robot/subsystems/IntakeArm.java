@@ -89,6 +89,15 @@ public class IntakeArm extends SubsystemBase {
         .andThen(stopExtendRetract());
     }
 
+    public Command extendForAutonomous() {
+       return run(() -> {
+            isExtending = true;
+            runExtendRetractAtDutyCycle(0.5);
+        })
+        .until(() -> shouldStopExtendRetract.getAsBoolean())
+        .andThen(stopExtendRetract());
+    }
+
     public Command extendForAutoAgitate() {
        return run(() -> {
             isExtending = true;
