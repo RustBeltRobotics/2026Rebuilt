@@ -16,6 +16,7 @@ import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.networktables.BooleanPublisher;
+import edu.wpi.first.networktables.DoubleEntry;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.Units;
@@ -56,6 +57,10 @@ public class ShooterYams extends SubsystemBase {
     private final DoublePublisher shooterCurrentMechanismVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Mechanism/Velocity/Current").publish();
     private final DoublePublisher shooterTargetMechanismVelocityPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/Mechanism/Velocity/Target").publish();
     private final DoublePublisher autoRpmCalculationPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Shooter/AutoDistance/RPM").publish();
+
+    private final DoubleEntry tunableRpmEntry = NetworkTableInstance.getDefault().getTable("Tuning")
+            .getDoubleTopic("Shooter/RPM")
+            .getEntry(Constants.Shooter.SHOOTER_TEST_RPM.in(Units.RPM));
 
     private final BooleanPublisher atRpmPublisher = NetworkTableInstance.getDefault().getBooleanTopic("/RBR/Shooter/atRPM").publish();
 
@@ -130,11 +135,20 @@ public class ShooterYams extends SubsystemBase {
 
     public ShooterYams() {
         //meters to RPM, Note: distance is measured from center of robot (drivetrain.getState().Pose) to center of hub
+        tunableRpmEntry.setDefault(Constants.Shooter.SHOOTER_TEST_RPM.in(Units.RPM));
         //TODO: Add a few more measured values
-        rpmTable.put(1.3212, Constants.Shooter.SHOOTER_LAYUP_RPM.in(Units.RPM));  //corresponds to 3.297, 4.067
-        rpmTable.put(2.3872, Constants.Shooter.SHOOTER_SHORT_DEFENSE_SHOT_RPM.in(Units.RPM));  //2.231, 4.003 (one full robot length back from the hub - i.e. short defensive shot)
-        rpmTable.put(3.4371, Constants.Shooter.SHOOTER_LONG_DEFENSE_SHOT_RPM.in(Units.RPM));  //1.181, 4.003 (two full robot length back from the hub - i.e. long defensive shot)
-        rpmTable.put(3.5744, Constants.Shooter.SHOOTER_TRENCH_RPM.in(Units.RPM)); //corresponds to 3.385, 0.684
+        //measured values with laser distance tool: 1.3441m, 2.4811m
+        // rpmTable.put(1.3212, Constants.Shooter.SHOOTER_LAYUP_RPM.in(Units.RPM));  //corresponds to 3.297, 4.067
+        // rpmTable.put(2.3872, Constants.Shooter.SHOOTER_SHORT_DEFENSE_SHOT_RPM.in(Units.RPM));  //2.231, 4.003 (one full robot length back from the hub - i.e. short defensive shot)
+        // rpmTable.put(3.4371, Constants.Shooter.SHOOTER_LONG_DEFENSE_SHOT_RPM.in(Units.RPM));  //1.181, 4.003 (two full robot length back from the hub - i.e. long defensive shot)
+        // rpmTable.put(3.5744, Constants.Shooter.SHOOTER_TRENCH_RPM.in(Units.RPM)); //corresponds to 3.385, 0.684
+        rpmTable.put(1.6764, 2550.0);
+        rpmTable.put(2.2555, 2750.0);
+        rpmTable.put(2.4600, 2800.0);
+        rpmTable.put(2.7920, 3100.0);
+        rpmTable.put(3.1181, 3350.0);
+        rpmTable.put(3.3985, 3420.0);
+        rpmTable.put(3.8191, 3580.0);
     }
 
     public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
@@ -214,6 +228,10 @@ public class ShooterYams extends SubsystemBase {
 
     public Command runAtAngularVelocity(AngularVelocity rpmTarget) {
         return this.run(() -> setShooterAngularVelocity(rpmTarget)).withName("Shooter at velocity: " + rpmTarget);
+    }
+
+    public Command runAtTunableAngularVelocity() {
+        return this.run(() -> setShooterAngularVelocity(Units.RPM.of(getTunableRpm()))).withName("Shooter at velocity: " + getTunableRpm());
     }
 
     public Command idleAtLowRpm() {
@@ -298,6 +316,10 @@ public class ShooterYams extends SubsystemBase {
 
     public Trigger getAtRpmTrigger() {
         return atRpmTrigger;
+    }
+
+    public double getTunableRpm() {
+        return tunableRpmEntry.get();
     }
 
 }

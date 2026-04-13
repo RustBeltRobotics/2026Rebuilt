@@ -184,7 +184,7 @@ public final class Constants {
 
     public static final double STEER_GEAR_RATIO = 1.0 / 26.09;
 
-    public static final double DRIVE_MOTOR_SUPPLY_CURRENT_LIMIT_AUTO = 60; //Amps - TODO: test with this set to 80 and see how performance and battery draw are affected
+    public static final double DRIVE_MOTOR_SUPPLY_CURRENT_LIMIT_AUTO = 50; //Amps - TODO: test with this set to 80 and see how performance and battery draw are affected
     // public static final double DRIVE_MOTOR_SUPPLY_CURRENT_LIMIT_AUTO = 38; Amps - TODO: test with this set to 80 and see how performance and battery draw are affected
 
     public static final double DRIVE_MOTOR_SUPPLY_CURRENT_LIMIT_TELEOP = 38; //Amps
@@ -313,13 +313,13 @@ public final class Constants {
       
     //TODO: tune this - max xy error seen roughly 1 - 0.33
     // public static final double rotation_P = 1.5;
-    public static final double rotation_P = 2.0;
+    public static final double rotation_P = 5.0;
     public static final double rotation_I = 0.0;
     public static final double rotation_D = 0.0;
 
     //TODO: tune this - max xy error seen roughly 1 - 0.33
     // public static final double translation_P = 1.0;
-    public static final double translation_P = 3.5;
+    public static final double translation_P = 5.0;
     public static final double translation_I = 0.0;
     public static final double translation_D = 0.0;
   }
@@ -359,10 +359,10 @@ public final class Constants {
      * Unique camera names, usable in PhotonCamera instances
      */
     public static final class CameraName {
-      //TODO: update these constants for this year, these values are from last years game
       //Note: these names are set in hardware via https://docs.arducam.com/UVC-Camera/Serial-Number-Tool-Guide/
       public static final String FRONT_CENTER = "Arducam_OV9281_USB_Camera-4";
       public static final String BACK_CENTER = "Arducam_OV9281_USB_Camera-3";
+      public static final String BACK_RIGHT_FORWARD = "Arducam_OV9281_USB_Camera-3";
       public static final String BACK_RIGHT = "Arducam_OV9281_USB_Camera-2";
       public static final String BACK_LEFT = "Arducam_OV9281_USB_Camera-1";
     }
@@ -389,16 +389,15 @@ public final class Constants {
       //   new Rotation3d(0, CAM_PITCH_ANGLE, 0).rotateBy(new Rotation3d(0, 0, -Units.degreesToRadians(45))));  //front right - photonvision2
       //x-, y-, z+, (0, -degrees, 0).rotateBy(0, 0, -135 degrees)
 
-      //20.5 high, 12" back, 10.5 to the side
-
-      // 6" back, 10.5" to the right
+      //11.5" back, 13.25" to the side, 19.43375" high off ground (to center of lens)
       public static final Transform3d BACK_RIGHT = new Transform3d(-Units.Inches.of(11.5).in(Units.Meters), -Units.Inches.of(13.25).in(Units.Meters), Units.Inches.of(19.43375).in(Units.Meters), 
         new Rotation3d(0, 0, 0).rotateBy(new Rotation3d(0, 0, Units.Degrees.of(-90.0).in(Units.Radians))));  //back right cam- photonvision1
-      //x-, y+, z+, (0, -degrees, 0).rotateBy(0, 0, 135 degrees)
       public static final Transform3d BACK_LEFT = new Transform3d(-Units.Inches.of(11.5).in(Units.Meters), Units.Inches.of(13.5).in(Units.Meters), Units.Inches.of(19.43375).in(Units.Meters),
         new Rotation3d(0, 0, 0).rotateBy(new Rotation3d(0, 0, Units.Degrees.of(90.0).in(Units.Radians))));  //back left - photonvision1
       public static final Transform3d BACK_CENTER = new Transform3d(-Units.Inches.of(13.0).in(Units.Meters), Units.Inches.of(0.0).in(Units.Meters), Units.Inches.of(20.25).in(Units.Meters),
-        new Rotation3d(0, 0, 0).rotateBy(new Rotation3d(0, 0, Units.Degrees.of(90.0).in(Units.Radians))));  //back left - photonvision1
+        new Rotation3d(0, 0, 0).rotateBy(new Rotation3d(0, 0, Units.Degrees.of(90.0).in(Units.Radians))));  //back center - photonvision2
+      public static final Transform3d BACK_RIGHT_FORWARD = new Transform3d(-Units.Inches.of(10.375).in(Units.Meters), -Units.Inches.of(12.5).in(Units.Meters), Units.Inches.of(19.8125).in(Units.Meters),
+        new Rotation3d(0, 0, 0).rotateBy(new Rotation3d(0, 0, 0)));  //back right facing forward - photonvision2
     }
   }
 

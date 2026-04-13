@@ -1,0 +1,82 @@
+{
+  "version": "2025.0",
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 4.451454104435132,
+        "y": 0.5422764908694853
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 6.249863636359636,
+        "y": 0.4791477272768987
+      },
+      "isLocked": false,
+      "linkedName": "r-trench-start"
+    },
+    {
+      "anchor": {
+        "x": 8.468903508771929,
+        "y": 0.9480175438596508
+      },
+      "prevControl": {
+        "x": 7.27548245614035,
+        "y": 0.6934210526315803
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "r-neutral-start-sweep"
+    }
+  ],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.6449234259784441,
+      "rotationDegrees": 90.0
+    }
+  ],
+  "constraintZones": [],
+  "pointTowardsZones": [],
+  "eventMarkers": [
+    {
+      "name": "extend-intake",
+      "waypointRelativePos": 0.10288335517692991,
+      "endWaypointRelativePos": null,
+      "command": {
+        "type": "named",
+        "data": {
+          "name": "extend-intake"
+        }
+      }
+    },
+    {
+      "name": "intake-fuel",
+      "waypointRelativePos": 0.6546526867627872,
+      "endWaypointRelativePos": null,
+      "command": {
+        "type": "named",
+        "data": {
+          "name": "intake-fuel"
+        }
+      }
+    }
+  ],
+  "globalConstraints": {
+    "maxVelocity": 5.29,
+    "maxAcceleration": 5.0,
+    "maxAngularVelocity": 700.0,
+    "maxAngularAcceleration": 720.0,
+    "nominalVoltage": 12.0,
+    "unlimited": false
+  },
+  "goalEndState": {
+    "velocity": 0.5,
+    "rotation": 105.1010981613855
+  },
+  "reversed": false,
+  "folder": null,
+  "idealStartingState": {
+    "velocity": 0,
+    "rotation": 90.0
+  },
+  "useDefaultConstraints": false
+}

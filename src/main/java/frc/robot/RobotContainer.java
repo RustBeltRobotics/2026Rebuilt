@@ -17,6 +17,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.XboxController;
@@ -193,6 +194,18 @@ public class RobotContainer {
             )
         );
 
+        Command fullShootingSequenceTunableRpm = new SequentialCommandGroup(
+            shooter.resetShooterAtTargetRpm(),
+            Commands.parallel(
+              shooter.runAtTunableAngularVelocity(),
+              Commands.waitUntil(shooter.getAtRpmTrigger())
+                .andThen(Commands.parallel(
+                    shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM), 
+                    intakeRoller.intakeFuel(),
+                    rollingFloor.rollInwardsFast()))
+            )
+        );
+
         //TODO: test integrating this into the runFullShootingSystem command to see if it helps with agitation
         Command runIntakeRollerAlternating = Commands.sequence(intakeRoller.intakeFuel().withTimeout(0.1), intakeRoller.outtakeFuel().withTimeout(0.1));
 
@@ -295,7 +308,8 @@ public class RobotContainer {
         
         //Free driver buttons = povUp, povDown, a
 
-        operatorController.rightTrigger().whileTrue(runFullShootingAutoRpmAndAim);
+        //For quick RPM tuning
+        operatorController.rightTrigger().whileTrue(fullShootingSequenceTunableRpm);
 
         //Note: operator controller is for testing new commands and running SysId tests
         // operatorController.b().whileTrue(runIntakeArmAlternating);

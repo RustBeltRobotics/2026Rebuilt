@@ -73,6 +73,8 @@ public class VisionSystem {
         .getStructTopic("/RBR/Vision/PoseEstimates/Camera/BR", Pose3d.struct).publish();
     private final StructPublisher<Pose3d> backCenterCameraPoseEstimatePublisher = NetworkTableInstance.getDefault()
         .getStructTopic("/RBR/Vision/PoseEstimates/Camera/BC", Pose3d.struct).publish();
+    private final StructPublisher<Pose3d> backRightForwardCameraPoseEstimatePublisher = NetworkTableInstance.getDefault()
+        .getStructTopic("/RBR/Vision/PoseEstimates/Camera/BRF", Pose3d.struct).publish();
 
     private final StructPublisher<Pose2d> backLeftCameraLocationPublisher = NetworkTableInstance.getDefault()
         .getStructTopic("/RBR/Vision/Locations/Camera/BL", Pose2d.struct).publish();
@@ -80,6 +82,8 @@ public class VisionSystem {
         .getStructTopic("/RBR/Vision/Locations/Camera/BR", Pose2d.struct).publish();
     private final StructPublisher<Pose2d> backCenterCameraLocationPublisher = NetworkTableInstance.getDefault()
         .getStructTopic("/RBR/Vision/Locations/Camera/BC", Pose2d.struct).publish();
+        private final StructPublisher<Pose2d> backRightForwardCameraLocationPublisher = NetworkTableInstance.getDefault()
+        .getStructTopic("/RBR/Vision/Locations/Camera/BRF", Pose2d.struct).publish();
 
     //Simulation
     private List<PhotonCameraSim> simulatedCameras = new ArrayList<>();
@@ -108,13 +112,16 @@ public class VisionSystem {
             Constants.Vision.CameraPose.BACK_RIGHT, fieldLayout);
         VisionCamera backLeftCamera = new VisionCamera(Constants.Vision.CameraName.BACK_LEFT, CameraPosition.BACK_LEFT,
             Constants.Vision.CameraPose.BACK_LEFT, fieldLayout);
-        VisionCamera backCenterCamera = new VisionCamera(Constants.Vision.CameraName.BACK_CENTER, CameraPosition.BACK_CENTER,
-            Constants.Vision.CameraPose.BACK_CENTER, fieldLayout);
+        // VisionCamera backCenterCamera = new VisionCamera(Constants.Vision.CameraName.BACK_CENTER, CameraPosition.BACK_CENTER,
+        //     Constants.Vision.CameraPose.BACK_CENTER, fieldLayout);
+        VisionCamera backRightForwardCamera = new VisionCamera(Constants.Vision.CameraName.BACK_RIGHT_FORWARD, CameraPosition.BACK_RIGHT_FORWARD,
+            Constants.Vision.CameraPose.BACK_RIGHT_FORWARD, fieldLayout);
         // visionCameras.add(frontCenterCamera);           
         // visionCameras.add(frontRightCamera);           
         visionCameras.add(backRightCamera);           
         visionCameras.add(backLeftCamera);
-        visionCameras.add(backCenterCamera);
+        // visionCameras.add(backCenterCamera);
+        visionCameras.add(backRightForwardCamera);
 
         if (Robot.isSimulation()) {
             // Create the vision system simulation which handles cameras and targets on the field.
@@ -173,6 +180,8 @@ public class VisionSystem {
                     backRightCameraLocationPublisher.set(cameraFieldPose);
                 } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_CENTER) {
                     backCenterCameraLocationPublisher.set(cameraFieldPose);
+                } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_RIGHT_FORWARD) {
+                    backRightForwardCameraLocationPublisher.set(cameraFieldPose);
                 }
             }
         }
@@ -311,6 +320,8 @@ public class VisionSystem {
                     backRightCameraPoseEstimatePublisher.set(estimatedPose, networkTablesPoseTimestampMicroSeconds);
                 } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_CENTER) {
                     backCenterCameraPoseEstimatePublisher.set(estimatedPose, networkTablesPoseTimestampMicroSeconds);
+                } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_RIGHT_FORWARD) {
+                    backRightForwardCameraPoseEstimatePublisher.set(estimatedPose, networkTablesPoseTimestampMicroSeconds);
                 }
             } else {
                 rejectedPoses.add(poseEstimate);
@@ -433,6 +444,7 @@ public class VisionSystem {
         backLeftCameraPoseEstimatePublisher.set(Pose3d.kZero);
         backRightCameraPoseEstimatePublisher.set(Pose3d.kZero);
         backCenterCameraPoseEstimatePublisher.set(Pose3d.kZero);
+        backRightForwardCameraPoseEstimatePublisher.set(Pose3d.kZero);
     }
 
     public void simulationPeriodic(Pose2d robotSimPose) {
