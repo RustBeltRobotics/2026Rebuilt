@@ -38,6 +38,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
+import frc.robot.RobotContainer;
 import frc.robot.generated.TunerConstants;
 import frc.robot.util.AlertManager;
 import frc.robot.vision.VisionEstimateConsumer;
@@ -60,9 +61,6 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     private final StructPublisher<Rotation2d> alignDriveTargetRotationPublisher = NetworkTableInstance.getDefault().getStructTopic("/RBR/Drivetrain/AutoAlign/Rotation/Target", Rotation2d.struct).publish();
     private final DoublePublisher alignDriveTargetRotationDegreesPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/AutoAlign/Rotation/Target/degrees").publish();
     private final DoublePublisher alignDriveCurrentRotationDegreesPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Drivetrain/AutoAlign/Rotation/Current/degrees").publish();
-
-    private final StructPublisher<Pose2d> testShortDefensePosePublisher = NetworkTableInstance.getDefault().getStructTopic("/RBR/Test/Pose/Defense/Short", Pose2d.struct).publish();
-    private final StructPublisher<Pose2d> testLongDefensePosePublisher = NetworkTableInstance.getDefault().getStructTopic("/RBR/Test/Pose/Defense/Long", Pose2d.struct).publish();
 
     private static final Pose2d testShortDefensePose = new Pose2d(2.231, 4.003, new Rotation2d());
     private static final Pose2d testLongDefensePose = new Pose2d(1.181, 4.003, new Rotation2d());
@@ -95,8 +93,6 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     private final SwerveRequest.SwerveDriveBrake applyBrakeRequest = new SwerveRequest.SwerveDriveBrake();
 
     private boolean initialPoseSetViaVision = false;
-    private boolean rampOrTipDetected = false;
-    private boolean needToCorrectOdometryUsingVision = false;
     private boolean isAutoTargeting = false;
     private Pose2d latestVisionPose;
 
@@ -141,48 +137,35 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
     public void periodic() {
         super.periodic();
 
-        double kP = kPEntry.get();
-        double kD = kDEntry.get();
+        if (Constants.Game.ENABLE_LIVE_PID_VALUE_TUNING) {
+            double kP = kPEntry.get();
+            double kD = kDEntry.get();
 
-        if (kP != priorHeadingControllerKp || kD != priorHeadingControllerKd) {
-            autoAlignRequest.HeadingController.setP(kP);
-            autoAlignRequest.HeadingController.setD(kD);
-            priorHeadingControllerKp = kP;
-            priorHeadingControllerKd = kD;
-            AlertManager.addAlert("DriveAutoAlign", "DriveAutoAlign PID changed! kP: " + kP + " kD: " + kD, AlertType.kInfo);
+            if (kP != priorHeadingControllerKp || kD != priorHeadingControllerKd) {
+                autoAlignRequest.HeadingController.setP(kP);
+                autoAlignRequest.HeadingController.setD(kD);
+                priorHeadingControllerKp = kP;
+                priorHeadingControllerKd = kD;
+                AlertManager.addAlert("DriveAutoAlign", "DriveAutoAlign PID changed! kP: " + kP + " kD: " + kD, AlertType.kInfo);
+            }
         }
 
-        testShortDefensePosePublisher.set(testShortDefensePose);
-        testLongDefensePosePublisher.set(testLongDefensePose);
+        if (Constants.Game.ENABLE_DEBUG_NT_LOGGING) {
+            SwerveDriveState swerveDriveState = getState();
+            driveForwardSpeedPublisher.set(swerveDriveState.Speeds.vxMetersPerSecond);
 
-        SwerveDriveState swerveDriveState = getState();
-        driveForwardSpeedPublisher.set(swerveDriveState.Speeds.vxMetersPerSecond);
-
-        SwerveModule<?, ?, ?> frontLeftModule = getModule(0);
-        SwerveModule<?, ?, ?> frontRightModule = getModule(1);
-        SwerveModule<?, ?, ?> backLeftModule = getModule(2);
-        SwerveModule<?, ?, ?> backRightModule = getModule(3);
-        frontLeftDriveCurrentPublisher.set(frontLeftModule.getDriveMotor().getStatorCurrent().getValueAsDouble());
-        frontLeftSteerCurrentPublisher.set(frontLeftModule.getSteerMotor().getStatorCurrent().getValueAsDouble());
-        frontRightDriveCurrentPublisher.set(frontRightModule.getDriveMotor().getStatorCurrent().getValueAsDouble());
-        frontRightSteerCurrentPublisher.set(frontRightModule.getSteerMotor().getStatorCurrent().getValueAsDouble());
-        backLeftDriveCurrentPublisher.set(backLeftModule.getDriveMotor().getStatorCurrent().getValueAsDouble());
-        backLeftSteerCurrentPublisher.set(backLeftModule.getSteerMotor().getStatorCurrent().getValueAsDouble());
-        backRightDriveCurrentPublisher.set(backRightModule.getDriveMotor().getStatorCurrent().getValueAsDouble());
-        backRightSteerCurrentPublisher.set(backRightModule.getSteerMotor().getStatorCurrent().getValueAsDouble());
-
-        Pigeon2 pigeon2 = getPigeon2();
-        double robotPitch = Math.abs(pigeon2.getPitch().getValueAsDouble());
-        double robotRoll = Math.abs(pigeon2.getRoll().getValueAsDouble());
-        //periodically check for ramp/tip condition
-        if (!rampOrTipDetected && (robotPitch > Constants.Kinematics.TIP_THRESHOLD_DEGREES || robotRoll > Constants.Kinematics.TIP_THRESHOLD_DEGREES)) {
-            rampOrTipDetected = true;
-            AlertManager.addAlert("Ramp/Tip", "Ramp/Tip detected! Pitch: " + robotPitch + " Roll: " + robotRoll, AlertType.kInfo);
-        } else if (rampOrTipDetected && robotPitch <= Constants.Kinematics.ROLL_PITCH_ERROR && robotRoll <= Constants.Kinematics.ROLL_PITCH_ERROR) {
-            //reset condition when back within safe limits
-            rampOrTipDetected = false;
-            needToCorrectOdometryUsingVision = true;
-            AlertManager.addAlert("Ramp/Tip", "Ramp/Tip cleared. Pitch: " + robotPitch + " Roll: " + robotRoll, AlertType.kInfo);
+            SwerveModule<?, ?, ?> frontLeftModule = getModule(0);
+            SwerveModule<?, ?, ?> frontRightModule = getModule(1);
+            SwerveModule<?, ?, ?> backLeftModule = getModule(2);
+            SwerveModule<?, ?, ?> backRightModule = getModule(3);
+            frontLeftDriveCurrentPublisher.set(frontLeftModule.getDriveMotor().getSupplyCurrent().getValueAsDouble());
+            frontLeftSteerCurrentPublisher.set(frontLeftModule.getSteerMotor().getSupplyCurrent().getValueAsDouble());
+            frontRightDriveCurrentPublisher.set(frontRightModule.getDriveMotor().getSupplyCurrent().getValueAsDouble());
+            frontRightSteerCurrentPublisher.set(frontRightModule.getSteerMotor().getSupplyCurrent().getValueAsDouble());
+            backLeftDriveCurrentPublisher.set(backLeftModule.getDriveMotor().getSupplyCurrent().getValueAsDouble());
+            backLeftSteerCurrentPublisher.set(backLeftModule.getSteerMotor().getSupplyCurrent().getValueAsDouble());
+            backRightDriveCurrentPublisher.set(backRightModule.getDriveMotor().getSupplyCurrent().getValueAsDouble());
+            backRightSteerCurrentPublisher.set(backRightModule.getSteerMotor().getSupplyCurrent().getValueAsDouble());
         }
     }
 
@@ -194,7 +177,9 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
         return applyRequest(() -> {
             isAutoTargeting = false;
             double xControllerValue = modifyDriverControllerInput(controller.getLeftY());  //forward/back
+            xControllerValue = xControllerValue * RobotContainer.MAX_SPEED_FACTOR;
             double yControllerValue = modifyDriverControllerInput(controller.getLeftX());  //left/right
+            yControllerValue = yControllerValue * RobotContainer.MAX_SPEED_FACTOR;
             double rotationalControllerValue = modifyDriverControllerInput(controller.getRightX());  //rotation
             return teleopRequest.withVelocityX(-xControllerValue * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND) // Drive forward with negative Y (forward)
                     .withVelocityY(-yControllerValue * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND) // Drive left with negative X (left)
@@ -216,7 +201,9 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
             isAutoTargeting = true;
 
             double xControllerValue = -modifyDriverControllerInput(controller.getLeftY());  //forward/back
+            xControllerValue = xControllerValue * RobotContainer.MAX_SPEED_FACTOR;
             double yControllerValue = -modifyDriverControllerInput(controller.getLeftX());  //left/right
+            yControllerValue = yControllerValue * RobotContainer.MAX_SPEED_FACTOR;
 
             Pose2d drivePose = getState().Pose;
             alignDriveCurrentRotationDegreesPublisher.set(drivePose.getRotation().getDegrees());
@@ -332,13 +319,6 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
         double timestamp = estimatedRobotPose.timestampSeconds;
         Matrix<N3, N1> estimationStdDevs = visionPoseEstimationResult.getVisionMeasurementStdDevs();
 
-        if (needToCorrectOdometryUsingVision && Constants.Vision.BOOST_POSE_ESTIMATES_FROM_VISION_FOR_RAMP) {
-            //boost vision odometry via lowering standard deviations to compensate for error in wheel odometry after ramp/tip
-            //TODO: test this and tune boost factor
-            estimationStdDevs = estimationStdDevs.times(0.25); //boost by factor of 4
-            needToCorrectOdometryUsingVision = false;
-            AlertManager.addAlert("Vision", "Ramp/Tip compensated using new pose: " + pose, AlertType.kInfo);
-        }
         if (Constants.Vision.TAKE_POSE_ESTIMATES_FROM_VISION) {
             this.addVisionMeasurement(pose, timestamp, estimationStdDevs);
         }
@@ -374,14 +354,11 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
                 ;
             });
         }
-        
     }
 
     public Command resetState() {
         return Commands.runOnce(() -> {
             initialPoseSetViaVision = false;
-            rampOrTipDetected = false;
-            needToCorrectOdometryUsingVision = false;
             isAutoTargeting = false;
             latestVisionPose = null;
         }, this);

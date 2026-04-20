@@ -56,6 +56,12 @@ public final class Constants {
     //TODO: this should only be true for running in the lab for 2026, always use false for comp!!!
     public static final boolean FLIP_FIELD_CENTRIC_OPERATOR_PERSPECTIVE = true;
 
+    //TODO: set this to false for comp and true for lab testing to get more detailed logging of NT values
+    public static final boolean ENABLE_DEBUG_NT_LOGGING = true;
+
+    //TODO: enable this to allow for live tuning of PID values via NT during testing - should be false for comp to avoid accidentally changing values
+    public static final boolean ENABLE_LIVE_PID_VALUE_TUNING = false;
+
     //These are buffers to accomodate for margin of error in Vision / PoseEstimator output
     public static final double FIELD_POSE_XY_ERROR_MARGIN_METERS = Units.Inches.of(1.0).in(Units.Meters);
     public static final double FIELD_POSE_THETA_ERROR_MARGIN_RADIANS = Units.Degrees.of(2.0).in(Units.Radians);
@@ -121,15 +127,13 @@ public final class Constants {
     }
   }
 
-  //TODO: update / verify all of these values and/or integrate with CTRE Swerve generated constants (these are all from last year)
-
   /**
    * Robot physical constraints (max velocity, max angular velocity, SwerveDriveKinematics, etc.)
    */
   public static final class Kinematics {
 
     /* Initial / max speed multiplier for drivetrain - reduce to slow teleop driving speed */
-    public static final double INITIAL_DRIVE_MAX_SPEED_FACTOR = 0.9;
+    public static final double INITIAL_DRIVE_MAX_SPEED_FACTOR = 0.80;
 
     /* Robot mass in Kg. */
     public static final double ROBOT_MASS = Units.Pounds.of(102.0).in(Units.Kilograms); //Note: this weight does NOT include the battery or bumpers
@@ -274,7 +278,8 @@ public final class Constants {
     public static final AngularVelocity SHOOTER_TEST_RPM = Units.RPM.of(3450);  //was 3400
     public static final AngularVelocity SHOOTER_SHORT_DEFENSE_SHOT_RPM = Units.RPM.of(3050); //one robots length away from hub
     public static final AngularVelocity SHOOTER_LONG_DEFENSE_SHOT_RPM = Units.RPM.of(3450); //two robots length away from hub
-    public static final AngularVelocity SHOOTER_LAYUP_RPM = Units.RPM.of(2550); 
+    public static final AngularVelocity SHOOTER_LAYUP_RPM = Units.RPM.of(2490); 
+    public static final AngularVelocity SHOOTER_CENTER_AUTO_RPM = Units.RPM.of(2600);
     public static final AngularVelocity SHOOTER_BUMP_AUTO_RPM = Units.RPM.of(2700); 
     public static final AngularVelocity SHOOTER_TRENCH_RPM = Units.RPM.of(3420);
 
@@ -328,7 +333,6 @@ public final class Constants {
     public static final boolean VISION_ENABLED = true;  //TODO: Re-enable this
     public static final boolean TAKE_INITIAL_AUTO_POSE_FROM_VISION = false;  //we don't have cameras in good positions to see AprilTags at start of auto
     public static final boolean TAKE_POSE_ESTIMATES_FROM_VISION = true;
-    public static final boolean BOOST_POSE_ESTIMATES_FROM_VISION_FOR_RAMP = false;
     public static final boolean USE_STATIC_STD_DEV = true;  //If true OTHER_CAMERA_STANDARD_DEVIATIONS will be used, if false dynamic algo will be used
     public static final int APRIL_TAG_PIPELINE_INDEX = 0;
     public static final String ARDUCAM_MODEL = "OV9281";
@@ -337,6 +341,7 @@ public final class Constants {
     public static final double POSE_AMBIGUITY_MULTIPLIER = 4.0;
     public static final double NOISY_DISTANCE_METERS = 2.5;  //distance beyond which vision measurements are noisy (2.5m =~ 8ft)
     public static final double DISTANCE_CUTOFF = 3.0;  //Tag readings beyond this distance (in meters) will be considered invalid
+    // public static final double DISTANCE_CUTOFF = 5.0;  //Use for lab
     public static final double DISTANCE_WEIGHT = 7.0;
     public static final int TAG_PRESENCE_WEIGHT = 10;
   
@@ -361,7 +366,7 @@ public final class Constants {
     public static final class CameraName {
       //Note: these names are set in hardware via https://docs.arducam.com/UVC-Camera/Serial-Number-Tool-Guide/
       public static final String FRONT_CENTER = "Arducam_OV9281_USB_Camera-4";
-      public static final String BACK_CENTER = "Arducam_OV9281_USB_Camera-3";
+      public static final String BACK_CENTER = "Arducam_OV9281_USB_Camera-4";
       public static final String BACK_RIGHT_FORWARD = "Arducam_OV9281_USB_Camera-3";
       public static final String BACK_RIGHT = "Arducam_OV9281_USB_Camera-2";
       public static final String BACK_LEFT = "Arducam_OV9281_USB_Camera-1";
@@ -394,7 +399,7 @@ public final class Constants {
         new Rotation3d(0, 0, 0).rotateBy(new Rotation3d(0, 0, Units.Degrees.of(-90.0).in(Units.Radians))));  //back right cam- photonvision1
       public static final Transform3d BACK_LEFT = new Transform3d(-Units.Inches.of(11.5).in(Units.Meters), Units.Inches.of(13.5).in(Units.Meters), Units.Inches.of(19.43375).in(Units.Meters),
         new Rotation3d(0, 0, 0).rotateBy(new Rotation3d(0, 0, Units.Degrees.of(90.0).in(Units.Radians))));  //back left - photonvision1
-      public static final Transform3d BACK_CENTER = new Transform3d(-Units.Inches.of(13.0).in(Units.Meters), Units.Inches.of(0.0).in(Units.Meters), Units.Inches.of(20.25).in(Units.Meters),
+      public static final Transform3d BACK_CENTER = new Transform3d(-Units.Inches.of(13.0).in(Units.Meters), Units.Inches.of(0.0).in(Units.Meters), Units.Inches.of(19.875).in(Units.Meters),
         new Rotation3d(0, 0, 0).rotateBy(new Rotation3d(0, 0, Units.Degrees.of(90.0).in(Units.Radians))));  //back center - photonvision2
       public static final Transform3d BACK_RIGHT_FORWARD = new Transform3d(-Units.Inches.of(10.375).in(Units.Meters), -Units.Inches.of(12.5).in(Units.Meters), Units.Inches.of(19.8125).in(Units.Meters),
         new Rotation3d(0, 0, 0).rotateBy(new Rotation3d(0, 0, 0)));  //back right facing forward - photonvision2

@@ -50,7 +50,7 @@ public class IntakeArm extends SubsystemBase {
         extendRetractConfig.idleMode(IdleMode.kBrake);
         //TODO: update this note on gear ratio is it likely is changing
         //Note: the gear ratio on this mechanism is 64:1 (4x4x4)
-        extendRetractConfig.smartCurrentLimit(70).secondaryCurrentLimit(60);
+        extendRetractConfig.smartCurrentLimit(65).secondaryCurrentLimit(60);
         extendRetractMotor.configure(extendRetractConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         extendRetractEncoder.setPosition(0.0);  //zero the encoder on startup (the arm will be retracted within the robot perimeter)
     }
@@ -58,15 +58,17 @@ public class IntakeArm extends SubsystemBase {
     @Override
     public void periodic() {
         extendRetractMotorOutputCurrentAmps = extendRetractMotor.getOutputCurrent();
-        extendRetractCurrentPublisher.set(extendRetractMotorOutputCurrentAmps);
-        extendRetractPositionPublisher.set(extendRetractEncoder.getPosition());
         double rawVelocity = extendRetractEncoder.getVelocity();
-        extendRetractVelocityPublisher.set(rawVelocity);
         double extendRetractMotorVelocityRps = Math.abs(rawVelocity / 60);
         stallDetected = stallDetectionDebouncer.calculate(extendRetractMotorVelocityRps < 1 && extendRetractMotorOutputCurrentAmps >= 50.0);
-        atHardStopPublisher.set(stallDetected);
-        
-        AlertManager.addAlert("IntakeArm", "IntakeArm stallDetected? " + (stallDetected ? "Yes" : "No"), AlertType.kInfo);
+
+        if (Constants.Game.ENABLE_DEBUG_NT_LOGGING) {
+            extendRetractCurrentPublisher.set(extendRetractMotorOutputCurrentAmps);
+            extendRetractPositionPublisher.set(extendRetractEncoder.getPosition());
+            extendRetractVelocityPublisher.set(rawVelocity);
+            atHardStopPublisher.set(stallDetected);
+            AlertManager.addAlert("IntakeArm", "IntakeArm stallDetected? " + (stallDetected ? "Yes" : "No"), AlertType.kInfo);
+        }
     }
 
     public void runExtendRetractAtDutyCycle(double dutyCycle) {

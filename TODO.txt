@@ -1,13 +1,13 @@
 TODO:
 - ** Change Constants.Game.FLIP_FIELD_CENTRIC_OPERATOR_PERSPECTIVE to false for competition [or at the Warehouse in Rochester] (flip to true at the lab)
-- update photonvision1 to latest using downloaded offline update
-- add photonvision 2 opi and back camera back onto robot
-- install opi cases
-- Measure and get more distance to RPM mappings for linear interpolator
-    - Test prepVariableDistanceShot command to auto-set shooter RPM based on robot pose distance from hub
+- Plug front pi back into PDH for power
+- Keep back pi plugged into battery pack for power
+- Run full match timing runs to test battery / brownouts (full auto + tele-op time)
 
-- Update MOI values to match current design measurements
-    - Need MOI from CAD from Dillan
+- Turn off local lab specific testing constants before Worlds comp play:
+    - FLIP_FIELD_CENTRIC_OPERATOR_PERSPECTIVE
+    - ENABLE_DEBUG_NT_LOGGING
+
 - Test / update CTRE Swerve constants kSlipCurrent (this is how stator current is set)
     - https://docs.advantagekit.org/getting-started/template-projects/talonfx-swerve-template/#slip-current-measurement
     - https://v6.docs.ctr-electronics.com/en/stable/docs/hardware-reference/talonfx/improving-performance-with-current-limits.html#preventing-wheel-slip

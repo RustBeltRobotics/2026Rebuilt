@@ -90,8 +90,8 @@ public class ShooterFeederYams extends SubsystemBase {
             .withIdleMode(MotorMode.BRAKE)
             // .withVoltageCompensation(Units.Volts.of(12))  //Note: we can't use this - apparently it's a Pro/paid feature
             // Motor properties to prevent over currenting.
-            .withSupplyCurrentLimit(Units.Amps.of(50))
-            .withStatorCurrentLimit(Units.Amps.of(50));
+            .withSupplyCurrentLimit(Units.Amps.of(45))
+            .withStatorCurrentLimit(Units.Amps.of(45));
 
     SmartMotorController krakenSmartMotorController = new TalonFXWrapper(feederKrakenLeft, DCMotor.getKrakenX60(1), feederKrakenConfig);
 
@@ -135,14 +135,17 @@ public class ShooterFeederYams extends SubsystemBase {
     @Override
     public void periodic() {
         double currentRpm = feederFlywheel.getSpeed().in(Units.RPM);
-        feederCurrentMechanismVelocityPublisher.set(currentRpm);
-        feederTargetMechanismVelocityPublisher.set(targetRpm);  
-        feederLeftMotorRotorVelocityPublisher.set(feederKrakenLeft.getRotorVelocity().getValueAsDouble());
-        feederRightMotorRotorVelocityPublisher.set(feederKrakenRight.getRotorVelocity().getValueAsDouble());
-        feederLeftCurrentPublisher.set(feederKrakenLeft.getStatorCurrent().getValueAsDouble());
-        feederRightCurrentPublisher.set(feederKrakenRight.getStatorCurrent().getValueAsDouble());
-        feederLeftVoltagePublisher.set(feederKrakenLeft.getMotorVoltage().getValueAsDouble());
-        feederRightVoltagePublisher.set(feederKrakenRight.getMotorVoltage().getValueAsDouble());
+        
+        if (Constants.Game.ENABLE_DEBUG_NT_LOGGING) {
+            feederCurrentMechanismVelocityPublisher.set(currentRpm);
+            feederTargetMechanismVelocityPublisher.set(targetRpm);  
+            feederLeftMotorRotorVelocityPublisher.set(feederKrakenLeft.getRotorVelocity().getValueAsDouble());
+            feederRightMotorRotorVelocityPublisher.set(feederKrakenRight.getRotorVelocity().getValueAsDouble());
+            feederLeftCurrentPublisher.set(feederKrakenLeft.getSupplyCurrent().getValueAsDouble());
+            feederRightCurrentPublisher.set(feederKrakenRight.getSupplyCurrent().getValueAsDouble());
+            feederLeftVoltagePublisher.set(feederKrakenLeft.getMotorVoltage().getValueAsDouble());
+            feederRightVoltagePublisher.set(feederKrakenRight.getMotorVoltage().getValueAsDouble());
+        }
 
         if (targetRpm != 0.0 && !atTargetRpm) {
             if ((Math.abs(targetRpm) - Math.abs(currentRpm)) <= 100.00) {
@@ -151,7 +154,9 @@ public class ShooterFeederYams extends SubsystemBase {
             }
         }
 
-        AlertManager.addAlert("FeederRPM", "FeederRPM At Target? " + (atTargetRpm ? "Yes" : "No"), AlertType.kInfo);
+        if (Constants.Game.ENABLE_DEBUG_NT_LOGGING) {
+            AlertManager.addAlert("FeederRPM", "FeederRPM At Target? " + (atTargetRpm ? "Yes" : "No"), AlertType.kInfo);
+        }
     }
 
     @Override

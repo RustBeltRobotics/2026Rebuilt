@@ -104,24 +104,19 @@ public class VisionSystem {
         fieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
         fieldLayout.setOrigin(OriginPosition.kBlueAllianceWallRightSide);
 
-        // VisionCamera frontCenterCamera = new VisionCamera(Constants.Vision.CameraName.FRONT_CENTER, CameraPosition.FRONT_CENTER,
-        //     Constants.Vision.CameraPose.FRONT_CENTER, fieldLayout);   
-        // VisionCamera frontRightCamera = new VisionCamera(Constants.Vision.CameraName.FRONT_RIGHT, CameraPosition.FRONT_RIGHT,
-        //     Constants.Vision.CameraPose.FRONT_RIGHT, fieldLayout);
         VisionCamera backRightCamera = new VisionCamera(Constants.Vision.CameraName.BACK_RIGHT, CameraPosition.BACK_RIGHT,
             Constants.Vision.CameraPose.BACK_RIGHT, fieldLayout);
         VisionCamera backLeftCamera = new VisionCamera(Constants.Vision.CameraName.BACK_LEFT, CameraPosition.BACK_LEFT,
             Constants.Vision.CameraPose.BACK_LEFT, fieldLayout);
         // VisionCamera backCenterCamera = new VisionCamera(Constants.Vision.CameraName.BACK_CENTER, CameraPosition.BACK_CENTER,
         //     Constants.Vision.CameraPose.BACK_CENTER, fieldLayout);
-        VisionCamera backRightForwardCamera = new VisionCamera(Constants.Vision.CameraName.BACK_RIGHT_FORWARD, CameraPosition.BACK_RIGHT_FORWARD,
-            Constants.Vision.CameraPose.BACK_RIGHT_FORWARD, fieldLayout);
-        // visionCameras.add(frontCenterCamera);           
-        // visionCameras.add(frontRightCamera);           
+        // VisionCamera backRightForwardCamera = new VisionCamera(Constants.Vision.CameraName.BACK_RIGHT_FORWARD, CameraPosition.BACK_RIGHT_FORWARD,
+        //     Constants.Vision.CameraPose.BACK_RIGHT_FORWARD, fieldLayout);
+ 
         visionCameras.add(backRightCamera);           
         visionCameras.add(backLeftCamera);
         // visionCameras.add(backCenterCamera);
-        visionCameras.add(backRightForwardCamera);
+        // visionCameras.add(backRightForwardCamera);
 
         if (Robot.isSimulation()) {
             // Create the vision system simulation which handles cameras and targets on the field.
@@ -147,45 +142,34 @@ public class VisionSystem {
                 visionSim.addCamera(cameraSim, visionCamera.getRobotToCameraPose());
                 cameraSim.enableDrawWireframe(true);
             }
-        } else {
-            //Do not track cameras that are not actively connected at time of constructor initialization
-            visionCameras.removeIf(c -> {
-                boolean isDisconnected = !c.isCameraConnected();
-                if (isDisconnected) {
-                    AlertManager.addAlert(c.getCameraName(), "Camera (" + c.getCameraName() + ") disconnected!", AlertType.kWarning);
-                } else {
-                    AlertManager.removeAlert(c.getCameraName());
-                    c.getCameraInstance().setPipelineIndex(Constants.Vision.APRIL_TAG_PIPELINE_INDEX);
-                }
-
-                return isDisconnected;
-            });
         }
     }
 
     public void periodic() {
-        //Publish camera positions to verify/visualize they are where we expect them to be in relation to the robot center
-        Pose2d currentRobotPose = currentRobotPoseSupplier.get();
-        if (currentRobotPose != null) {
-            for (VisionCamera visionCamera : visionCameras) {
-                Transform3d robotCenterToCameraTransform = visionCamera.getRobotToCameraPose();
-                Translation2d translation2d = new Translation2d(robotCenterToCameraTransform.getX(), robotCenterToCameraTransform.getY());
-                Rotation2d rotation2d = robotCenterToCameraTransform.getRotation().toRotation2d();
+        if (Constants.Game.ENABLE_DEBUG_NT_LOGGING) {
+            //Publish camera positions to verify/visualize they are where we expect them to be in relation to the robot center
+            Pose2d currentRobotPose = currentRobotPoseSupplier.get();
+            if (currentRobotPose != null) {
+                for (VisionCamera visionCamera : visionCameras) {
+                    Transform3d robotCenterToCameraTransform = visionCamera.getRobotToCameraPose();
+                    Translation2d translation2d = new Translation2d(robotCenterToCameraTransform.getX(), robotCenterToCameraTransform.getY());
+                    Rotation2d rotation2d = robotCenterToCameraTransform.getRotation().toRotation2d();
 
-                Pose2d cameraFieldPose = currentRobotPose.transformBy(new Transform2d(translation2d, rotation2d));
+                    Pose2d cameraFieldPose = currentRobotPose.transformBy(new Transform2d(translation2d, rotation2d));
 
-                if (visionCamera.getCameraPosition() == CameraPosition.BACK_LEFT) {
-                    backLeftCameraLocationPublisher.set(cameraFieldPose);
-                } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_RIGHT) {
-                    backRightCameraLocationPublisher.set(cameraFieldPose);
-                } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_CENTER) {
-                    backCenterCameraLocationPublisher.set(cameraFieldPose);
-                } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_RIGHT_FORWARD) {
-                    backRightForwardCameraLocationPublisher.set(cameraFieldPose);
+                    if (visionCamera.getCameraPosition() == CameraPosition.BACK_LEFT) {
+                        backLeftCameraLocationPublisher.set(cameraFieldPose);
+                    } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_RIGHT) {
+                        backRightCameraLocationPublisher.set(cameraFieldPose);
+                    } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_CENTER) {
+                        backCenterCameraLocationPublisher.set(cameraFieldPose);
+                    } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_RIGHT_FORWARD) {
+                        backRightForwardCameraLocationPublisher.set(cameraFieldPose);
+                    }
                 }
             }
         }
-
+        
         List<VisionPoseEstimationResult> newVisionPoseEstimates = getRobotPoseEstimationResults();
         receivedNewVisionData = !newVisionPoseEstimates.isEmpty();
         
@@ -219,7 +203,7 @@ public class VisionSystem {
             for (PhotonPipelineResult pipelineResult : photonCamera.getAllUnreadResults()) {
                 processPhotonPipelineResult(pipelineResult, estimationResults, acceptedPoses, rejectedPoses, usedAprilTags,
                     rejectedAprilTags, visionCamera, poseEstimator);
-            }
+            } 
         }
 
         if (!usedAprilTags.isEmpty()) {

@@ -88,8 +88,8 @@ public class ShooterYams extends SubsystemBase {
             .withIdleMode(MotorMode.COAST)
             // .withVoltageCompensation(Units.Volts.of(12)) //Note: we can't use this - apparently it's a Pro/paid feature
             // Motor properties to prevent over currenting.
-            .withSupplyCurrentLimit(Units.Amps.of(80))
-            .withStatorCurrentLimit(Units.Amps.of(80));  //TODO: verify this limit is not being hit during operation using telemetry, and adjust if necessary
+            .withSupplyCurrentLimit(Units.Amps.of(70))
+            .withStatorCurrentLimit(Units.Amps.of(70));  //TODO: verify this limit is not being hit during operation using telemetry, and adjust if necessary
 
     //TODO: use vendor config to potentially set min motor closed loop output to 0 to avoid driving flywheel backwords with PID
 
@@ -183,16 +183,17 @@ public class ShooterYams extends SubsystemBase {
 
     @Override
     public void periodic() {
-        rightKrakenVelocityPublisher.set(shooterKrakenRight.getRotorVelocity().getValueAsDouble() / 60);  //Convert RPS to RPM
-        rightKrakenVoltagePublisher.set(shooterKrakenRight.getMotorVoltage().getValueAsDouble());
-        rightKrakenCurrentPublisher.set(shooterKrakenRight.getStatorCurrent().getValueAsDouble());
-        leftKrakenVelocityPublisher.set(shooterKrakenLeft.getRotorVelocity().getValueAsDouble() / 60);
-        leftKrakenVoltagePublisher.set(shooterKrakenLeft.getMotorVoltage().getValueAsDouble());
-        leftKrakenCurrentPublisher.set(shooterKrakenLeft.getStatorCurrent().getValueAsDouble());
-
         double currentRpm = shooterKraken.getSpeed().in(Units.RPM);
-        shooterCurrentMechanismVelocityPublisher.set(currentRpm);
-        shooterTargetMechanismVelocityPublisher.set(targetRpm);
+        if (Constants.Game.ENABLE_DEBUG_NT_LOGGING) {
+            rightKrakenVelocityPublisher.set(shooterKrakenRight.getRotorVelocity().getValueAsDouble() / 60);  //Convert RPS to RPM
+            rightKrakenVoltagePublisher.set(shooterKrakenRight.getMotorVoltage().getValueAsDouble());
+            rightKrakenCurrentPublisher.set(shooterKrakenRight.getSupplyCurrent().getValueAsDouble());
+            leftKrakenVelocityPublisher.set(shooterKrakenLeft.getRotorVelocity().getValueAsDouble() / 60);
+            leftKrakenVoltagePublisher.set(shooterKrakenLeft.getMotorVoltage().getValueAsDouble());
+            leftKrakenCurrentPublisher.set(shooterKrakenLeft.getSupplyCurrent().getValueAsDouble());
+            shooterCurrentMechanismVelocityPublisher.set(currentRpm);
+            shooterTargetMechanismVelocityPublisher.set(targetRpm);
+        }
 
         if (targetRpm != 0.0 && !atTargetRpm) {
             if ((Math.abs(targetRpm) - Math.abs(currentRpm)) <= 10.00) {
@@ -200,7 +201,9 @@ public class ShooterYams extends SubsystemBase {
             }
         }
 
-        atRpmPublisher.set(atTargetRpm);
+        if (Constants.Game.ENABLE_DEBUG_NT_LOGGING) {
+            atRpmPublisher.set(atTargetRpm);
+        }
     }
 
     public void setShooterAngularVelocity(AngularVelocity rpmTarget) {

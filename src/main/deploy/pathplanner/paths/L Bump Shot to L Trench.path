@@ -3,32 +3,37 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 0.449,
-        "y": 4.821932021464827
+        "x": 3.2098947368421045,
+        "y": 5.347763157894738
       },
       "prevControl": null,
       "nextControl": {
-        "x": 0.465225402496853,
-        "y": 5.454722719141323
+        "x": 3.1064649122807015,
+        "y": 6.326368421052632
       },
       "isLocked": false,
-      "linkedName": "c-shot-depot-start"
+      "linkedName": "l-bump-shot"
     },
     {
       "anchor": {
-        "x": 0.449,
-        "y": 7.3683177222174825
+        "x": 3.0348874436873756,
+        "y": 7.574276330740627
       },
       "prevControl": {
-        "x": 0.44900000000000007,
-        "y": 6.638174609516229
+        "x": 3.1224049875470246,
+        "y": 6.579758786880978
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "depot-to-wall-start"
+      "linkedName": "l-bump-trench-start"
     }
   ],
-  "rotationTargets": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.20930232558139084,
+      "rotationDegrees": -90.0
+    }
+  ],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [],
@@ -42,13 +47,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 90.00000000059791
+    "rotation": -90.0
   },
   "reversed": false,
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 89.99999999927283
+    "rotation": -45.0
   },
   "useDefaultConstraints": true
 }

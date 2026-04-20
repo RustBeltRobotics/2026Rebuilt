@@ -3,29 +3,29 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 0.4519932272812015,
-        "y": 7.3683177222174825
+        "x": 3.0348874436873756,
+        "y": 7.574276330740627
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.966930615466784,
-        "y": 6.313666559426785
+        "x": 5.764035036113917,
+        "y": 7.582242691719342
       },
       "isLocked": false,
-      "linkedName": "depot-to-wall-start"
+      "linkedName": "l-bump-trench-start"
     },
     {
       "anchor": {
-        "x": 2.753,
-        "y": 4.07556350626118
+        "x": 6.018,
+        "y": 7.4386200860787985
       },
       "prevControl": {
-        "x": 1.876828264758497,
-        "y": 5.2437924865831835
+        "x": 5.456710487166879,
+        "y": 7.6115116963809655
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "depot-wall-shot-end"
+      "linkedName": "l-neutral-hub-start"
     }
   ],
   "rotationTargets": [],
@@ -33,13 +33,13 @@
   "pointTowardsZones": [],
   "eventMarkers": [
     {
-      "name": "start-shooter-layup",
-      "waypointRelativePos": 0.14613368283093375,
+      "name": "extend-intake",
+      "waypointRelativePos": 0.6114023591087966,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
         "data": {
-          "name": "start-shooter-layup"
+          "name": "extend-intake"
         }
       }
     }
@@ -54,13 +54,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 0.0
+    "rotation": -90.0
   },
   "reversed": false,
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 90.00000000059791
+    "rotation": -90.0
   },
   "useDefaultConstraints": true
 }

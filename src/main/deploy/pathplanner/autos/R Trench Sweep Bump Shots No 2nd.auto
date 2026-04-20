@@ -7,13 +7,31 @@
         {
           "type": "path",
           "data": {
-            "pathName": "C To Shot"
+            "pathName": "R Trench To R Neutral Sweep"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "R Neutral Grab Fuel Sweep"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "R Neutral Fuel to Bump Shot"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "layup-shoot"
+            "name": "bump-shoot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "stop-shooter"
           }
         },
         {
@@ -25,7 +43,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "C Shot to Depot"
+            "pathName": "R Bump Shot to R Trench"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "R Bump Trench to R Neutral Hub"
           }
         },
         {
@@ -37,25 +61,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Depot to Wall"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Depot Wall to Shot"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "layup-shoot"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "stop-intake"
+            "pathName": "R Neutral Hub Grab Fuel"
           }
         }
       ]

@@ -30,14 +30,14 @@ public class IntakeRoller extends SubsystemBase {
         var rotateIntakeRightShaftConfig = new SparkMaxConfig();
         rotateIntakeRightShaftConfig.idleMode(IdleMode.kBrake);
         rotateIntakeRightShaftConfig.inverted(false);
-        rotateIntakeRightShaftConfig.smartCurrentLimit(75).secondaryCurrentLimit(80);
+        rotateIntakeRightShaftConfig.smartCurrentLimit(75).secondaryCurrentLimit(65);
 
         rotateIntakeRightShaftMotor.configure(rotateIntakeRightShaftConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
         var rotateIntakeLeftShaftConfig = new SparkMaxConfig();
         rotateIntakeLeftShaftConfig.idleMode(IdleMode.kBrake);
         rotateIntakeLeftShaftConfig.inverted(false);
-        rotateIntakeLeftShaftConfig.smartCurrentLimit(75).secondaryCurrentLimit(80);
+        rotateIntakeLeftShaftConfig.smartCurrentLimit(75).secondaryCurrentLimit(65);
 
         rotateIntakeLeftShaftMotor.configure(rotateIntakeLeftShaftConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         rotateIntakeLeftShaftConfig.follow(Constants.CanID.INTAKE_ROTATE_MOTOR_RIGHT, true);
@@ -45,10 +45,12 @@ public class IntakeRoller extends SubsystemBase {
 
     @Override
     public void periodic() {
-        rotateIntakeShaftCurrentPublisher.set(rotateIntakeRightShaftMotor.getOutputCurrent());
-        rotateIntakeShaftVelocityPublisher.set(rotateIntakeRightShaftEncoder.getVelocity());
-        rotateIntakeLeftVoltagePublisher.set(rotateIntakeLeftShaftMotor.getAppliedOutput() * rotateIntakeLeftShaftMotor.getBusVoltage());
-        rotateIntakeRightVoltagePublisher.set(rotateIntakeRightShaftMotor.getAppliedOutput() * rotateIntakeRightShaftMotor.getBusVoltage());
+        if (Constants.Game.ENABLE_DEBUG_NT_LOGGING) {
+            rotateIntakeShaftCurrentPublisher.set(rotateIntakeRightShaftMotor.getOutputCurrent());
+            rotateIntakeShaftVelocityPublisher.set(rotateIntakeRightShaftEncoder.getVelocity());
+            rotateIntakeLeftVoltagePublisher.set(rotateIntakeLeftShaftMotor.getAppliedOutput() * rotateIntakeLeftShaftMotor.getBusVoltage());
+            rotateIntakeRightVoltagePublisher.set(rotateIntakeRightShaftMotor.getAppliedOutput() * rotateIntakeRightShaftMotor.getBusVoltage());
+        }
     }
 
     public void runIntakeWheelsAtDutyCycle(double dutyCycle) {

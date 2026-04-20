@@ -6,13 +6,6 @@ import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.revrobotics.PersistMode;
-import com.revrobotics.RelativeEncoder;
-import com.revrobotics.ResetMode;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -50,12 +43,14 @@ public class RollingFloor extends SubsystemBase {
 
     @Override
     public void periodic() {
-        leftNeoVelocityPublisher.set(leftMotor.getVelocity().getValueAsDouble());
-        leftNeoVoltagePublisher.set(leftMotor.getMotorVoltage().getValueAsDouble());
-        leftNeoCurrentPublisher.set(leftMotor.getStatorCurrent().getValueAsDouble());
-        rightNeoVelocityPublisher.set(rightMotor.getVelocity().getValueAsDouble());
-        rightNeoVoltagePublisher.set(rightMotor.getMotorVoltage().getValueAsDouble());
-        rightNeoCurrentPublisher.set(rightMotor.getStatorCurrent().getValueAsDouble());
+        if (Constants.Game.ENABLE_DEBUG_NT_LOGGING) {
+            leftNeoVelocityPublisher.set(leftMotor.getVelocity().getValueAsDouble());
+            leftNeoVoltagePublisher.set(leftMotor.getMotorVoltage().getValueAsDouble());
+            leftNeoCurrentPublisher.set(leftMotor.getSupplyCurrent().getValueAsDouble());
+            rightNeoVelocityPublisher.set(rightMotor.getVelocity().getValueAsDouble());
+            rightNeoVoltagePublisher.set(rightMotor.getMotorVoltage().getValueAsDouble());
+            rightNeoCurrentPublisher.set(rightMotor.getSupplyCurrent().getValueAsDouble());
+        }
     }
 
     //run duty cycle

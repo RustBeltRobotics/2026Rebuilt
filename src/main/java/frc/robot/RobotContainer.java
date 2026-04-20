@@ -49,7 +49,7 @@ public class RobotContainer {
   // The robot's subsystems and commands are defined here...
 
    // For limiting maximum speed in teleop (1.0 = 100% = full speed)
-  private static double MAX_SPEED_FACTOR = Constants.Kinematics.INITIAL_DRIVE_MAX_SPEED_FACTOR;
+  public static double MAX_SPEED_FACTOR = Constants.Kinematics.INITIAL_DRIVE_MAX_SPEED_FACTOR;
 
   private final CommandXboxController driverController = new CommandXboxController(Constants.Controls.CONTROLLER_PORT_DRIVER);
   private final CommandXboxController operatorController = new CommandXboxController(Constants.Controls.CONTROLLER_PORT_OPERATOR);
@@ -82,14 +82,17 @@ public class RobotContainer {
     registerPathPlannerNamedCommands();
     
     autoChooser = AutoBuilder.buildAutoChooser();
-
     driveTrainSpeedChooser.setDefaultOption(MAX_SPEED_FACTOR + "%", MAX_SPEED_FACTOR);
+    driveTrainSpeedChooser.addOption("90%", 0.90);
+    driveTrainSpeedChooser.addOption("85%", 0.85);
     driveTrainSpeedChooser.addOption("75%", 0.75);
     driveTrainSpeedChooser.addOption("50%", 0.5);
     driveTrainSpeedChooser.addOption("25%", 0.25);
     driveTrainSpeedChooser.onChange((newValue) -> {
-      MAX_SPEED_FACTOR = newValue;
-      swerveTelemetryCTRE.setMaxSpeed(getMaxSpeed());
+      if (newValue != null) {
+        MAX_SPEED_FACTOR = newValue;
+        swerveTelemetryCTRE.setMaxSpeed(getMaxSpeed());
+      }
     });
     Constants.Shuffleboard.COMPETITION_TAB.add("Drive Speed Selector", driveTrainSpeedChooser).withPosition(0, 2).withSize(2, 1);
 
@@ -124,9 +127,16 @@ public class RobotContainer {
           Commands.sequence(Commands.waitSeconds(2.0), intakeArm.retract().withTimeout(0.5))  //TODO: graph and tune this delay based on time for shooter to get up to speed (adjust if we leave the shooter running at low RPM idle between shots)
         ).withTimeout(3.0);
 
+    Command runFullShootingSystemLayup = Commands.parallel(
+          shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM),
+          rollingFloor.rollInwards(),
+          Commands.sequence(Commands.waitSeconds(2.0), intakeArm.retract().withTimeout(0.5))  //TODO: graph and tune this delay based on time for shooter to get up to speed (adjust if we leave the shooter running at low RPM idle between shots)
+        ).withTimeout(3.0);
+
     NamedCommands.registerCommand("start-shooter", shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TRENCH_RPM));
     //TODO: test start-shooter-bump, may need to bump RPM a bit and save as a diff constant
     NamedCommands.registerCommand("start-shooter-bump", shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_BUMP_AUTO_RPM));
+    NamedCommands.registerCommand("start-shooter-layup", shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_LAYUP_RPM));
     NamedCommands.registerCommand("bump-shoot", runFullShootingSystemBump);
     NamedCommands.registerCommand("extend-intake", intakeArm.extendForAutonomous().withTimeout(0.75));
     Command intakeFuelSequence = Commands.parallel(intakeRoller.intakeFuelForAuto(), intakeArm.extendForIntakeSequenceAuto());
@@ -134,14 +144,10 @@ public class RobotContainer {
     NamedCommands.registerCommand("intake-fuel", intakeFuelSequence);
     //TODO: add an .andThen(intakeArm.retract()) to the end of this?
     NamedCommands.registerCommand("stop-intake", stopIntakeFuelSequence);
-    NamedCommands.registerCommand("stop-shooter", Commands.parallel(shooter.stopImmediately(), shooterFeeder.stop()).withTimeout(0.2));
+    NamedCommands.registerCommand("stop-shooter", Commands.parallel(shooter.stopImmediately(), shooterFeeder.stop(), rollingFloor.stop()).withTimeout(0.2));
     NamedCommands.registerCommand("outpost-wait", Commands.waitSeconds(1.5));
     NamedCommands.registerCommand("trench-shoot", runFullShootingSystem);
-    Command runFullShootingSystemLayup = Commands.parallel(
-      shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_LAYUP_RPM),
-      Commands.sequence(Commands.waitSeconds(0.9), shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM)),
-      Commands.sequence(Commands.waitSeconds(0.9), rollingFloor.rollInwards())
-    ).withTimeout(3.0);
+    
     NamedCommands.registerCommand("layup-shoot", runFullShootingSystemLayup);
     NamedCommands.registerCommand("outpost-shoot", runFullShootingSystem);
     NamedCommands.registerCommand("shooter-low-idle", shooter.idleAtLowRpm());
@@ -169,7 +175,7 @@ public class RobotContainer {
         
         RobotModeTriggers.autonomous().onTrue(Commands.runOnce(() -> {
           System.out.println("Running Auto init resets...");
-          drivetrain.applyAutoCurrentLimits();
+          // drivetrain.applyAutoCurrentLimits();
           visionSystem.resetTelemetry();
         }));
 
@@ -224,6 +230,7 @@ public class RobotContainer {
           intakeRoller.outtakeFuel()
         ).finallyDo(() -> shooter.resetShooterAtTargetRpm());
 
+        //TODO: Add drivetrain brake/x-lock to the parallel command and test effectiveness
         Command runFullShootingSystemLayup = new SequentialCommandGroup(
             shooter.resetShooterAtTargetRpm(),
             Commands.parallel(

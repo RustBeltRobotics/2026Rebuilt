@@ -5,6 +5,7 @@ public enum CameraPosition {
     FRONT_RIGHT,
     BACK_RIGHT,
     BACK_RIGHT_FORWARD,
+    BACK_RIGHT_BACK,
     BACK_LEFT,
     BACK_CENTER
 }
