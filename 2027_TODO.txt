@@ -1,0 +1,13 @@
+- Use new Telemetry API to log non-CTRE SignalLogger native data
+    - Log to NT when at Lab
+        - Use Tuning NT base for editable entries (PID tuning, etc.)
+    - Log to file at comp (to avoid NT overhead)
+    - Log more detailed data for Vision readings - use a Loggable object containing all relevant data for debugging:
+        - Camera ID/Name
+            - List<VisionTagResult> receivedTags
+                - PhotonTrackedTarget (from pipelineResult.getTargets())
+                - accepted (boolean)
+                - Pose3d tagPose (from fieldLayout.getTagPose(PhotonTrackedTarget.getFiducialId()))
+- Setup 2027 1/2 field at lab using new coordinate system (center of field = 0,0)
+    - Position AprilTags directly using absolute coordinates from origin (not relative to other tags)
+- Experiment with dynamic vision standard deviations / algorithms to improve correct pose locations

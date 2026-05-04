@@ -6,7 +6,6 @@ package frc.robot;
 
 import java.util.function.Supplier;
 
-import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -17,8 +16,8 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -29,13 +28,13 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
-import frc.robot.commands.RotateAzimuthCommand;
 import frc.robot.subsystems.IntakeArm;
 import frc.robot.subsystems.IntakeRoller;
 import frc.robot.subsystems.ShooterFeederYams;
 import frc.robot.subsystems.ShooterYams;
 import frc.robot.subsystems.RollingFloor;
 import frc.robot.subsystems.drive.Drivetrain;
+import frc.robot.util.HubStateTracker;
 import frc.robot.util.SwerveTelemetryCTRE;
 import frc.robot.vision.VisionSystem;
 
@@ -69,6 +68,8 @@ public class RobotContainer {
 
   private final SendableChooser<Command> autoChooser;
   private final SendableChooser<Double> driveTrainSpeedChooser = new SendableChooser<>();
+  private final Trigger lastTenSecondsOfShiftTrigger = HubStateTracker.getLastTenSecondsShiftWarning();
+  private final Trigger lastFiveSecondsOfShiftTrigger = HubStateTracker.getLastFiveSecondsShiftWarning();
   private DoublePublisher maxSpeedFactorPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/MaxSpeed").publish();
   private DoublePublisher batteryVoltagePublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Battery/Voltage").publish();
   private BooleanPublisher brownoutPublisher = NetworkTableInstance.getDefault().getBooleanTopic("/RBR/Battery/Brownout").publish();
@@ -83,7 +84,12 @@ public class RobotContainer {
     
     autoChooser = AutoBuilder.buildAutoChooser();
     driveTrainSpeedChooser.setDefaultOption(MAX_SPEED_FACTOR + "%", MAX_SPEED_FACTOR);
-    driveTrainSpeedChooser.addOption("90%", 0.90);
+    driveTrainSpeedChooser.addOption("100%", 1.0);
+
+    if (Constants.Kinematics.INITIAL_DRIVE_MAX_SPEED_FACTOR != 0.90) {
+      driveTrainSpeedChooser.addOption("90%", 0.90);
+    }
+    
     driveTrainSpeedChooser.addOption("85%", 0.85);
     driveTrainSpeedChooser.addOption("75%", 0.75);
     driveTrainSpeedChooser.addOption("50%", 0.5);
@@ -104,6 +110,15 @@ public class RobotContainer {
       visionSystem = null;
     }
 
+    lastTenSecondsOfShiftTrigger.whileTrue(Commands.startEnd(
+        () -> driverController.getHID().setRumble(RumbleType.kBothRumble, 0.5),
+        () -> driverController.getHID().setRumble(RumbleType.kBothRumble, 0.0)
+    ));
+    lastFiveSecondsOfShiftTrigger.whileTrue(Commands.startEnd(
+        () -> driverController.getHID().setRumble(RumbleType.kBothRumble, 0.75),
+        () -> driverController.getHID().setRumble(RumbleType.kBothRumble, 0.0)
+    ));
+
     setDefaultCommands();
     configureBindings();
     configureAutos();
@@ -112,9 +127,7 @@ public class RobotContainer {
     FollowPathCommand.warmupCommand().schedule();
   }
 
-  private void registerPathPlannerNamedCommands() {
-    //TODO: implement
-
+  private void registerPathPlannerNamedCommands() { 
     Command runFullShootingSystem = Commands.parallel(
           shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM),
           rollingFloor.rollInwards(),
@@ -136,6 +149,7 @@ public class RobotContainer {
     NamedCommands.registerCommand("start-shooter", shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TRENCH_RPM));
     //TODO: test start-shooter-bump, may need to bump RPM a bit and save as a diff constant
     NamedCommands.registerCommand("start-shooter-bump", shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_BUMP_AUTO_RPM));
+    NamedCommands.registerCommand("start-shooter-center", shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_CENTER_AUTO_RPM));
     NamedCommands.registerCommand("start-shooter-layup", shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_LAYUP_RPM));
     NamedCommands.registerCommand("bump-shoot", runFullShootingSystemBump);
     NamedCommands.registerCommand("extend-intake", intakeArm.extendForAutonomous().withTimeout(0.75));
@@ -171,7 +185,10 @@ public class RobotContainer {
         RobotModeTriggers.teleop().onFalse(drivetrain.resetState());
 
         //Apply different current limits in teleop vs auto - we can allow higher limits in auto since we're not concerned about brownouts as much and we want max performance
-        RobotModeTriggers.teleop().onTrue(Commands.runOnce(() -> drivetrain.applyTeleopCurrentLimits()));
+        RobotModeTriggers.teleop().onTrue(Commands.runOnce(() -> {
+          shooter.setDefaultCommand(shooter.idleAtLowRpm());
+          drivetrain.applyTeleopCurrentLimits(Constants.Kinematics.DRIVE_MOTOR_SUPPLY_CURRENT_LIMIT_TELEOP);
+        }));
         
         RobotModeTriggers.autonomous().onTrue(Commands.runOnce(() -> {
           System.out.println("Running Auto init resets...");
@@ -230,11 +247,24 @@ public class RobotContainer {
           intakeRoller.outtakeFuel()
         ).finallyDo(() -> shooter.resetShooterAtTargetRpm());
 
-        //TODO: Add drivetrain brake/x-lock to the parallel command and test effectiveness
         Command runFullShootingSystemLayup = new SequentialCommandGroup(
             shooter.resetShooterAtTargetRpm(),
             Commands.parallel(
               shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_LAYUP_RPM),
+              Commands.waitUntil(shooter.getAtRpmTrigger())
+                .andThen(Commands.parallel(
+                    shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM), 
+                    intakeRoller.intakeFuel(),
+                    rollingFloor.rollInwardsFast()
+                  )
+                )
+            )
+        );
+
+        Command runFullShootingSystemTowerShot = new SequentialCommandGroup(
+            shooter.resetShooterAtTargetRpm(),
+            Commands.parallel(
+              shooter.runAtAngularVelocity(Constants.Shooter.SHOOTER_TOWER_RPM),
               Commands.waitUntil(shooter.getAtRpmTrigger())
                 .andThen(Commands.parallel(
                     shooterFeeder.runAtAngularVelocity(Constants.ShooterFeeder.FEEDER_RPM), 
@@ -282,11 +312,13 @@ public class RobotContainer {
 
         driverController.rightBumper().whileTrue(intakeFuelSequence);
         driverController.rightBumper().onFalse(Commands.parallel(intakeRoller.stopIntakeWheelRotation(), intakeArm.stopExtendRetract()));
-        // driverController.rightTrigger().whileTrue(fullShootingSequence);
+        driverController.y().whileTrue(runFullShootingSystemTowerShot);
         driverController.rightTrigger().whileTrue(runFullShootingAutoRpmAndAim);
 
         driverController.x().whileTrue(intakeRoller.outtakeFuel());
-        driverController.b().whileTrue(runFullShootingSystemLayup); 
+        // driverController.b().whileTrue(runFullShootingSystemLayup);
+        //TODO: test/confirm this behavior
+        driverController.b().toggleOnTrue(runFullShootingSystemLayup);
         
         driverController.back().onTrue(toggleShooterLowIdleEnabledCommand);
         driverController.start().whileTrue(passCommand);
@@ -297,21 +329,17 @@ public class RobotContainer {
         driverController.povRight().whileTrue(intakeArm.extend());  //press and relese to manually 'agitate'
 
         // Auto-align drive to hub while holding y
-        driverController.y().whileTrue(
-          Commands.parallel(
-            shooter.variableDistanceShot(() -> drivetrain.getShotDistance(hubTargetPoseSupplier.get().getTranslation())),
-            drivetrain.teleOpDriveWithAutoAimToTarget(driverController, hubTargetPoseSupplier)
-            // drivetrain.alignToTargetDrive(driverController, hubTargetPoseSupplier)
-          )
-        );
+        // driverController.y().whileTrue(
+        //   Commands.parallel(
+        //     shooter.variableDistanceShot(() -> drivetrain.getShotDistance(hubTargetPoseSupplier.get().getTranslation())),
+        //     drivetrain.teleOpDriveWithAutoAimToTarget(driverController, hubTargetPoseSupplier)
+        //     // drivetrain.alignToTargetDrive(driverController, hubTargetPoseSupplier)
+        //   )
+        // );
 
         driverController.a().whileTrue(drivetrain.brakeAndLockWheels());
 
         driverController.povUp().onTrue(drivetrain.resetPoseUsingVision());
-
-        //TODO: Add command or sequence within other command 
-
-        //TODO: Add auto-vibrate X seconds (5?) before hub active time for alliance
         
         //Free driver buttons = povUp, povDown, a
 

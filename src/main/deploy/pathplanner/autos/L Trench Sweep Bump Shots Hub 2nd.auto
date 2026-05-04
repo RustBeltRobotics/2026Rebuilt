@@ -7,19 +7,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "R Trench To R Neutral Sweep"
+            "pathName": "L Trench To L Neutral Sweep"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "R Neutral Grab Fuel Sweep"
+            "pathName": "L Neutral Grab Fuel Sweep"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "R Neutral Fuel to Bump Shot"
+            "pathName": "L Neutral Fuel to Bump Shot"
           }
         },
         {
@@ -43,13 +43,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "R Bump Shot to R Trench"
+            "pathName": "L Bump Shot to L Trench"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "R Bump Trench to R Neutral Hub"
+            "pathName": "L Bump Trench to L Inner Hub"
           }
         },
         {
@@ -61,13 +61,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "R Neutral Hub Grab Fuel"
+            "pathName": "L Inner Hub Grab Fuel"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "R Neutral Hub Fuel to Bump Shot"
+            "pathName": "L Inner Hub Fuel to Bump Shot"
           }
         },
         {

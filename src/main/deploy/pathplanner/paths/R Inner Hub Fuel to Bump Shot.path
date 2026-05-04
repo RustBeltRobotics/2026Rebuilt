@@ -3,66 +3,50 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 7.527909090909091,
-        "y": 3.7361022727272726
+        "x": 6.11388596491228,
+        "y": 3.836096491228071
       },
       "prevControl": null,
       "nextControl": {
-        "x": 6.332318181818181,
-        "y": 2.39621590909091
+        "x": 7.5300789473684215,
+        "y": 2.793842105263159
       },
       "isLocked": false,
-      "linkedName": "r-neutral-hub-end"
+      "linkedName": "r-inner-hub-bump-shot"
     },
     {
       "anchor": {
-        "x": 6.5899886363636355,
-        "y": 2.5095909090909094
+        "x": 4.562438596491227,
+        "y": 2.3960350877192993
       },
       "prevControl": {
-        "x": 7.198090909090909,
-        "y": 2.9321704545454543
+        "x": 5.737370773907384,
+        "y": 2.5161986058641337
       },
       "nextControl": {
-        "x": 6.384691439181442,
-        "y": 2.366926755116843
+        "x": 2.4620175438596497,
+        "y": 2.1812192982456144
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 3.590704545454545,
-        "y": 2.3240681818181814
-      },
-      "prevControl": {
-        "x": 4.0958649181329605,
-        "y": 2.290101965156247
-      },
-      "nextControl": {
-        "x": 2.7069201923797253,
-        "y": 2.383492500198113
-      },
-      "isLocked": false,
-      "linkedName": null
-    },
-    {
-      "anchor": {
-        "x": 3.3849298245614032,
+        "x": 3.392885964912281,
         "y": 4.011131578947369
       },
       "prevControl": {
-        "x": 3.332338633882818,
-        "y": 3.3795827026314607
+        "x": 2.392885964912281,
+        "y": 4.011131578947369
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "r-bump-shot"
+      "linkedName": "c-layup-shot"
     }
   ],
   "rotationTargets": [
     {
-      "waypointRelativePos": 2.0353982300884943,
+      "waypointRelativePos": 1.031196823596144,
       "rotationDegrees": 90.0
     }
   ],
@@ -71,12 +55,12 @@
   "eventMarkers": [
     {
       "name": "start-shooter-layup",
-      "waypointRelativePos": 0.5013106159895179,
+      "waypointRelativePos": 0.3735255570118091,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
         "data": {
-          "name": "start-shooter-bump"
+          "name": "start-shooter-layup"
         }
       }
     }
@@ -97,7 +81,7 @@
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 102.22681063207057
+    "rotation": 97.75606588805647
   },
   "useDefaultConstraints": true
 }

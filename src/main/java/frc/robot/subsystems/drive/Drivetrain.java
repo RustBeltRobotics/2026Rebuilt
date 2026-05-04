@@ -122,13 +122,13 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
         }
     }
 
-    public void applyTeleopCurrentLimits() {
+    public void applyTeleopCurrentLimits(double newCurrentLimit) {
         for (int i = 0; i < 4; i++) {
             var talonFXConfigurator = this.getModule(i).getDriveMotor().getConfigurator();
             var talonFXConfigs = new TalonFXConfiguration();
             talonFXConfigurator.refresh(talonFXConfigs);  //read current config from motor controller into talonFXConfigs
             var currentLimitConfig = talonFXConfigs.CurrentLimits;
-            currentLimitConfig.SupplyCurrentLimit = Constants.Kinematics.DRIVE_MOTOR_SUPPLY_CURRENT_LIMIT_TELEOP; //set new supply current limit for teleop
+            currentLimitConfig.SupplyCurrentLimit = newCurrentLimit; //set new supply current limit for teleop
             talonFXConfigurator.apply(talonFXConfigs);  //apply the updated configuration to the motor controller
         }
     }

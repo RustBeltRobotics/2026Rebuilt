@@ -7,13 +7,25 @@
         {
           "type": "path",
           "data": {
-            "pathName": "C To Shot"
+            "pathName": "C To Extend Intake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "C Extend Intake to Layup"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "layup-shoot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "stop-shooter"
           }
         },
         {
@@ -50,6 +62,36 @@
           "type": "named",
           "data": {
             "name": "layup-shoot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "stop-shooter"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "stop-intake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "C Shot To R Bump Neutral"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "extend-intake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "R Bump Neutral Fuel Run"
           }
         },
         {

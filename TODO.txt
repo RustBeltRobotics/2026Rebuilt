@@ -1,8 +1,8 @@
 TODO:
 - ** Change Constants.Game.FLIP_FIELD_CENTRIC_OPERATOR_PERSPECTIVE to false for competition [or at the Warehouse in Rochester] (flip to true at the lab)
-- Plug front pi back into PDH for power
-- Keep back pi plugged into battery pack for power
-- Run full match timing runs to test battery / brownouts (full auto + tele-op time)
+- Test new toggle behavior for layup shot / b-button
+- Test new center auto
+- Test finish time / shot accuracy on Right Trench Sweep Bump Shots
 
 - Turn off local lab specific testing constants before Worlds comp play:
     - FLIP_FIELD_CENTRIC_OPERATOR_PERSPECTIVE

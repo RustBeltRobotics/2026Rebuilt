@@ -8,47 +8,46 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 3.279308147388594,
-        "y": 5.0820081442404605
+        "x": 3.0391167357943325,
+        "y": 3.4584562783436206
       },
       "isLocked": false,
       "linkedName": "c-layup-shot"
     },
     {
       "anchor": {
-        "x": 0.4493559928519838,
-        "y": 4.821932021464827
+        "x": 2.549535087719298,
+        "y": 2.8734035087719305
       },
       "prevControl": {
-        "x": 1.4715563506413565,
-        "y": 4.805706618958275
+        "x": 2.5512923844978173,
+        "y": 3.1233973325117024
+      },
+      "nextControl": {
+        "x": 2.547777790940779,
+        "y": 2.6234096850321587
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 5.840121364666901,
+        "y": 2.665910208887749
+      },
+      "prevControl": {
+        "x": 5.1788258186310285,
+        "y": 2.665910208887749
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "c-shot-depot-start"
+      "linkedName": "r-bump-neutral-fuel-start"
     }
   ],
-  "rotationTargets": [
-    {
-      "waypointRelativePos": 0.5,
-      "rotationDegrees": 90.0
-    }
-  ],
+  "rotationTargets": [],
   "constraintZones": [],
   "pointTowardsZones": [],
-  "eventMarkers": [
-    {
-      "name": "extend-intake",
-      "waypointRelativePos": 0.30078636959371297,
-      "endWaypointRelativePos": null,
-      "command": {
-        "type": "named",
-        "data": {
-          "name": "extend-intake"
-        }
-      }
-    }
-  ],
+  "eventMarkers": [],
   "globalConstraints": {
     "maxVelocity": 5.29,
     "maxAcceleration": 4.0,
@@ -59,7 +58,7 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 89.99999999927283
+    "rotation": 0.0
   },
   "reversed": false,
   "folder": null,

@@ -55,18 +55,31 @@ public class VisionSystem {
     private VisionEstimateConsumer visionEstimateConsumer;
     private final Supplier<Pose2d> currentRobotPoseSupplier;
     private DoublePublisher averageLatencyMsPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/Vision/Latency").publish();
-    private final StructArrayPublisher<Pose3d> acceptedTagPublisher = NetworkTableInstance.getDefault()
-        .getStructArrayTopic("/RBR/Vision/AprilTags/Accepted", Pose3d.struct).publish();
-    private final StructArrayPublisher<Pose3d> rejectedTagPublisher = NetworkTableInstance.getDefault()
-        .getStructArrayTopic("/RBR/Vision/AprilTags/Rejected", Pose3d.struct).publish();
+    private final StructArrayPublisher<Pose3d> allAcceptedTagPublisher = NetworkTableInstance.getDefault()
+        .getStructArrayTopic("/RBR/Vision/AprilTags/Accepted/All", Pose3d.struct).publish();
+    private final StructArrayPublisher<Pose3d> acceptedTagPublisherBackLeft = NetworkTableInstance.getDefault()
+        .getStructArrayTopic("/RBR/Vision/AprilTags/Accepted/BL", Pose3d.struct).publish();
+    private final StructArrayPublisher<Pose3d> acceptedTagPublisherBackRight= NetworkTableInstance.getDefault()
+        .getStructArrayTopic("/RBR/Vision/AprilTags/Accepted/BR", Pose3d.struct).publish();
+    private final StructArrayPublisher<Pose3d> acceptedTagPublisherBackCenter = NetworkTableInstance.getDefault()
+        .getStructArrayTopic("/RBR/Vision/AprilTags/Accepted/BC", Pose3d.struct).publish();
+    private final StructArrayPublisher<Pose3d> acceptedTagPublisherBackRightForward = NetworkTableInstance.getDefault()
+        .getStructArrayTopic("/RBR/Vision/AprilTags/Accepted/BRF", Pose3d.struct).publish();
+    private final StructArrayPublisher<Pose3d> allRejectedTagPublisher = NetworkTableInstance.getDefault()
+        .getStructArrayTopic("/RBR/Vision/AprilTags/Rejected/All", Pose3d.struct).publish();
+    private final StructArrayPublisher<Pose3d> rejectedTagPublisherBackLeft = NetworkTableInstance.getDefault()
+        .getStructArrayTopic("/RBR/Vision/AprilTags/Rejected/BL", Pose3d.struct).publish();
+    private final StructArrayPublisher<Pose3d> rejectedTagPublisherBackRight= NetworkTableInstance.getDefault()
+        .getStructArrayTopic("/RBR/Vision/AprilTags/Rejected/BR", Pose3d.struct).publish();
+    private final StructArrayPublisher<Pose3d> rejectedTagPublisherBackCenter = NetworkTableInstance.getDefault()
+        .getStructArrayTopic("/RBR/Vision/AprilTags/Rejected/BC", Pose3d.struct).publish();
+    private final StructArrayPublisher<Pose3d> rejectedTagPublisherBackRightForward = NetworkTableInstance.getDefault()
+        .getStructArrayTopic("/RBR/Vision/AprilTags/Rejected/BRF", Pose3d.struct).publish();
     private final StructArrayPublisher<Pose3d> acceptedVisionPosePublisher = NetworkTableInstance.getDefault()
         .getStructArrayTopic("/RBR/Vision/PoseEstimates/Accepted", Pose3d.struct).publish();
     private final StructArrayPublisher<Pose3d> rejectedVisionPosePublisher = NetworkTableInstance.getDefault()
         .getStructArrayTopic("/RBR/Vision/PoseEstimates/Rejected", Pose3d.struct).publish();
-    // private final StructPublisher<Pose2d> frontCenterCameraPosePublisher = NetworkTableInstance.getDefault()
-    //     .getStructTopic("/RBR/Vision/PoseEstimates/Camera/FC", Pose2d.struct).publish();
-    // private final StructPublisher<Pose2d> frontRightCameraPosePublisher = NetworkTableInstance.getDefault()
-    //     .getStructTopic("/RBR/Vision/PoseEstimates/Camera/FR", Pose2d.struct).publish();
+
     private final StructPublisher<Pose3d> backLeftCameraPoseEstimatePublisher = NetworkTableInstance.getDefault()
         .getStructTopic("/RBR/Vision/PoseEstimates/Camera/BL", Pose3d.struct).publish();
     private final StructPublisher<Pose3d> backRightCameraPoseEstimatePublisher = NetworkTableInstance.getDefault()
@@ -108,15 +121,15 @@ public class VisionSystem {
             Constants.Vision.CameraPose.BACK_RIGHT, fieldLayout);
         VisionCamera backLeftCamera = new VisionCamera(Constants.Vision.CameraName.BACK_LEFT, CameraPosition.BACK_LEFT,
             Constants.Vision.CameraPose.BACK_LEFT, fieldLayout);
-        // VisionCamera backCenterCamera = new VisionCamera(Constants.Vision.CameraName.BACK_CENTER, CameraPosition.BACK_CENTER,
-        //     Constants.Vision.CameraPose.BACK_CENTER, fieldLayout);
-        // VisionCamera backRightForwardCamera = new VisionCamera(Constants.Vision.CameraName.BACK_RIGHT_FORWARD, CameraPosition.BACK_RIGHT_FORWARD,
-        //     Constants.Vision.CameraPose.BACK_RIGHT_FORWARD, fieldLayout);
+        VisionCamera backCenterCamera = new VisionCamera(Constants.Vision.CameraName.BACK_CENTER, CameraPosition.BACK_CENTER,
+            Constants.Vision.CameraPose.BACK_CENTER, fieldLayout);
+        VisionCamera backRightForwardCamera = new VisionCamera(Constants.Vision.CameraName.BACK_RIGHT_FORWARD, CameraPosition.BACK_RIGHT_FORWARD,
+            Constants.Vision.CameraPose.BACK_RIGHT_FORWARD, fieldLayout);
  
         visionCameras.add(backRightCamera);           
         visionCameras.add(backLeftCamera);
-        // visionCameras.add(backCenterCamera);
-        // visionCameras.add(backRightForwardCamera);
+        visionCameras.add(backCenterCamera);
+        visionCameras.add(backRightForwardCamera);
 
         if (Robot.isSimulation()) {
             // Create the vision system simulation which handles cameras and targets on the field.
@@ -207,10 +220,10 @@ public class VisionSystem {
         }
 
         if (!usedAprilTags.isEmpty()) {
-            acceptedTagPublisher.accept(usedAprilTags.toArray(new Pose3d[0]));
+            allAcceptedTagPublisher.accept(usedAprilTags.toArray(new Pose3d[0]));
         }
         if (!rejectedAprilTags.isEmpty()) {
-            rejectedTagPublisher.accept(rejectedAprilTags.toArray(new Pose3d[0]));
+            allRejectedTagPublisher.accept(rejectedAprilTags.toArray(new Pose3d[0]));
         }
 
         if (!acceptedPoses.isEmpty()) {
@@ -260,9 +273,29 @@ public class VisionSystem {
 
             if (!usedAprilTagsForCamera.isEmpty()) {
                 usedAprilTags.addAll(usedAprilTagsForCamera);
+
+                if (visionCamera.getCameraPosition() == CameraPosition.BACK_LEFT) {
+                    acceptedTagPublisherBackLeft.set(usedAprilTagsForCamera.toArray(new Pose3d[0]));
+                } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_RIGHT) {
+                    acceptedTagPublisherBackRight.set(usedAprilTagsForCamera.toArray(new Pose3d[0]));
+                } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_CENTER) {
+                    acceptedTagPublisherBackCenter.set(usedAprilTagsForCamera.toArray(new Pose3d[0]));
+                } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_RIGHT_FORWARD) {
+                    acceptedTagPublisherBackRightForward.set(usedAprilTagsForCamera.toArray(new Pose3d[0]));
+                }
             }
             if (!rejectedAprilTagsForCamera.isEmpty()) {
                 rejectedAprilTags.addAll(rejectedAprilTagsForCamera);
+
+                if (visionCamera.getCameraPosition() == CameraPosition.BACK_LEFT) {
+                    rejectedTagPublisherBackLeft.set(rejectedAprilTagsForCamera.toArray(new Pose3d[0]));
+                } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_RIGHT) {
+                    rejectedTagPublisherBackRight.set(rejectedAprilTagsForCamera.toArray(new Pose3d[0]));
+                } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_CENTER) {
+                    rejectedTagPublisherBackCenter.set(rejectedAprilTagsForCamera.toArray(new Pose3d[0]));
+                } else if (visionCamera.getCameraPosition() == CameraPosition.BACK_RIGHT_FORWARD) {
+                    rejectedTagPublisherBackRightForward.set(rejectedAprilTagsForCamera.toArray(new Pose3d[0]));
+                }
             }
         }
 
@@ -294,7 +327,12 @@ public class VisionSystem {
                         return;
                 }
 
-                acceptedPoses.add(poseEstimate);
+                //Skip back center cam poses, they seem off (at Worlds in Houston)
+                if (visionCamera.getCameraPosition() != CameraPosition.BACK_CENTER) {
+                    acceptedPoses.add(poseEstimate);
+                }
+
+                
                 Matrix<N3, N1> poseEstimateStandardDeviations = getVisionMeasurementStandardDeviation(poseEstimate, visionCamera);
                 estimationResults.add(new VisionPoseEstimationResult(visionCamera, poseEstimate, poseEstimateStandardDeviations));
 
@@ -317,11 +355,33 @@ public class VisionSystem {
         CameraPosition cameraPosition = visionCamera.getCameraPosition();
 
         if (Constants.Vision.USE_STATIC_STD_DEV) {
-            if (cameraPosition == CameraPosition.FRONT_CENTER) {
-                return Constants.Vision.FRONT_CAMERA_STANDARD_DEVIATIONS;
-            } else {
-                return Constants.Vision.OTHER_CAMERA_STANDARD_DEVIATIONS;
+            // if (cameraPosition == CameraPosition.FRONT_CENTER) {
+            //     return Constants.Vision.FRONT_CAMERA_STANDARD_DEVIATIONS;
+            // } else {
+            //     return Constants.Vision.OTHER_CAMERA_STANDARD_DEVIATIONS;
+            // }
+            var standardDeviation = Constants.Vision.OTHER_CAMERA_STANDARD_DEVIATIONS;
+            double avgDist = 0;
+            int numTags = 0;
+
+            for (PhotonTrackedTarget target : estimation.targetsUsed) {
+                var tagPose = visionCamera.getPoseEstimator().getFieldTags().getTagPose(target.getFiducialId());
+                if (tagPose.isEmpty()) {
+                    continue;
+                } 
+                numTags++;
+                avgDist += tagPose.get().toPose2d().getTranslation().getDistance(estimation.estimatedPose.toPose2d().getTranslation());
             }
+
+            if (numTags > 0) {
+                avgDist /= numTags;
+            }
+
+            if (avgDist >= Constants.Vision.FAR_DISTANCE_THRESHOLD) {
+                standardDeviation = Constants.Vision.FAR_TARGET_STANDARD_DEVIATIONS;
+            }
+
+            return standardDeviation;
         } else {
             //TODO: these std devs are def a little too aggressive
 

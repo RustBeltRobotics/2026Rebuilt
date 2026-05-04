@@ -1,0 +1,22 @@
+- Java basics
+    - Data types, looping, conditional logic, etc.
+- Motor control and Encoders
+    - Understanding motor curves
+    - Current, Voltage, Torque, Resistance
+    - Current limiting
+    - CTRE APIs
+- https://docs.wpilib.org/en/stable/docs/hardware/hardware-tutorials/transmissions.html
+- PID/FF control + Motion Profiling
+    - SysId
+- Telemetry, Logging, NT
+- AdvantageScope
+- Command Based https://docs.wpilib.org/en/stable/docs/software/commandbased/index.html
+- Vision
+    - Camera characteristics
+    - April Tags
+    - Orange Pis http://www.orangepi.org/html/hardWare/computerAndMicrocontrollers/details/Orange-Pi-5.html
+    - Photonvision Web UI
+    - Phontovision APIs
+- Swerve
+    - Odometry and PoseEstimator
+- PathPlanner

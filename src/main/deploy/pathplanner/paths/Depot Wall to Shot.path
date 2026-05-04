@@ -8,24 +8,24 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.966930615466784,
-        "y": 6.313666559426785
+        "x": 2.549535087719298,
+        "y": 6.851473684210527
       },
       "isLocked": false,
       "linkedName": "depot-to-wall-start"
     },
     {
       "anchor": {
-        "x": 2.753,
-        "y": 4.07556350626118
+        "x": 3.392885964912281,
+        "y": 4.011131578947369
       },
       "prevControl": {
-        "x": 1.876828264758497,
-        "y": 5.2437924865831835
+        "x": 2.1173077078070386,
+        "y": 4.0228699712164415
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "depot-wall-shot-end"
+      "linkedName": "c-layup-shot"
     }
   ],
   "rotationTargets": [],

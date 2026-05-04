@@ -3,43 +3,38 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.385,
-        "y": 7.355476010810971
+        "x": 3.446409090909091,
+        "y": 0.5306818181818187
       },
       "prevControl": null,
       "nextControl": {
-        "x": 4.385,
-        "y": 7.355476010810971
+        "x": 4.446409090909091,
+        "y": 0.5306818181818187
       },
       "isLocked": false,
-      "linkedName": "l-trench-shot"
+      "linkedName": "r-bump-trench-start"
     },
     {
       "anchor": {
-        "x": 7.750696360498882,
-        "y": 7.417319121692999
+        "x": 6.42417543859649,
+        "y": 0.5820350877192992
       },
       "prevControl": {
-        "x": 6.750696360498882,
-        "y": 7.417319121692999
+        "x": 5.42417543859649,
+        "y": 0.5820350877192987
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "l-neutral-hub-start"
+      "linkedName": "r-inner-hub"
     }
   ],
-  "rotationTargets": [
-    {
-      "waypointRelativePos": 0.23085649461145855,
-      "rotationDegrees": -90.0
-    }
-  ],
+  "rotationTargets": [],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [
     {
       "name": "extend-intake",
-      "waypointRelativePos": 0.7477064220183502,
+      "waypointRelativePos": 0.6114023591087966,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
@@ -58,14 +53,14 @@
     "unlimited": false
   },
   "goalEndState": {
-    "velocity": 1.0,
-    "rotation": -98.97262661489644
+    "velocity": 0,
+    "rotation": 97.0012675574953
   },
   "reversed": false,
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -69.14997472241713
+    "rotation": 90.0
   },
   "useDefaultConstraints": true
 }

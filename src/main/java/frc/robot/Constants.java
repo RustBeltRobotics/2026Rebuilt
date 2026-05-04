@@ -54,10 +54,10 @@ public final class Constants {
 
   public static final class Game {
     //TODO: this should only be true for running in the lab for 2026, always use false for comp!!!
-    public static final boolean FLIP_FIELD_CENTRIC_OPERATOR_PERSPECTIVE = true;
+    public static final boolean FLIP_FIELD_CENTRIC_OPERATOR_PERSPECTIVE = false;
 
     //TODO: set this to false for comp and true for lab testing to get more detailed logging of NT values
-    public static final boolean ENABLE_DEBUG_NT_LOGGING = true;
+    public static final boolean ENABLE_DEBUG_NT_LOGGING = false;
 
     //TODO: enable this to allow for live tuning of PID values via NT during testing - should be false for comp to avoid accidentally changing values
     public static final boolean ENABLE_LIVE_PID_VALUE_TUNING = false;
@@ -133,7 +133,7 @@ public final class Constants {
   public static final class Kinematics {
 
     /* Initial / max speed multiplier for drivetrain - reduce to slow teleop driving speed */
-    public static final double INITIAL_DRIVE_MAX_SPEED_FACTOR = 0.80;
+    public static final double INITIAL_DRIVE_MAX_SPEED_FACTOR = 0.90;
 
     /* Robot mass in Kg. */
     public static final double ROBOT_MASS = Units.Pounds.of(102.0).in(Units.Kilograms); //Note: this weight does NOT include the battery or bumpers
@@ -188,7 +188,7 @@ public final class Constants {
 
     public static final double STEER_GEAR_RATIO = 1.0 / 26.09;
 
-    public static final double DRIVE_MOTOR_SUPPLY_CURRENT_LIMIT_AUTO = 50; //Amps - TODO: test with this set to 80 and see how performance and battery draw are affected
+    public static final double DRIVE_MOTOR_SUPPLY_CURRENT_LIMIT_AUTO = 55; //Amps - TODO: test with this set to 80 and see how performance and battery draw are affected
     // public static final double DRIVE_MOTOR_SUPPLY_CURRENT_LIMIT_AUTO = 38; Amps - TODO: test with this set to 80 and see how performance and battery draw are affected
 
     public static final double DRIVE_MOTOR_SUPPLY_CURRENT_LIMIT_TELEOP = 38; //Amps
@@ -278,8 +278,9 @@ public final class Constants {
     public static final AngularVelocity SHOOTER_TEST_RPM = Units.RPM.of(3450);  //was 3400
     public static final AngularVelocity SHOOTER_SHORT_DEFENSE_SHOT_RPM = Units.RPM.of(3050); //one robots length away from hub
     public static final AngularVelocity SHOOTER_LONG_DEFENSE_SHOT_RPM = Units.RPM.of(3450); //two robots length away from hub
-    public static final AngularVelocity SHOOTER_LAYUP_RPM = Units.RPM.of(2490); 
-    public static final AngularVelocity SHOOTER_CENTER_AUTO_RPM = Units.RPM.of(2600);
+    public static final AngularVelocity SHOOTER_LAYUP_RPM = Units.RPM.of(2460); 
+    public static final AngularVelocity SHOOTER_TOWER_RPM = Units.RPM.of(3300); 
+    public static final AngularVelocity SHOOTER_CENTER_AUTO_RPM = Units.RPM.of(2650);
     public static final AngularVelocity SHOOTER_BUMP_AUTO_RPM = Units.RPM.of(2700); 
     public static final AngularVelocity SHOOTER_TRENCH_RPM = Units.RPM.of(3420);
 
@@ -340,7 +341,8 @@ public final class Constants {
     public static final double POSE_AMBIGUITY_SHIFTER = 0.2;
     public static final double POSE_AMBIGUITY_MULTIPLIER = 4.0;
     public static final double NOISY_DISTANCE_METERS = 2.5;  //distance beyond which vision measurements are noisy (2.5m =~ 8ft)
-    public static final double DISTANCE_CUTOFF = 3.0;  //Tag readings beyond this distance (in meters) will be considered invalid
+    public static final double FAR_DISTANCE_THRESHOLD = 3.0;
+    public static final double DISTANCE_CUTOFF = 4.0;  //Tag readings beyond this distance (in meters) will be considered invalid
     // public static final double DISTANCE_CUTOFF = 5.0;  //Use for lab
     public static final double DISTANCE_WEIGHT = 7.0;
     public static final int TAG_PRESENCE_WEIGHT = 10;
@@ -359,6 +361,7 @@ public final class Constants {
     //TODO: we should be able to bump trust in the rear cameras after some testing
     // public static final Matrix<N3, N1> OTHER_CAMERA_STANDARD_DEVIATIONS = VecBuilder.fill(1.2, 1.2, 9999.0);
     public static final Matrix<N3, N1> OTHER_CAMERA_STANDARD_DEVIATIONS = VecBuilder.fill(0.8, 0.8, 9999.0);
+    public static final Matrix<N3, N1> FAR_TARGET_STANDARD_DEVIATIONS = VecBuilder.fill(6, 6, 9999.0);
 
     /**
      * Unique camera names, usable in PhotonCamera instances
@@ -370,6 +373,8 @@ public final class Constants {
       public static final String BACK_RIGHT_FORWARD = "Arducam_OV9281_USB_Camera-3";
       public static final String BACK_RIGHT = "Arducam_OV9281_USB_Camera-2";
       public static final String BACK_LEFT = "Arducam_OV9281_USB_Camera-1";
+
+      //new backup = Arducam_OV9281_USB_Camera-5
     }
 
     /**

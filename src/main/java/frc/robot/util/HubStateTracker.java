@@ -2,6 +2,7 @@ package frc.robot.util;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 public class HubStateTracker {
 
@@ -21,6 +22,66 @@ public class HubStateTracker {
         }
 
         return activeAlliance == teamAlliance;
+    }
+
+    public static Trigger getLastTenSecondsShiftWarning() {
+        return new Trigger(() -> {
+            // Only active during teleop
+            if (!DriverStation.isTeleopEnabled()) {
+                return false;
+            }
+
+            double t = DriverStation.getMatchTime();
+
+            // getMatchTime() returns -1 if the time is not yet valid
+            if (t < 0) {
+                return false;
+            }
+
+            // Last 10s of Shift 1: 105
+            if (t == 105.0) return true;
+
+            // Last 10s of Shift 2: 80
+            if (t == 80.0)  return true;
+
+            // Last 10s of Shift 3: 55 
+            if (t == 55.0)  return true;
+
+            // Last 10s of Shift 4: 40
+            if (t == 40.0)  return true;
+
+            return false;
+        });
+    }
+
+    public static Trigger getLastFiveSecondsShiftWarning() {
+        return new Trigger(() -> {
+            // Only active during teleop
+            if (!DriverStation.isTeleopEnabled()) {
+                return false;
+            }
+
+            double t = DriverStation.getMatchTime();
+
+            // getMatchTime() returns -1 if the time is not yet valid
+            if (t < 0) {
+                return false;
+            }
+
+            // Last 10s of Shift 1: 100
+            if (t == 100.0) return true;
+
+            // Last 10s of Shift 2: 75
+            if (t == 75.0)  return true;
+
+            // Last 10s of Shift 3: 50 
+            if (t == 50.0)  return true;
+
+            // Last 10s of Shift 4: 335
+            if (t == 35.0)  return true;
+
+            return false;
+        });
     }
 
     /**
