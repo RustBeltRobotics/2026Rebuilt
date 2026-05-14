@@ -21,6 +21,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.networktables.BooleanPublisher;
@@ -92,6 +93,10 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
 
     private final SwerveRequest.SwerveDriveBrake applyBrakeRequest = new SwerveRequest.SwerveDriveBrake();
 
+    // Separate wheel-only odometry — no vision corrections applied
+    private SwerveDriveOdometry wheelOdometry;
+    private Pose2d wheelOdometryPose = new Pose2d();
+
     private boolean initialPoseSetViaVision = false;
     private boolean isAutoTargeting = false;
     private Pose2d latestVisionPose;
@@ -105,6 +110,14 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
 
     public Drivetrain() {
         super(TunerConstants.DrivetrainConstants, TunerConstants.FrontLeft, TunerConstants.FrontRight, TunerConstants.BackLeft, TunerConstants.BackRight);
+        
+        wheelOdometry = new SwerveDriveOdometry(
+            getKinematics(),
+            getState().RawHeading,          // raw gyro — unaffected by vision
+            getState().ModulePositions,     // initial module positions
+            new Pose2d()                    // initial pose — origin
+        );
+        
         configureAutoBuilder();
         //This is required to get the entry to show in NT for the first time
         kPEntry.setDefault(Constants.Kinematics.RotateToPosePID.K_P);
@@ -362,6 +375,14 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
             isAutoTargeting = false;
             latestVisionPose = null;
         }, this);
+    }
+
+    public SwerveDriveOdometry getWheelOdometry() {
+        return wheelOdometry;
+    }
+
+    public void setWheelOdometryPose(Pose2d wheelOdometryPose) {
+        this.wheelOdometryPose = wheelOdometryPose;
     }
 
 }

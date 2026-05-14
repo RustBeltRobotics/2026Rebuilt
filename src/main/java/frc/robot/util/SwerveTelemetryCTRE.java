@@ -7,6 +7,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.DoubleArrayPublisher;
@@ -21,6 +22,7 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
+import frc.robot.subsystems.drive.Drivetrain;
 
 public class SwerveTelemetryCTRE {
 
@@ -31,8 +33,9 @@ public class SwerveTelemetryCTRE {
      * 
      * @param maxSpeed Maximum speed in meters per second
      */
-    public SwerveTelemetryCTRE(double maxSpeed) {
+    public SwerveTelemetryCTRE(double maxSpeed, Drivetrain drivetrain) {
         this.maxSpeed = maxSpeed;
+        this.drivetrain = drivetrain;
 
         /* Set up the module state Mechanism2d telemetry */
         for (int i = 0; i < 4; ++i) {
@@ -45,7 +48,8 @@ public class SwerveTelemetryCTRE {
 
     /* Robot swerve drive state */
     private final NetworkTable driveStateTable = inst.getTable("DriveState");
-    private final StructPublisher<Pose2d> drivePose = driveStateTable.getStructTopic("Pose", Pose2d.struct).publish();
+    private final StructPublisher<Pose2d> drivePose = driveStateTable.getStructTopic("FusedPose", Pose2d.struct).publish();
+    private final StructPublisher<Pose2d> odometryPose = driveStateTable.getStructTopic("OdometryPose", Pose2d.struct).publish();
     private final StructPublisher<ChassisSpeeds> driveSpeeds = driveStateTable.getStructTopic("Speeds", ChassisSpeeds.struct).publish();
     private final StructPublisher<Rotation2d> rawHeading = driveStateTable.getStructTopic("RawHeading", Rotation2d.struct).publish();
 
@@ -93,8 +97,20 @@ public class SwerveTelemetryCTRE {
 
     private final double[] m_poseArray = new double[3];
 
+    private Drivetrain drivetrain;
+
     /** Accept the swerve drive state and telemeterize it to SmartDashboard and SignalLogger. */
     public void telemeterize(SwerveDriveState state) {
+        // Update wheel-only odometry — uses raw gyro heading so vision
+        // updates to the fused pose do not bleed into this estimate
+        Pose2d wheelOdometryPose = drivetrain.getWheelOdometry().update(
+            state.RawHeading,
+            state.ModulePositions
+        );
+
+        drivetrain.setWheelOdometryPose(wheelOdometryPose);
+        odometryPose.set(wheelOdometryPose);
+
         /* Telemeterize the swerve drive state */
         drivePose.set(state.Pose);
         driveSpeeds.set(state.Speeds);

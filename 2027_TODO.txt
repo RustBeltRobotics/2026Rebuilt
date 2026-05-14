@@ -11,3 +11,5 @@
 - Setup 2027 1/2 field at lab using new coordinate system (center of field = 0,0)
     - Position AprilTags directly using absolute coordinates from origin (not relative to other tags)
 - Experiment with dynamic vision standard deviations / algorithms to improve correct pose locations
+- Implement a script using AI that can parse match logs (SignalLogs and URCL logs) and analyze power/energy usage, provide summary and suggest ways to improve 
+    - Breakdown by subsystem, Energy in watt hours, # of samples, % of time running, percentile groupings for current usage

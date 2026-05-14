@@ -53,8 +53,9 @@ public class RobotContainer {
   private final CommandXboxController driverController = new CommandXboxController(Constants.Controls.CONTROLLER_PORT_DRIVER);
   private final CommandXboxController operatorController = new CommandXboxController(Constants.Controls.CONTROLLER_PORT_OPERATOR);
 
-  private final SwerveTelemetryCTRE swerveTelemetryCTRE = new SwerveTelemetryCTRE(MAX_SPEED_FACTOR * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND);
   private final Drivetrain drivetrain = new Drivetrain();
+  private final SwerveTelemetryCTRE swerveTelemetryCTRE = new SwerveTelemetryCTRE(MAX_SPEED_FACTOR * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND, drivetrain);
+
   private final ShooterYams shooter = new ShooterYams();
   // private final ShooterSysId shooterSysId = new ShooterSysId();
   private final ShooterFeederYams shooterFeeder = new ShooterFeederYams();
