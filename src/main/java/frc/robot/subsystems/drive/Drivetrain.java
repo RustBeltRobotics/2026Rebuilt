@@ -4,6 +4,7 @@ import java.util.function.Supplier;
 
 import org.photonvision.EstimatedRobotPose;
 
+import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.swerve.SwerveModule;
@@ -34,6 +35,7 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -285,6 +287,11 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
             AlertManager.addAlert("AutoVision", "Initial AutoPose [" + pose + "] overriden with vision to [" + this.latestVisionPose + "]", AlertType.kInfo);
         } else {
             AlertManager.addAlert("AutoVision", "Initial AutoPose [" + pose + "] from PathPlanner accepted as is", AlertType.kInfo);
+        }
+
+        if (Utils.isSimulation() && mapleSimSwerveDrivetrain != null) {
+            mapleSimSwerveDrivetrain.mapleSimDrive.setSimulationWorldPose(pose);
+            Timer.delay(0.05); // Wait for simulation to update
         }
 
         resetPose(targetPose);
