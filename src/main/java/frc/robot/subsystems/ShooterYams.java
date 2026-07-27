@@ -28,6 +28,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
+import frc.robot.util.Utilities;
 import yams.gearing.MechanismGearing;
 import yams.mechanisms.config.FlyWheelConfig;
 import yams.mechanisms.velocity.FlyWheel;
@@ -207,7 +208,8 @@ public class ShooterYams extends SubsystemBase {
     }
 
     public void setShooterAngularVelocity(AngularVelocity rpmTarget) {
-        targetRpm = rpmTarget.in(Units.RPM);
+        AngularVelocity rpmTargetWithSpeedFactor = Utilities.getShooterSpeedWithSpeedFactor(rpmTarget);
+        targetRpm = rpmTargetWithSpeedFactor.in(Units.RPM);
         shooterKraken.setMechanismVelocitySetpoint(rpmTarget);
     }
 

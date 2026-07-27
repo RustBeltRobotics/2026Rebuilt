@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
+import frc.robot.RobotContainer;
 import frc.robot.util.AlertManager;
 
 public class IntakeArm extends SubsystemBase {
@@ -85,7 +86,12 @@ public class IntakeArm extends SubsystemBase {
     public Command extend() {
        return run(() -> {
             isExtending = true;
-            runExtendRetractAtDutyCycle(0.3);
+            //move slower in demo mode
+            if (RobotContainer.SHOOTER_SPEED_FACTOR < 1.0) {
+                runExtendRetractAtDutyCycle(0.15);
+            } else {
+                runExtendRetractAtDutyCycle(0.3);
+            }
         })
         .until(() -> shouldStopExtendRetract.getAsBoolean())
         .andThen(stopExtendRetract());
@@ -126,7 +132,13 @@ public class IntakeArm extends SubsystemBase {
     public Command retract() {
         return run(() -> {
             isExtending = false;
-            runExtendRetractAtDutyCycle(-0.40);
+
+            //move slower in demo mode
+            if (RobotContainer.SHOOTER_SPEED_FACTOR < 1.0) {
+                runExtendRetractAtDutyCycle(-0.20);
+            } else {
+                runExtendRetractAtDutyCycle(-0.40);
+            }
         })
         .until(() -> shouldStopExtendRetract.getAsBoolean())
         .andThen(stopExtendRetract());

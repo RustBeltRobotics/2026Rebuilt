@@ -9,12 +9,22 @@ import com.revrobotics.REVLibError;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.RobotContainer;
 
 public class Utilities {
+
+    public static double getShooterSpeedWithSpeedFactor(double speed) {
+        return RobotContainer.SHOOTER_SPEED_FACTOR * speed;
+    }
+
+    public static AngularVelocity getShooterSpeedWithSpeedFactor(AngularVelocity angularVelocity) {
+        return angularVelocity.times(RobotContainer.SHOOTER_SPEED_FACTOR);
+    }
 
     /**
      * This method is used to filter driver input.

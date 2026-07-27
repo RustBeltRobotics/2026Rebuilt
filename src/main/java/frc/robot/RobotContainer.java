@@ -49,6 +49,7 @@ public class RobotContainer {
 
    // For limiting maximum speed in teleop (1.0 = 100% = full speed)
   public static double MAX_SPEED_FACTOR = Constants.Kinematics.INITIAL_DRIVE_MAX_SPEED_FACTOR;
+  public static double SHOOTER_SPEED_FACTOR = 1.0; //for use in demos to reduce speed of shooter to a safe level
 
   private final CommandXboxController driverController = new CommandXboxController(Constants.Controls.CONTROLLER_PORT_DRIVER);
   private final CommandXboxController operatorController = new CommandXboxController(Constants.Controls.CONTROLLER_PORT_OPERATOR);
@@ -69,6 +70,7 @@ public class RobotContainer {
 
   private final SendableChooser<Command> autoChooser;
   private final SendableChooser<Double> driveTrainSpeedChooser = new SendableChooser<>();
+  private final SendableChooser<Double> shooterSpeedChooser = new SendableChooser<>();
   private final Trigger lastTenSecondsOfShiftTrigger = HubStateTracker.getLastTenSecondsShiftWarning();
   private final Trigger lastFiveSecondsOfShiftTrigger = HubStateTracker.getLastFiveSecondsShiftWarning();
   private DoublePublisher maxSpeedFactorPublisher = NetworkTableInstance.getDefault().getDoubleTopic("/RBR/MaxSpeed").publish();
@@ -84,6 +86,23 @@ public class RobotContainer {
     registerPathPlannerNamedCommands();
     
     autoChooser = AutoBuilder.buildAutoChooser();
+    shooterSpeedChooser.setDefaultOption("100%", 1.0);
+    shooterSpeedChooser.addOption("90%", 0.9);
+    shooterSpeedChooser.addOption("80%", 0.8);
+    shooterSpeedChooser.addOption("70%", 0.7);
+    shooterSpeedChooser.addOption("60%", 0.6);
+    shooterSpeedChooser.addOption("50%", 0.5);
+    shooterSpeedChooser.addOption("40%", 0.4);
+    shooterSpeedChooser.addOption("30%", 0.3);
+
+    shooterSpeedChooser.onChange((newValue) -> {
+      if (newValue != null) {
+        SHOOTER_SPEED_FACTOR = newValue;
+      }
+    });
+    Constants.Shuffleboard.COMPETITION_TAB.add("Shooter Speed Selector", shooterSpeedChooser).withPosition(0, 1).withSize(2, 1);
+
+
     driveTrainSpeedChooser.setDefaultOption(MAX_SPEED_FACTOR + "%", MAX_SPEED_FACTOR);
     driveTrainSpeedChooser.addOption("100%", 1.0);
 

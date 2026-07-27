@@ -194,6 +194,11 @@ public class Drivetrain extends CommandSwerveDrivetrain implements VisionEstimat
             double yControllerValue = modifyDriverControllerInput(controller.getLeftX());  //left/right
             yControllerValue = yControllerValue * RobotContainer.MAX_SPEED_FACTOR;
             double rotationalControllerValue = modifyDriverControllerInput(controller.getRightX());  //rotation
+            if (RobotContainer.SHOOTER_SPEED_FACTOR < 1.0) {
+                //if we're in demo mode, reduce rotation speed as well
+                rotationalControllerValue = rotationalControllerValue * RobotContainer.MAX_SPEED_FACTOR;
+            }
+
             return teleopRequest.withVelocityX(-xControllerValue * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND) // Drive forward with negative Y (forward)
                     .withVelocityY(-yControllerValue * Constants.Kinematics.MAX_VELOCITY_METERS_PER_SECOND) // Drive left with negative X (left)
                     .withRotationalRate(-rotationalControllerValue * Constants.Kinematics.MAX_ANGULAR_VELOCITY_RADIANS_PER_SECOND); // Drive counterclockwise with negative X (left)
